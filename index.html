@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Si0 Survival</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; background: #000; }
+        #gameOverScreen, #levelUpScreen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #restartButton, .skillButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 24px;
+            background-color: #fff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+        }
+        #bulletDamageLabel, #skillsLabel, #statusLabel {
+            position: absolute;
+            color: white;
+            font-size: 18px;
+        }
+        #bulletDamageLabel {
+            bottom: 10px;
+            right: 10px;
+        }
+        #skillsLabel {
+            top: 10px;
+            left: 10px;
+        }
+        #statusLabel {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .skillButton {
+            margin-top: 10px;
+        }
+        .skillDescription {
+            font-size: 16px;
+            color: white;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOverScreen">
+        <div>Game Over</div>
+        <button id="restartButton">Restart</button>
+    </div>
+    <div id="levelUpScreen">
+        <div>Level Up!</div>
+        <button class="skillButton" data-skill="penetration">Penetration</button>
+        <div class="skillDescription">관통력이 증가합니다.</div>
+        <button class="skillButton" data-skill="shotgun">Shotgun</button>
+        <div class="skillDescription">거리가 멀어질 수록 약해지는 펠릿 2개가 추가됩니다.</div>
+        <button class="skillButton" data-skill="rpm">RPM</button>
+        <div class="skillDescription">연사력이 빨라집니다.</div>
+        <button class="skillButton" data-skill="burst">Burst</button>
+        <div class="skillDescription">탄이 하나 더 발사됩니다.</div>
+        <button class="skillButton" data-skill="hermes">Hermes</button>
+        <div class="skillDescription">이동 속도가 빨라집니다.</div>
+        <button class="skillButton" data-skill="magnetic">Magnetic</button>
+        <div class="skillDescription">아이템 획득 범위가 증가합니다.</div>
+        <button class="skillButton" data-skill="blade">Blade</button>
+        <div class="skillDescription">플레이어 주변을 회전하는 칼날을 생성합니다.</div>
+    </div>
+    <div id="bulletDamageLabel">Bullet Damage: 10</div>
+    <div id="skillsLabel">Penetration: 0<br>Shotgun: 0<br>RPM: 0<br>Burst: 0<br>Hermes: 0<br>Magnetic: 0<br>Blade: 0</div>
+    <div id="statusLabel">Time: 0s | Round: 1</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const restartButton = document.getElementById('restartButton');
+        const levelUpScreen = document.getElementById('levelUpScreen');
+        const skillButtons = document.querySelectorAll('.skillButton');
+        const bulletDamageLabel = document.getElementById('bulletDamageLabel');
+        const skillsLabel = document.getElementById('skillsLabel');
+        const statusLabel = document.getElementById('statusLabel');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const mapSize = 3000;  // 맵 크기
+        const viewSize = 1000; // 화면 크기
+
+        let player, enemies, keys, bullets, expOrbs, medKits, round, nextRoundTime, enemySpawnInterval, lastEnemySpawn, bossSpawned;
+        let gameOver = false;
+        let invincible = false;
+        let invincibleTimer = 0;
+        let exp = 0;
+        let level = 0;
+        let bulletDamage = 10;
+        let penetration = 0;
+        let shotgun = 0;
+        let rpm = 0;
+        let burst = 0;
+        let hermes = 0;
+        let magnetic = 0;
+        let blade = 0;
+        let lastShot = 0;
+        let playerDirection = 0;
+        let expToNextLevel = 20;
+        let blades = [];
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let startTime, elapsedTime;
+
+        function initializeGame() {
+            player = { x: mapSize / 2, y: mapSize / 2, size: 20, speed: 1.2, health: 100 };
+            enemies = [];
+            keys = {};
+            bullets = [];
+            expOrbs = [];
+            medKits = [];
+            blades = [];
+            round = 1;
+            nextRoundTime = Date.now() + 30000;
+            enemySpawnInterval = 2000;
+            lastEnemySpawn = Date.now();
+            bossSpawned = false;
+            gameOver = false;
+            invincible = false;
+            exp = 0;
+            level = 0;
+            bulletDamage = 10;
+            penetration = 0;
+            shotgun = 0;
+            rpm = 0;
+            burst = 0;
+            hermes = 0;
+            magnetic = 0;
+            blade = 0;
+            expToNextLevel = 20;
+            startTime = Date.now();
+            gameOverScreen.style.display = 'none';
+            levelUpScreen.style.display = 'none';
+            updateSkillsLabel();
+            bulletDamageLabel.textContent = `Bullet Damage: ${bulletDamage}`;
+        }
+
+        function gameLoop() {
+            if (!gameOver) {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function update() {
+            elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            statusLabel.textContent = `Time: ${elapsedTime}s | Round: ${round}`;
+            if (Date.now() - lastEnemySpawn > enemySpawnInterval) {
+                spawnEnemy();
+                lastEnemySpawn = Date.now();
+            }
+            if (round % 5 === 0 && !bossSpawned) {
+                spawnBoss();
+                bossSpawned = true;
+            }
+            movePlayer();
+            moveEnemies();
+            moveBullets();
+            moveBlades();
+            checkCollisions();
+            checkExpOrbs();
+            checkMedKits();
+            checkRound();
+            autoShoot();
+            if (invincible) {
+                invincibleTimer -= 1;
+                if (invincibleTimer <= 0) {
+                    invincible = false;
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
+            drawMap();
+            drawBuildings();
+            drawPlayer();
+            drawEnemies();
+            drawBullets();
+            drawBlades();
+            drawExpOrbs();
+            drawMedKits();
+            ctx.restore();
+            drawHealthBar();
+            drawExpBar();
+        }
+
+        function drawMap() {
+            ctx.strokeStyle = 'white';
+            ctx.strokeRect(0, 0, mapSize, mapSize);
+        }
+
+        function drawBuildings() {
+            const buildings = [
+                { x: 500, y: 500, width: 200, height: 150 },
+                { x: 1500, y: 1500, width: 200, height: 150 },
+                { x: 1000, y: 700, width: 200, height: 150 }
+            ];
+
+            buildings.forEach(building => {
+                ctx.fillStyle = 'gray';
+                ctx.fillRect(building.x, building.y, building.width, building.height);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(building.x, building.y + 50, 20, 50);
+                ctx.fillRect(building.x + building.width - 20, building.y + 50, 20, 50);
+            });
+        }
+
+        function movePlayer() {
+            let moved = false;
+            if (keys['w']) {
+                player.y -= player.speed * (1 + hermes * 0.05);
+                moved = true;
+            }
+            if (keys['s']) {
+                player.y += player.speed * (1 + hermes * 0.05);
+                moved = true;
+            }
+            if (keys['a']) {
+                player.x -= player.speed * (1 + hermes * 0.05);
+                moved = true;
+            }
+            if (keys['d']) {
+                player.x += player.speed * (1 + hermes * 0.05);
+                moved = true;
+            }
+
+            if (player.x < 0) player.x = 0;
+            if (player.y < 0) player.y = 0;
+            if (player.x > mapSize - player.size) player.x = mapSize - player.size;
+            if (player.y > mapSize - player.size) player.y = mapSize - player.size;
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = invincible ? (Date.now() % 100 < 50 ? 'white' : 'transparent') : 'white';
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+        }
+
+        function spawnEnemy() {
+            let size = 20;
+            let x, y;
+            do {
+                x = Math.random() * (mapSize - size);
+                y = Math.random() * (mapSize - size);
+            } while (Math.abs(x - player.x) < 200 && Math.abs(y - player.y) < 200); // 플레이어 주변 200px 이내에 스폰되지 않도록
+
+            let speed = 0.7;
+            let health = 10 + (round - 1) * 2;
+            let color;
+            if (health <= 10) color = 'red';
+            else if (health <= 20) color = 'orange';
+            else if (health <= 30) color = 'yellow';
+            else if (health <= 40) color = 'green';
+            else if (health <= 50) color = 'blue';
+            else if (health <= 60) color = 'navy';
+            else color = 'purple';
+            enemies.push({ x, y, size, speed, health, color, isBoss: false, isArcher: round % 2 === 0 });
+        }
+
+        function spawnBoss() {
+            let size = 40;
+            let x, y;
+            do {
+                x = Math.random() * (mapSize - size);
+                y = Math.random() * (mapSize - size);
+            } while (Math.abs(x - player.x) < 200 && Math.abs(y - player.y) < 200); // 플레이어 주변 200px 이내에 스폰되지 않도록
+
+            let speed = 0.5;
+            let health = 100;
+            enemies.push({ x, y, size, speed, health, color: 'black', isBoss: true, lastAttackTime: 0 });
+        }
+
+        function moveEnemies() {
+            enemies.forEach(enemy => {
+                let dx = player.x - enemy.x;
+                let dy = player.y - enemy.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                enemy.x += (dx / distance) * enemy.speed;
+                enemy.y += (dy / distance) * enemy.speed;
+
+                if (enemy.isBoss && Date.now() - enemy.lastAttackTime > 5000) {
+                    enemy.lastAttackTime = Date.now();
+                    // 보스 투사체 발사 로직
+                    bullets.push({ x: enemy.x, y: enemy.y, angle: Math.atan2(player.y - enemy.y, player.x - enemy.x), speed: 3, penetration: 0, damage: 20 });
+                }
+
+                if (enemy.isArcher && Date.now() - enemy.lastAttackTime > 3000) {
+                    enemy.lastAttackTime = Date.now();
+                    // Archer 투사체 발사 로직
+                    bullets.push({ x: enemy.x, y: enemy.y, angle: Math.atan2(player.y - enemy.y, player.x - enemy.x), speed: 3, penetration: 0, damage: 5 });
+                }
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+            });
+        }
+
+        function shootBullet(x, y, angle) {
+            for (let i = 0; i <= burst; i++) {
+                setTimeout(() => {
+                    let damage = shotgun > 0 ? bulletDamage / (1 + shotgun * 2) : bulletDamage;
+                    bullets.push({ x, y, angle, speed: 5, penetration, damage });
+                    for (let j = 1; j <= shotgun; j++) {
+                        bullets.push({ x, y, angle: angle + j * 0.1, speed: 5, penetration, damage });
+                        bullets.push({ x, y, angle: angle - j * 0.1, speed: 5, penetration, damage });
+                    }
+                }, i * 100);
+            }
+        }
+
+        function moveBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.x += Math.cos(bullet.angle) * bullet.speed;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
+                if (bullet.x < 0 || bullet.x > mapSize || bullet.y < 0 || bullet.y > mapSize) {
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function moveBlades() {
+            blades.forEach(blade => {
+                blade.angle += 0.05;
+                blade.x = player.x + Math.cos(blade.angle) * blade.distance;
+                blade.y = player.y + Math.sin(blade.angle) * blade.distance;
+            });
+        }
+
+        function drawBlades() {
+            ctx.fillStyle = 'silver';
+            blades.forEach(blade => {
+                ctx.beginPath();
+                ctx.arc(blade.x, blade.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function checkCollisions() {
+            enemies.forEach((enemy, enemyIndex) => {
+                if (player.x < enemy.x + enemy.size &&
+                    player.x + player.size > enemy.x &&
+                    player.y < enemy.y + enemy.size &&
+                    player.y + player.size > enemy.y) {
+                    if (!invincible) {
+                        player.health -= enemy.isBoss ? 20 : 10;
+                        invincible = true;
+                        invincibleTimer = 60; // 1초 (60 프레임)
+                        if (player.health <= 0) {
+                            player.health = 0;
+                            endGame();
+                        }
+                    }
+                }
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (bullet.x < enemy.x + enemy.size &&
+                        bullet.x + 5 > enemy.x &&
+                        bullet.y < enemy.y + enemy.size &&
+                        bullet.y + 5 > enemy.y) {
+                        enemy.health -= bullet.damage;
+                        if (bullet.penetration <= 0) {
+                            bullets.splice(bulletIndex, 1);
+                        } else {
+                            bullet.penetration -= 1;
+                        }
+                        if (enemy.health <= 0) {
+                            enemies.splice(enemyIndex, 1);
+                            if (Math.random() < 0.7) { // 70% 확률로 경험치 드랍
+                                spawnExpOrb(enemy.x, enemy.y);
+                            }
+                            if (Math.random() < 0.05) { // 5% 확률로 구급상자 드랍
+                                spawnMedKit(enemy.x, enemy.y);
+                            }
+                        }
+                    }
+                });
+                blades.forEach((blade) => {
+                    if (blade.x < enemy.x + enemy.size &&
+                        blade.x + 10 > enemy.x &&
+                        blade.y < enemy.y + enemy.size &&
+                        blade.y + 10 > enemy.y) {
+                        enemy.health -= blade.damage;
+                        if (enemy.health <= 0) {
+                            enemies.splice(enemyIndex, 1);
+                            if (Math.random() < 0.7) {
+                                spawnExpOrb(enemy.x, enemy.y);
+                            }
+                            if (Math.random() < 0.05) {
+                                spawnMedKit(enemy.x, enemy.y);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function spawnExpOrb(x, y) {
+            expOrbs.push({ x, y, size: 10, createdAt: Date.now() });
+        }
+
+        function moveExpOrbs() {
+            expOrbs.forEach((orb, index) => {
+                if (Date.now() - orb.createdAt > 30000) {
+                    expOrbs.splice(index, 1);
+                    return;
+                }
+                let dx = player.x - orb.x;
+                let dy = player.y - orb.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 50 * (1 + magnetic * 0.1)) {
+                    orb.x += (dx / distance) * 5;
+                    orb.y += (dy / distance) * 5;
+                }
+                if (distance < player.size) {
+                    expOrbs.splice(index, 1);
+                    exp += 20;
+                    if (exp >= expToNextLevel) {
+                        levelUp();
+                    }
+                }
+            });
+        }
+
+        function drawExpOrbs() {
+            ctx.fillStyle = 'green';
+            expOrbs.forEach(orb => {
+                ctx.fillRect(orb.x, orb.y, orb.size, orb.size);
+            });
+        }
+
+        function checkExpOrbs() {
+            moveExpOrbs();
+        }
+
+        function spawnMedKit(x, y) {
+            medKits.push({ x, y, size: 10, createdAt: Date.now() });
+        }
+
+        function moveMedKits() {
+            medKits.forEach((kit, index) => {
+                if (Date.now() - kit.createdAt > 30000) {
+                    medKits.splice(index, 1);
+                    return;
+                }
+                let dx = player.x - kit.x;
+                let dy = player.y - kit.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 50 * (1 + magnetic * 0.1)) {
+                    kit.x += (dx / distance) * 5;
+                    kit.y += (dy / distance) * 5;
+                }
+                if (distance < player.size) {
+                    medKits.splice(index, 1);
+                    player.health = Math.min(player.health + 10, 100);
+                }
+            });
+        }
+
+        function drawMedKits() {
+            ctx.fillStyle = 'red';
+            medKits.forEach(kit => {
+                ctx.fillRect(kit.x, kit.y, kit.size, kit.size);
+            });
+        }
+
+        function checkMedKits() {
+            moveMedKits();
+        }
+
+        function drawHealthBar() {
+            const barWidth = 200;
+            const barHeight = 20;
+            const barX = (canvas.width - barWidth) / 2;
+            const barY = canvas.height - 40;
+
+            ctx.fillStyle = 'black';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            const healthWidth = (player.health / 100) * barWidth;
+            ctx.fillStyle = 'green';
+            ctx.fillRect(barX, barY, healthWidth, barHeight);
+
+            ctx.strokeStyle = 'white';
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+        }
+
+        function drawExpBar() {
+            const barWidth = 200;
+            const barHeight = 20;
+            const barX = (canvas.width - barWidth) / 2;
+            const barY = canvas.height - 70;
+
+            ctx.fillStyle = 'black';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            const expWidth = (exp / expToNextLevel) * barWidth;
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(barX, barY, expWidth, barHeight);
+
+            ctx.strokeStyle = 'white';
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText(`Level: ${level}`, barX + barWidth / 2 - 20, barY + 15);
+        }
+
+        function levelUp() {
+            level += 1;
+            exp = 0;
+            expToNextLevel += 5;
+            levelUpScreen.style.display = 'flex';
+            gameOver = true; // 일시정지
+
+            const availableSkills = ['penetration', 'shotgun', 'rpm', 'burst', 'hermes', 'magnetic', 'blade'];
+            const selectedSkills = [];
+            const skillsToChoose = burst > 0 ? availableSkills.filter(skill => skill !== 'shotgun') :
+                                  shotgun > 0 ? availableSkills.filter(skill => skill !== 'burst') :
+                                  availableSkills;
+            
+            while (selectedSkills.length < 3) {
+                const skill = skillsToChoose[Math.floor(Math.random() * skillsToChoose.length)];
+                if (!selectedSkills.includes(skill)) {
+                    selectedSkills.push(skill);
+                }
+            }
+
+            skillButtons.forEach(button => {
+                if (selectedSkills.includes(button.getAttribute('data-skill'))) {
+                    button.style.display = 'block';
+                } else {
+                    button.style.display = 'none';
+                }
+            });
+        }
+
+        function updateSkillsLabel() {
+            skillsLabel.innerHTML = `Penetration: ${penetration}<br>Shotgun: ${shotgun}<br>RPM: ${rpm}<br>Burst: ${burst}<br>Hermes: ${hermes}<br>Magnetic: ${magnetic}<br>Blade: ${blade}`;
+        }
+
+        skillButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const skill = button.getAttribute('data-skill');
+                if (skill === 'penetration' && penetration < 10) {
+                    penetration += 1;
+                } else if (skill === 'shotgun' && shotgun < 10) {
+                    shotgun += 1;
+                } else if (skill === 'rpm' && rpm < 10) {
+                    rpm += 1;
+                } else if (skill === 'burst' && burst < 10) {
+                    burst += 1;
+                } else if (skill === 'hermes' && hermes < 10) {
+                    hermes += 1;
+                } else if (skill === 'magnetic' && magnetic < 10) {
+                    magnetic += 1;
+                } else if (skill === 'blade' && blade < 10) {
+                    blade += 1;
+                    blades.push({ x: player.x, y: player.y, angle: 0, distance: 50, damage: 10 + blade * 10 });
+                }
+                updateSkillsLabel();
+                gameOver = false;
+                levelUpScreen.style.display = 'none';
+                requestAnimationFrame(gameLoop);
+            });
+        });
+
+        function checkRound() {
+            if (Date.now() >= nextRoundTime) {
+                round += 1;
+                nextRoundTime = Date.now() + 30000;
+                enemySpawnInterval = Math.max(500, 2000 - round * 200);
+                bossSpawned = false;
+            }
+        }
+
+        function autoShoot() {
+            if (Date.now() - lastShot > 1000 / (1 + rpm * 0.2)) {
+                const angle = Math.atan2(mouseY - (canvas.height / 2), mouseX - (canvas.width / 2));
+                shootBullet(player.x + player.size / 2, player.y + player.size / 2, angle);
+                lastShot = Date.now();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        restartButton.addEventListener('click', () => {
+            initializeGame();
+            gameLoop();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        initializeGame();
+        gameLoop();
+    </script>
+</body>
+</html>
