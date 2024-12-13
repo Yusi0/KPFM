@@ -76,11 +76,12 @@
         .table-container {
             width: 100%;
             overflow-x: auto;
-            /* 가로 스크롤 활성화 */
+            /* 가로 스크롤 허용 */
             margin-top: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            /* 시각적 강조 */
+            position: relative;
+            /* 추가 */
         }
 
         table {
@@ -98,9 +99,25 @@
         }
 
         th {
+            position: sticky;
+            top: 0;
+            /* 상단에서의 고정 위치 */
+            z-index: 2;
+            /* 다른 요소 위에 나타나도록 설정 */
             background-color: #333;
+            /* 배경색 */
             color: #BB86FC;
-            font-weight: 700;
+            /* 텍스트 색상 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            /* 헤더 아래 그림자 */
+            border: 1px solid #444;
+            /* 테두리 */
+        }
+
+        tbody tr {
+            cursor: pointer;
+            /* 클릭 가능한 커서 */
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
         tbody tr:nth-child(odd) {
@@ -108,19 +125,15 @@
         }
 
         tbody tr:nth-child(even) {
-            background-color: #1F1F1F;
+            background-color: #323232;
         }
 
         tbody tr:hover {
             background-color: #3C3C3C;
             transform: scale(1.01);
+            /* 약간 확대 */
             box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
-        }
-
-
-        tbody tr:nth-child(even) {
-            background-color: #323232;
-            /* 줄무늬 행 */
+            /* 호버 시 그림자 */
         }
 
         tbody tr td:first-child {
@@ -130,20 +143,47 @@
             /* 순위 포인트 컬러 */
         }
 
-        tbody tr td:last-child {
-            font-weight: 700;
-            color: #BB86FC;
-        }
-
         tbody tr td:nth-child(2) {
             font-weight: 700;
             color: #BB86FC;
+            /* 닉네임 포인트 컬러 */
         }
 
-        .tier {
+        tbody tr td:last-child {
             font-weight: 700;
-            color: #9c4bff;
-            /* 포인트 컬러 */
+            font-size: 16px;
+        }
+
+        .tier-copper {
+            color: #B87333;
+        }
+
+        .tier-bronze {
+            color: #CD7F32;
+        }
+
+        .tier-silver {
+            color: #C0C0C0;
+        }
+
+        .tier-gold {
+            color: #FFD700;
+        }
+
+        .tier-platinum {
+            color: #00BFFF;
+        }
+
+        .tier-diamond {
+            color: #8A2BE2;
+        }
+
+        .tier-champion {
+            color: #DC143C;
+        }
+
+        .tier-unranked {
+            color: #E0E0E0;
         }
     </style>
 </head>
@@ -279,6 +319,41 @@
 
             data.sort((a, b) => b.elo - a.elo).forEach((player, index) => {
                 const row = document.createElement('tr');
+
+                // 행 클릭 이벤트 추가
+                row.addEventListener("click", () => {
+                    window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
+                });
+
+                // 티어에서 숫자를 제거한 이름 추출
+                const tierName = player.tier?.split(' ')[0] || 'Unranked'; // 숫자 제거 후 티어 이름만 추출
+                let tierClass = 'tier-unranked'; // 기본 클래스
+
+                // 티어에 따른 클래스 설정
+                switch (tierName) {
+                    case 'Copper':
+                        tierClass = 'tier-copper';
+                        break;
+                    case 'Bronze':
+                        tierClass = 'tier-bronze';
+                        break;
+                    case 'Silver':
+                        tierClass = 'tier-silver';
+                        break;
+                    case 'Gold':
+                        tierClass = 'tier-gold';
+                        break;
+                    case 'Platinum':
+                        tierClass = 'tier-platinum';
+                        break;
+                    case 'Diamond':
+                        tierClass = 'tier-diamond';
+                        break;
+                    case 'Champion':
+                        tierClass = 'tier-champion';
+                        break;
+                }
+
                 row.innerHTML = `
             <td>${index + 1}</td>
             <td><a href="user.html?nickname=${encodeURIComponent(player.nickname)}" style="color: #BB86FC; text-decoration: none;">${player.nickname}</a></td>
@@ -287,7 +362,7 @@
             <td>${(player.kills / player.matches).toFixed(1)}</td>
             <td>${player.matches}</td>
             <td>${player.elo || 'N/A'}</td>
-            <td>${player.tier || 'Unranked'}</td>
+            <td class="${tierClass}">${player.tier || 'Unranked'}</td>
         `;
                 tbody.appendChild(row);
             });
