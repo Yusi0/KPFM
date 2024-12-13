@@ -195,7 +195,7 @@
                 <canvas id="kdrTrend"></canvas>
             </div>
         </div>
-
+        <h3> </h3>
         <h3>매치 내역</h3>
         <div class="table-responsive">
             <table id="matchHistory" class="table table-dark">
@@ -263,7 +263,7 @@
         }
 
         // 데이터를 가져와서 해당 사용자의 스탯 표시
-        fetch('https://yusi0.github.io/KPFM/match.csv')
+        fetch('match.csv')
             .then(response => response.text())
             .then(data => {
                 const rows = data.trim().split('\n');
@@ -278,21 +278,27 @@
             .catch(error => console.error("Error loading CSV:", error));
 
         function processUserStats(nickname, matches) {
+            // 해당 유저가 참여한 매치 필터링
             const userMatches = matches.filter(match => match.Nickname === nickname);
+
             if (userMatches.length === 0) {
                 alert("No data found for user: " + nickname);
                 window.location.href = "index.html";
+                return;
             }
 
             let kills = 0, deaths = 0, wins = 0, losses = 0, elo = 1500, matchesPlayed = 0;
             const eloHistory = [];
             const kdrHistory = [];
 
+            // 매치 데이터 계산
             userMatches.forEach(match => {
-                const team = parseInt(match.Team, 10);
-                const matchKills = parseInt(match.Kills, 10);
-                const matchDeaths = parseInt(match.Deaths, 10);
-                const winningTeam = parseInt(match['Winning Team'], 10);
+                const round = parseInt(match.Round, 10); // 매치 번호
+                const team = parseInt(match.Team, 10); // 유저가 속한 팀
+                const matchKills = parseInt(match.Kills, 10) || 0;
+                const matchDeaths = parseInt(match.Deaths, 10) || 0;
+                const winningTeam = parseInt(match['Winning Team'], 10); // 승리 팀
+
                 const won = team === winningTeam;
 
                 kills += matchKills;
@@ -301,13 +307,30 @@
                 if (won) wins++;
                 else losses++;
 
-                const eloChange = won ? 20 : -15;
+                const eloChange = won ? 20 : -15; // 간단한 ELO 변화 계산
                 elo += eloChange;
 
                 eloHistory.push(elo);
                 kdrHistory.push(kills / Math.max(1, deaths));
+
+                // 매치 내역 테이블에 데이터 추가
+                const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
+                const row = document.createElement("tr");
+                row.innerHTML = `
+            <td class="clickable" data-match-index="${round}">${round}</td>
+            <td>${matchKills}</td>
+            <td>${matchDeaths}</td>
+            <td>${won ? 'Win' : 'Loss'}</td>
+        `;
+                matchHistoryTable.appendChild(row);
+
+                // 매치 디테일 이벤트 추가
+                row.querySelector('.clickable').addEventListener('click', () => {
+                    displayMatchDetails(round, matches);
+                });
             });
 
+            // 스탯 업데이트
             document.getElementById("statNickname").textContent = nickname;
             document.getElementById("statELO").textContent = elo;
             document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
@@ -315,53 +338,40 @@
             document.getElementById("statKPR").textContent = (kills / matchesPlayed).toFixed(1);
             document.getElementById("statMatches").textContent = matchesPlayed;
 
-            const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
-            userMatches.forEach((match, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="clickable" data-match-index="${index}">${index + 1}</td>
-                    <td>${match.Kills}</td>
-                    <td>${match.Deaths}</td>
-                    <td>${match.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
-                `;
-                matchHistoryTable.appendChild(row);
-
-                row.querySelector('.clickable').addEventListener('click', () => {
-                    displayMatchDetails(index, matches);
-                });
-            });
-
             renderELOTrend(eloHistory);
             renderKDRTrend(kdrHistory);
         }
 
-        function displayMatchDetails(matchIndex, matches) {
-            const match = matches[matchIndex];
+        function displayMatchDetails(round, matches) {
             const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
             matchDetailsBody.innerHTML = "";
 
             // 팀별로 데이터 분리
-            const team1Players = matches.filter(player => player.Round === match.Round && player.Team === "1");
-            const team2Players = matches.filter(player => player.Round === match.Round && player.Team === "2");
+            const team1Players = matches.filter(player =>
+                String(player.Round) === String(round) && String(player.Team) === "1"
+            );
+            const team2Players = matches.filter(player =>
+                String(player.Round) === String(round) && String(player.Team) === "2"
+            );
 
             // 두 팀 중 가장 많은 플레이어 수
             const maxPlayers = Math.max(team1Players.length, team2Players.length);
 
             // 테이블에 데이터 추가
             for (let i = 0; i < maxPlayers; i++) {
-                const team1Player = team1Players[i] || {}; // 팀 1 플레이어가 없으면 빈 객체
-                const team2Player = team2Players[i] || {}; // 팀 2 플레이어가 없으면 빈 객체
+                const team1Player = team1Players[i] || {};
+                const team2Player = team2Players[i] || {};
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
             <td class="team1">${team1Player.Nickname || ""}</td>
             <td class="team1">${team1Player.Kills || ""}</td>
             <td class="team1">${team1Player.Deaths || ""}</td>
-            <td class="team1">${team1Player.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
+            <td class="team1">${team1Player.Team === team1Player['Winning Team'] ? 'Win' : 'Loss'}</td>
             <td class="team2">${team2Player.Nickname || ""}</td>
             <td class="team2">${team2Player.Kills || ""}</td>
             <td class="team2">${team2Player.Deaths || ""}</td>
-            <td class="team2">${team2Player.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
+            <td class="team2">${team2Player.Team === team2Player['Winning Team'] ? 'Win' : 'Loss'}</td>
         `;
                 matchDetailsBody.appendChild(row);
             }
@@ -370,6 +380,7 @@
             const matchModal = new bootstrap.Modal(document.getElementById("matchModal"));
             matchModal.show();
         }
+
         function renderELOTrend(eloHistory) {
             const ctx = document.getElementById("eloTrend").getContext("2d");
             new Chart(ctx, {
