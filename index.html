@@ -170,7 +170,20 @@
                 });
                 processMatches(matches);
             })
-            .catch(error => console.error("Error loading CSV:", error));
+            .catch(error => console.error("Error loading match.csv:", error));
+
+        fetch('https://yusi0.github.io/KPFM/lboard.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.trim().split('\n');
+                const headers = rows[0].split(',').map(header => header.trim());
+                const leaderboard = rows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+                });
+                updateLeaderboardWithEloAndTier(leaderboard);
+            })
+            .catch(error => console.error("Error loading lboard.csv:", error));
 
         document.getElementById("searchBox").addEventListener("input", function () {
             const input = this.value.trim().toLowerCase();
@@ -200,12 +213,9 @@
                 const nickname = match.Nickname;
                 if (!nickname) return;
 
-                const team = parseInt(match.Team, 10) || 0; // 숫자로 변환
                 const kills = parseInt(match.Kills, 10) || 0;
                 const deaths = parseInt(match.Deaths, 10) || 0;
-                const opponentElo = parseInt(match['Opponent ELO'], 10) || 1500; // 기본값 1500
-                const winningTeam = parseInt(match['Winning Team'], 10) || 0;
-                const result = team === winningTeam ? 1 : 0;
+                const result = parseInt(match['Winning Team'], 10) === parseInt(match.Team, 10) ? 1 : 0;
 
                 if (!playerStats[nickname]) {
                     playerStats[nickname] = {
@@ -215,7 +225,6 @@
                         deaths: 0,
                         wins: 0,
                         losses: 0,
-                        elo: 1500, // 초기 ELO
                     };
                 }
 
@@ -225,14 +234,24 @@
                 player.deaths += deaths;
                 if (result === 1) player.wins += 1;
                 else player.losses += 1;
-
-                player.elo = calculateElo(player.elo, opponentElo, result, kills, deaths, player.matches, player.wins);
-                player.tier = calculateTier(player.elo);
             });
 
             leaderboardData = Object.values(playerStats);
+        }
+
+        function updateLeaderboardWithEloAndTier(leaderboard) {
+            // ELO와 Tier 정보를 병합
+            leaderboard.forEach(rankEntry => {
+                const player = leaderboardData.find(p => p.nickname === rankEntry.Nickname);
+                if (player) {
+                    player.elo = parseInt(rankEntry.ELO, 10);
+                    player.tier = rankEntry.Tier;
+                }
+            });
+
             renderLeaderboard(leaderboardData);
         }
+
 
         function renderLeaderboard(data) {
             const tbody = document.querySelector("#leaderboard tbody");
@@ -247,42 +266,13 @@
             <td>${((player.wins / player.matches) * 100).toFixed(1)}%</td>
             <td>${(player.kills / player.matches).toFixed(1)}</td>
             <td>${player.matches}</td>
-            <td>${player.elo}</td>
-            <td>${player.tier}</td>
+            <td>${player.elo || 'N/A'}</td>
+            <td>${player.tier || 'Unranked'}</td>
         `;
                 tbody.appendChild(row);
             });
         }
 
-        function calculateElo(playerElo, opponentElo, result, kills, deaths, totalMatches, wins, k = 50, killWeight = 0.2, deathWeight = 0.1, initialK = 50) {
-            if (deaths === 0) deaths = 1; // 데스가 0인 경우 방지
-
-            const expectedResult = 1 / (1 + 10 ** ((opponentElo - playerElo) / 400));
-            const baseK = totalMatches <= 5 ? initialK : k / (1 + totalMatches / 20);
-
-            const winLossFactor = result === 1 ? 1 : -1;
-            const eloChange = baseK * winLossFactor * (1.5 - expectedResult);
-            const performanceScore = kills * killWeight - deaths * deathWeight;
-
-            const newElo = playerElo + eloChange + performanceScore;
-            return Math.max(0, Math.round(newElo));
-        }
-
-        function calculateTier(elo) {
-            const baseElo = 1500;
-            const tierNames = [
-                "Copper 3", "Copper 2", "Copper 1",
-                "Bronze 3", "Bronze 2", "Bronze 1",
-                "Silver 3", "Silver 2", "Silver 1",
-                "Gold 3", "Gold 2", "Gold 1",
-                "Platinum 3", "Platinum 2", "Platinum 1",
-                "Diamond 3", "Diamond 2", "Diamond 1",
-                "Champion 3", "Champion 2", "Champion 1"
-            ];
-
-            const tierIndex = Math.min(Math.max(Math.floor((elo - baseElo) / 100) + 9, 0), tierNames.length - 1);
-            return tierNames[tierIndex];
-        }
     </script>
 </body>
 
