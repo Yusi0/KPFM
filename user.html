@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유저 스테이터스</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #121212;
+            /* 다크모드 배경색 */
+            margin: 0;
+            color: #E0E0E0;
+            /* 밝은 텍스트 */
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            background: #1E1E1E;
+            /* 다크모드 박스 배경 */
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            margin: 30px auto;
+            overflow: hidden;
+        }
+
+        h1,
+        h3 {
+            font-weight: 700;
+            text-align: center;
+            color: #BB86FC;
+            /* 포인트 컬러 */
+            margin-bottom: 25px;
+            text-shadow: 0 2px 6px rgba(187, 134, 252, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #1A1A1A;
+            /* 테이블 전체 어두운 배경 */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #333;
+            /* 어두운 테두리 */
+            color: #E0E0E0;
+            /* 밝은 텍스트 */
+            background-color: #1A1A1A;
+            /* 기본 셀 배경 */
+        }
+
+        th {
+            background-color: #2C2C2C;
+            /* 헤더 배경 */
+            color: #BB86FC;
+            /* 포인트 텍스트 색상 */
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .table-dark tbody tr:nth-child(odd) {
+            background-color: #1A1A1A;
+            /* 홀수 줄 배경 */
+        }
+
+        .table-dark tbody tr:nth-child(even) {
+            background-color: #232323;
+            /* 짝수 줄 배경 */
+        }
+
+        tbody tr:hover {
+            background-color: #2C2C2C;
+            /* Hover 시 배경 */
+            transform: scale(1.01);
+            box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+        }
+
+        /* 모달 내부 테이블 스타일 */
+        .table-dark {
+            background-color: #1A1A1A;
+            /* 테이블 전체 어두운 배경 */
+            color: #E0E0E0;
+            /* 기본 텍스트 색상 */
+        }
+
+
+        .table-dark tbody tr:hover {
+            background-color: #2C2C2C;
+            /* Hover 시 행 배경 */
+            transition: all 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #1E1E1E;
+            /* 다크모드 배경 */
+            color: #E0E0E0;
+            /* 텍스트 색상 */
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content .table {
+            background-color: #252525 !important;
+            /* 테이블 전체 어두운 배경 */
+            color: #E0E0E0 !important;
+            /* 텍스트 색상 */
+        }
+
+        .modal-content .table th {
+            background-color: #2e2e2e !important;
+            /* 헤더 배경 */
+            color: #BB86FC !important;
+            /* 헤더 텍스트 */
+        }
+
+        .modal-content .table td {
+            background-color: #4e4e4e !important;
+            /* 셀 배경 */
+            color: #E0E0E0 !important;
+            /* 셀 텍스트 */
+            border: 1px solid #444 !important;
+        }
+
+        .modal-header {
+            background-color: #333;
+            /* 헤더 배경 */
+            border-bottom: 1px solid #444;
+            color: #BB86FC;
+            /* 헤더 텍스트 색상 */
+        }
+
+        .modal-footer {
+            background-color: #2C2C2C;
+            /* 푸터 배경 */
+            border-top: 1px solid #444;
+        }
+
+
+        .team1 {
+            color: #FFD700;
+            /* 팀 1 텍스트 색상 */
+            font-weight: 600;
+        }
+
+        .team2 {
+            color: #00BFFF;
+            /* 팀 2 텍스트 색상 */
+            font-weight: 600;
+        }
+
+        .table-hover tbody tr:hover td {
+            background-color: #2C2C2C;
+            /* Hover 시 셀 배경 */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>유저 스테이터스</h1>
+        <div id="userStats" class="mb-4">
+            <div class="row mb-3">
+                <div class="col-sm-6"><strong>닉네임:</strong> <span id="statNickname"></span></div>
+                <div class="col-sm-6"><strong>ELO:</strong> <span id="statELO"></span></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4"><strong>KDR:</strong> <span id="statKDR"></span></div>
+                <div class="col-sm-4"><strong>승률:</strong> <span id="statWR"></span></div>
+                <div class="col-sm-4"><strong>KPR:</strong> <span id="statKPR"></span></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-12"><strong>플레이한 매치 수:</strong> <span id="statMatches"></span></div>
+            </div>
+        </div>
+
+        <h3>ELO 및 KDR 그래프</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="eloTrend"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="kdrTrend"></canvas>
+            </div>
+        </div>
+
+        <h3>매치 내역</h3>
+        <div class="table-responsive">
+            <table id="matchHistory" class="table table-dark">
+                <thead class="table-dark">
+                    <tr>
+                        <th>매치</th>
+                        <th>킬</th>
+                        <th>데스</th>
+                        <th>결과</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 매치 데이터가 동적으로 추가됩니다 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 모달 -->
+    <div class="modal fade" id="matchModal" tabindex="-1" aria-labelledby="matchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="matchModalLabel">Match Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="matchDetails" class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>닉네임</th>
+                                    <th>킬</th>
+                                    <th>데스</th>
+                                    <th>결과</th>
+                                    <th>닉네임</th>
+                                    <th>킬</th>
+                                    <th>데스</th>
+                                    <th>결과</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 매치 데이터가 동적으로 추가됩니다 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // URL에서 닉네임 가져오기
+        const params = new URLSearchParams(window.location.search);
+        const nickname = params.get("nickname");
+
+        if (!nickname) {
+            alert("No user specified!");
+            window.location.href = "index.html";
+        }
+
+        // 데이터를 가져와서 해당 사용자의 스탯 표시
+        fetch('match.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.trim().split('\n');
+                const headers = rows[0].split(',').map(header => header.trim());
+                const matches = rows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+                });
+
+                processUserStats(nickname, matches);
+            })
+            .catch(error => console.error("Error loading CSV:", error));
+
+        function processUserStats(nickname, matches) {
+            const userMatches = matches.filter(match => match.Nickname === nickname);
+            if (userMatches.length === 0) {
+                alert("No data found for user: " + nickname);
+                window.location.href = "index.html";
+            }
+
+            let kills = 0, deaths = 0, wins = 0, losses = 0, elo = 1500, matchesPlayed = 0;
+            const eloHistory = [];
+            const kdrHistory = [];
+
+            userMatches.forEach(match => {
+                const team = parseInt(match.Team, 10);
+                const matchKills = parseInt(match.Kills, 10);
+                const matchDeaths = parseInt(match.Deaths, 10);
+                const winningTeam = parseInt(match['Winning Team'], 10);
+                const won = team === winningTeam;
+
+                kills += matchKills;
+                deaths += matchDeaths;
+                matchesPlayed++;
+                if (won) wins++;
+                else losses++;
+
+                const eloChange = won ? 20 : -15;
+                elo += eloChange;
+
+                eloHistory.push(elo);
+                kdrHistory.push(kills / Math.max(1, deaths));
+            });
+
+            document.getElementById("statNickname").textContent = nickname;
+            document.getElementById("statELO").textContent = elo;
+            document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
+            document.getElementById("statWR").textContent = ((wins / matchesPlayed) * 100).toFixed(1) + '%';
+            document.getElementById("statKPR").textContent = (kills / matchesPlayed).toFixed(1);
+            document.getElementById("statMatches").textContent = matchesPlayed;
+
+            const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
+            userMatches.forEach((match, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td class="clickable" data-match-index="${index}">${index + 1}</td>
+                    <td>${match.Kills}</td>
+                    <td>${match.Deaths}</td>
+                    <td>${match.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
+                `;
+                matchHistoryTable.appendChild(row);
+
+                row.querySelector('.clickable').addEventListener('click', () => {
+                    displayMatchDetails(index, matches);
+                });
+            });
+
+            renderELOTrend(eloHistory);
+            renderKDRTrend(kdrHistory);
+        }
+
+        function displayMatchDetails(matchIndex, matches) {
+            const match = matches[matchIndex];
+            const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
+            matchDetailsBody.innerHTML = "";
+
+            // 팀별로 데이터 분리
+            const team1Players = matches.filter(player => player.Round === match.Round && player.Team === "1");
+            const team2Players = matches.filter(player => player.Round === match.Round && player.Team === "2");
+
+            // 두 팀 중 가장 많은 플레이어 수
+            const maxPlayers = Math.max(team1Players.length, team2Players.length);
+
+            // 테이블에 데이터 추가
+            for (let i = 0; i < maxPlayers; i++) {
+                const team1Player = team1Players[i] || {}; // 팀 1 플레이어가 없으면 빈 객체
+                const team2Player = team2Players[i] || {}; // 팀 2 플레이어가 없으면 빈 객체
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+            <td class="team1">${team1Player.Nickname || ""}</td>
+            <td class="team1">${team1Player.Kills || ""}</td>
+            <td class="team1">${team1Player.Deaths || ""}</td>
+            <td class="team1">${team1Player.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
+            <td class="team2">${team2Player.Nickname || ""}</td>
+            <td class="team2">${team2Player.Kills || ""}</td>
+            <td class="team2">${team2Player.Deaths || ""}</td>
+            <td class="team2">${team2Player.Team === match['Winning Team'] ? 'Win' : 'Loss'}</td>
+        `;
+                matchDetailsBody.appendChild(row);
+            }
+
+            // 모달 표시
+            const matchModal = new bootstrap.Modal(document.getElementById("matchModal"));
+            matchModal.show();
+        }
+        function renderELOTrend(eloHistory) {
+            const ctx = document.getElementById("eloTrend").getContext("2d");
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: eloHistory.map((_, i) => `${i + 1}`),
+                    datasets: [{
+                        label: 'ELO',
+                        data: eloHistory,
+                        borderColor: '#ff7896',
+                        fill: true,
+                    }],
+                },
+            });
+        }
+
+        function renderKDRTrend(kdrHistory) {
+            const ctx = document.getElementById("kdrTrend").getContext("2d");
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: kdrHistory.map((_, i) => `${i + 1}`),
+                    datasets: [{
+                        label: '누적 KDR',
+                        data: kdrHistory,
+                        borderColor: '#fa2334',
+                        fill: false,
+                    }],
+                },
+            });
+        }
+    </script>
+</body>
+
+</html>
