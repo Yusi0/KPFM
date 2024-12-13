@@ -36,7 +36,6 @@
             text-align: center;
             color: #BB86FC;
             margin-bottom: 25px;
-            text-shadow: 0 2px 6px rgba(187, 134, 252, 0.5);
         }
 
         .row {
@@ -605,6 +604,20 @@
                             tierElement.style.color = '#E0E0E0'; // 기본 색상 (밝은 회색)
                             break;
                     }
+                    // KDR, 총 킬 및 데스, 승패, KPR, 매치 수 업데이트
+                    const kills = parseInt(userStats.Kills, 10) || 0;
+                    const deaths = parseInt(userStats.Deaths, 10) || 0;
+                    const wins = parseInt(userStats.Wins, 10) || 0;
+                    const losses = parseInt(userStats.Losses, 10) || 0;
+                    const matches = parseInt(userStats.Total, 10) || 0;
+
+                    document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
+                    document.getElementById("statTotalKD").textContent = `${kills} / ${deaths}`;
+                    document.getElementById("statTotalWL").textContent = `${wins} / ${losses}`;
+                    document.getElementById("statWR").textContent = ((wins / matches) * 100).toFixed(1) + '%';
+                    document.getElementById("statKPR").textContent = (kills / matches).toFixed(1);
+                    document.getElementById("statMatches").textContent = matches;
+
                 } else {
                     alert("User not found in leaderboard!");
                     window.location.href = "index.html";
