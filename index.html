@@ -14,8 +14,10 @@
             margin: 0;
             color: #E0E0E0;
             /* 밝은 텍스트 */
-            padding-right: 15px;
+            padding-right: 0px;
             /* 추가된 내부 여백 */
+            display: flex;
+            justify-content: center;
         }
 
         .container {
@@ -26,7 +28,7 @@
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
             padding: 30px;
-            margin: 30px auto;
+            margin: 20px auto;
             overflow: hidden;
             padding-right: 20px;
             /* 컨테이너 내부 우측 여백 */
@@ -34,7 +36,7 @@
 
         html,
         body {
-            overflow-x: hidden;
+            overflow-x: auto;
         }
 
         h1 {
@@ -71,14 +73,20 @@
             box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
         }
 
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            /* 가로 스크롤 활성화 */
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            /* 시각적 강조 */
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
             background-color: #1E1E1E;
-            border-radius: 8px;
-            width: 100%;
-            overflow-x: auto;
         }
 
         th,
@@ -91,16 +99,16 @@
 
         th {
             background-color: #333;
-            /* 테이블 헤더 배경 */
             color: #BB86FC;
-            /* 헤더 텍스트 */
             font-weight: 700;
         }
 
-        tbody tr {
-            background-color: #2C2C2C;
-            /* 테이블 행 배경 */
-            transition: all 0.3s ease;
+        tbody tr:nth-child(odd) {
+            background-color: #2A2A2A;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #1F1F1F;
         }
 
         tbody tr:hover {
@@ -147,23 +155,25 @@
             <input type="text" id="searchBox" placeholder="Search user..." list="nicknameList">
             <datalist id="nicknameList"></datalist>
         </div>
-        <table id="leaderboard">
-            <thead>
-                <tr>
-                    <th>순위</th>
-                    <th>닉네임</th>
-                    <th>KDR</th>
-                    <th>승률</th>
-                    <th>KPR</th>
-                    <th>매치 수</th>
-                    <th>ELO</th>
-                    <th>티어</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Leaderboard rows will be dynamically generated -->
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table id="leaderboard">
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>닉네임</th>
+                        <th>KDR</th>
+                        <th>승률</th>
+                        <th>KPR</th>
+                        <th>매치 수</th>
+                        <th>ELO</th>
+                        <th>티어</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Leaderboard rows will be dynamically generated -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
