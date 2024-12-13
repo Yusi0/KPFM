@@ -169,7 +169,7 @@
         .membership-card {
             width: 400px;
             /* 카드 너비 */
-            height: auto;
+            height: 700;
             /* 높이를 자동으로 확장 */
             max-height: 500px;
             /* 최대 높이 제한 */
@@ -193,7 +193,7 @@
             gap: 10px;
             overflow-y: auto;
             /* 내용이 많을 경우 스크롤 */
-            max-height: 300px;
+            max-height: 700px;
             /* 최대 높이 제한 */
             padding-right: 10px;
             /* 스크롤바와 간격 확보 */
@@ -259,6 +259,37 @@
             font-weight: bold;
             /* 강조 */
         }
+
+        .tier-card {
+            grid-column: span 2;
+            /* 2칸을 차지 */
+            height: 100px;
+            /* 높이를 기존 카드의 두 배로 설정 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            background-color: #2C2C2C;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .tier-card .stat-title {
+            font-size: 14px;
+            /* 제목 크기 */
+            color: #9C9C9C;
+            margin-bottom: 5px;
+        }
+
+        .tier-card .stat-value {
+            font-size: 24px;
+            /* 값 크기 */
+            font-weight: bold;
+            color: #FFD700;
+            /* 티어 강조 색 */
+        }
     </style>
 </head>
 
@@ -271,6 +302,14 @@
                     <h2 id="statNickname">닉네임</h2>
                 </div>
                 <div class="card-content">
+                    <div class="tier-card">
+                        <span class="stat-title">티어</span>
+                        <span class="stat-value" id="statTier">Unranked</span>
+                    </div>
+                    <div class="card-stat">
+                        <span class="stat-title">등수</span>
+                        <span class="stat-value" id="statRank">#1</span>
+                    </div>
                     <div class="card-stat">
                         <span class="stat-title">ELO</span>
                         <span class="stat-value" id="statELO">1500</span>
@@ -280,8 +319,16 @@
                         <span class="stat-value" id="statKDR">2.5</span>
                     </div>
                     <div class="card-stat">
+                        <span class="stat-title">총 킬 / 데스</span>
+                        <span class="stat-value" id="statTotalKD">0 / 0</span>
+                    </div>
+                    <div class="card-stat">
                         <span class="stat-title">승률</span>
                         <span class="stat-value" id="statWR">75%</span>
+                    </div>
+                    <div class="card-stat">
+                        <span class="stat-title">총 승 / 패</span>
+                        <span class="stat-value" id="statTotalWL">0 / 0</span>
                     </div>
                     <div class="card-stat">
                         <span class="stat-title">KPR</span>
@@ -290,10 +337,6 @@
                     <div class="card-stat">
                         <span class="stat-title">플레이한 매치 수</span>
                         <span class="stat-value" id="statMatches">20</span>
-                    </div>
-                    <div class="card-stat">
-                        <span class="stat-title">등수</span>
-                        <span class="stat-value" id="statRank">#1</span>
                     </div>
                 </div>
             </div>
@@ -375,7 +418,11 @@
             window.location.href = "index.html";
         }
 
-        // 데이터를 가져와서 해당 사용자의 스탯 표시
+        let eloHistory = [];
+        let tierHistory = [];
+        let elo = 1500; // 기본 ELO 값
+
+        // 유저 카드의 ELO를 lboard.csv에서 가져오기
         fetch('https://yusi0.github.io/KPFM/match.csv')
             .then(response => response.text())
             .then(data => {
@@ -388,10 +435,85 @@
 
                 processUserStats(nickname, matches);
             })
-            .catch(error => console.error("Error loading CSV:", error));
+            .catch(error => console.error("Error loading match.csv:", error));
+
+        fetch('https://yusi0.github.io/KPFM/lboard.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.trim().split('\n');
+                const headers = rows[0].split(',').map(header => header.trim());
+                const leaderboard = rows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+                });
+
+                const userStats = leaderboard.find(player => player.Nickname === nickname);
+                if (userStats) {
+                    document.getElementById("statELO").textContent = parseInt(userStats.ELO, 10) || 1500;
+                    document.getElementById("statTier").textContent = userStats.Tier || "Unranked";
+
+                    // 티어 색상 적용
+                    const tierElement = document.getElementById("statTier");
+
+                    // 숫자가 포함된 티어에서 숫자를 제거
+                    const tierName = userStats.Tier.replace(/\d+/g, '').trim(); // 숫자를 제거하고 공백을 제거
+                    switch (tierName) {
+                        case 'Copper':
+                            tierElement.style.color = '#B87333'; // 적갈색
+                            break;
+                        case 'Bronze':
+                            tierElement.style.color = '#CD7F32'; // 갈색
+                            break;
+                        case 'Silver':
+                            tierElement.style.color = '#C0C0C0'; // 은색
+                            break;
+                        case 'Gold':
+                            tierElement.style.color = '#FFD700'; // 노란색
+                            break;
+                        case 'Platinum':
+                            tierElement.style.color = '#00BFFF'; // 진한 하늘색
+                            break;
+                        case 'Diamond':
+                            tierElement.style.color = '#8A2BE2'; // 보라색
+                            break;
+                        case 'Champion':
+                            tierElement.style.color = '#DC143C'; // 진홍색
+                            break;
+                        default:
+                            tierElement.style.color = '#E0E0E0'; // 기본 색상 (밝은 회색)
+                            break;
+                    }
+                } else {
+                    alert("User not found in leaderboard!");
+                    window.location.href = "index.html";
+                }
+            })
+            .catch(error => console.error("Error loading lboard.csv:", error));
+
+        // ELO 그래프와 티어 데이터를 aftercalc.csv에서 가져오기
+        fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.trim().split('\n');
+                const headers = rows[0].split(',').map(header => header.trim());
+                const aftercalc = rows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+                });
+
+                // 유저의 라운드별 ELO와 티어 필터링
+                const userRounds = aftercalc.filter(round => round.Nickname === nickname);
+                if (userRounds.length > 0) {
+                    eloHistory = userRounds.map(round => parseInt(round.ELO, 10));
+                    tierHistory = userRounds.map(round => round.Tier);
+                    renderELOTrend(eloHistory, tierHistory);
+                } else {
+                    console.warn("No round data found for user in aftercalc.csv.");
+                }
+            })
+            .catch(error => console.error("Error loading aftercalc.csv:", error));
 
         function processUserStats(nickname, matches) {
-            // 해당 유저가 참여한 매치 필터링
             const userMatches = matches.filter(match => match.Nickname === nickname);
 
             if (userMatches.length === 0) {
@@ -400,17 +522,20 @@
                 return;
             }
 
-            let kills = 0, deaths = 0, wins = 0, losses = 0, elo = 1500, matchesPlayed = 0;
+            let kills = 0, deaths = 0, wins = 0, losses = 0, matchesPlayed = 0;
             const eloHistory = [];
             const kdrHistory = [];
 
-            // 매치 데이터 계산
+            // 매치 데이터 계산 및 테이블 업데이트
+            const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
+            matchHistoryTable.innerHTML = ""; // 기존 데이터 초기화
+
             userMatches.forEach(match => {
-                const round = parseInt(match.Round, 10); // 매치 번호
-                const team = parseInt(match.Team, 10); // 유저가 속한 팀
+                const round = parseInt(match.Round, 10);
+                const team = parseInt(match.Team, 10);
                 const matchKills = parseInt(match.Kills, 10) || 0;
                 const matchDeaths = parseInt(match.Deaths, 10) || 0;
-                const winningTeam = parseInt(match['Winning Team'], 10); // 승리 팀
+                const winningTeam = parseInt(match['Winning Team'], 10);
 
                 const won = team === winningTeam;
 
@@ -420,14 +545,11 @@
                 if (won) wins++;
                 else losses++;
 
-                const eloChange = won ? 20 : -15; // 간단한 ELO 변화 계산
-                elo += eloChange;
-
-                eloHistory.push(elo);
+                const eloChange = won ? 20 : -15;
+                eloHistory.push(eloHistory.length > 0 ? eloHistory[eloHistory.length - 1] + eloChange : 1500);
                 kdrHistory.push(kills / Math.max(1, deaths));
 
                 // 매치 내역 테이블에 데이터 추가
-                const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
                 const row = document.createElement("tr");
                 row.innerHTML = `
             <td class="clickable" data-match-index="${round}">${round}</td>
@@ -437,20 +559,23 @@
         `;
                 matchHistoryTable.appendChild(row);
 
-                // 매치 디테일 이벤트 추가
-                row.querySelector('.clickable').addEventListener('click', () => {
+                // 매치 디테일 표시 이벤트 추가
+                row.querySelector(".clickable").addEventListener("click", () => {
                     displayMatchDetails(round, matches);
                 });
             });
 
-            // 스탯 업데이트
+            // DOM 요소 업데이트
             document.getElementById("statNickname").textContent = nickname;
-            document.getElementById("statELO").textContent = elo;
+            document.getElementById("statELO").textContent = eloHistory[eloHistory.length - 1] || 1500;
             document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
             document.getElementById("statWR").textContent = ((wins / matchesPlayed) * 100).toFixed(1) + '%';
             document.getElementById("statKPR").textContent = (kills / matchesPlayed).toFixed(1);
             document.getElementById("statMatches").textContent = matchesPlayed;
+            document.getElementById("statTotalKD").textContent = `${kills} / ${deaths}`;
+            document.getElementById("statTotalWL").textContent = `${wins} / ${losses}`;
 
+            // 그래프 렌더링
             renderELOTrend(eloHistory);
             renderKDRTrend(kdrHistory);
         }
@@ -458,6 +583,7 @@
         function displayMatchDetails(round, matches) {
             const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
             matchDetailsBody.innerHTML = "";
+
 
             // 팀별로 데이터 분리
             const team1Players = matches.filter(player =>
@@ -494,18 +620,37 @@
             matchModal.show();
         }
 
-        function renderELOTrend(eloHistory) {
+        function renderELOTrend(eloHistory, tierHistory) {
             const ctx = document.getElementById("eloTrend").getContext("2d");
+
+            // ELO 데이터를 라인 차트로 표시
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: eloHistory.map((_, i) => `${i + 1}`),
-                    datasets: [{
-                        label: 'ELO',
-                        data: eloHistory,
-                        borderColor: '#ff7896',
-                        fill: true,
-                    }],
+                    labels: eloHistory.map((_, i) => `${i + 1}`), // 라운드별 라벨
+                    datasets: [
+                        {
+                            label: 'ELO',
+                            data: eloHistory,
+                            borderColor: '#ff7896',
+                            fill: true,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const elo = context.raw; // 현재 데이터 포인트의 ELO 값
+                                    const roundIndex = context.dataIndex; // 데이터 포인트의 인덱스
+                                    const tier = tierHistory[roundIndex]; // 해당 라운드의 티어
+                                    return `ELO: ${elo}, Tier: ${tier || 'N/A'}`; // 툴팁 내용
+                                },
+                            },
+                        },
+                    },
                 },
             });
         }
