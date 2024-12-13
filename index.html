@@ -241,15 +241,15 @@
             data.sort((a, b) => b.elo - a.elo).forEach((player, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${player.nickname}</td>
-                    <td>${(player.kills / Math.max(1, player.deaths)).toFixed(2)}</td>
-                    <td>${((player.wins / player.matches) * 100).toFixed(1)}%</td>
-                    <td>${(player.kills / player.matches).toFixed(1)}</td>
-                    <td>${player.matches}</td>
-                    <td>${player.elo}</td>
-                    <td>${player.tier}</td>
-                `;
+            <td>${index + 1}</td>
+            <td><a href="user.html?nickname=${encodeURIComponent(player.nickname)}" style="color: #BB86FC; text-decoration: none;">${player.nickname}</a></td>
+            <td>${(player.kills / Math.max(1, player.deaths)).toFixed(2)}</td>
+            <td>${((player.wins / player.matches) * 100).toFixed(1)}%</td>
+            <td>${(player.kills / player.matches).toFixed(1)}</td>
+            <td>${player.matches}</td>
+            <td>${player.elo}</td>
+            <td>${player.tier}</td>
+        `;
                 tbody.appendChild(row);
             });
         }
