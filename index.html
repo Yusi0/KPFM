@@ -73,13 +73,27 @@
             box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
         }
 
+        /* 스크롤바 숨기기 */
         .table-container {
             width: 100%;
             margin-top: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             position: relative;
-            /* 추가 */
+            overflow-x: auto;
+            /* 좌우 스크롤 유지 */
+        }
+
+        .table-container::-webkit-scrollbar {
+            display: none;
+            /* 스크롤바 숨기기 (Chrome, Edge, Safari) */
+        }
+
+        .table-container {
+            -ms-overflow-style: none;
+            /* IE와 Edge에서 스크롤바 숨기기 */
+            scrollbar-width: none;
+            /* Firefox에서 스크롤바 숨기기 */
         }
 
         table {
