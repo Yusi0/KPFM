@@ -393,7 +393,7 @@
 
                 if (nickname) {
                     // CSV 파일 로드 및 유저 데이터 표시
-                    fetch('lboard.csv')
+                    fetch('https://yusi0.github.io/KPFM/lboard.csv')
                         .then(response => response.text())
                         .then(data => {
                             const jsonData = csvToJson(data);
@@ -438,7 +438,7 @@
             }
 
             // 데이터를 가져와서 해당 사용자의 스탯 표시
-            fetch('match.csv')
+            fetch('https://yusi0.github.io/KPFM/match.csv')
                 .then(response => response.text())
                 .then(data => {
                     const rows = data.trim().split('\n');
