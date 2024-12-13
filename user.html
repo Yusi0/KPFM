@@ -259,23 +259,6 @@
             font-weight: bold;
             /* 강조 */
         }
-
-        .modal-xl-custom {
-            max-width: 90% !important;
-            /* 모달 너비를 화면의 90%로 설정 */
-            width: 90%;
-        }
-
-        .modal-body {
-            height: 500px;
-            /* 모달 내부 콘텐츠 높이 */
-        }
-
-        .modal-body canvas {
-            display: block;
-            width: 100% !important;
-            height: 100% !important;
-        }
     </style>
 </head>
 
@@ -288,11 +271,11 @@
                     <h2 id="statNickname">닉네임</h2>
                 </div>
                 <div class="card-content">
-                    <div class="card-stat" data-bs-toggle="modal" data-bs-target="#eloModal">
+                    <div class="card-stat">
                         <span class="stat-title">ELO</span>
                         <span class="stat-value" id="statELO">1500</span>
                     </div>
-                    <div class="card-stat" data-bs-toggle="modal" data-bs-target="#kdrModal">
+                    <div class="card-stat">
                         <span class="stat-title">KDR</span>
                         <span class="stat-value" id="statKDR">2.5</span>
                     </div>
@@ -315,266 +298,185 @@
                 </div>
             </div>
         </div>
-        <!-- ELO 모달 -->
-        <div class="modal fade" id="eloModal" tabindex="-1" aria-labelledby="eloModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl"> <!-- modal-xl로 크기를 확장 -->
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="eloModalLabel">ELO 그래프</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+        <h3>ELO 및 KDR 그래프</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="eloTrend"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="kdrTrend"></canvas>
+            </div>
+        </div>
+        <h3> </h3>
+        <h3>매치 내역</h3>
+        <div class="table-responsive">
+            <table id="matchHistory" class="table table-dark">
+                <thead class="table-dark">
+                    <tr>
+                        <th>매치</th>
+                        <th>킬</th>
+                        <th>데스</th>
+                        <th>결과</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 매치 데이터가 동적으로 추가됩니다 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 모달 -->
+    <div class="modal fade" id="matchModal" tabindex="-1" aria-labelledby="matchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="matchModalLabel">Match Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="matchDetails" class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>닉네임</th>
+                                    <th>킬</th>
+                                    <th>데스</th>
+                                    <th>결과</th>
+                                    <th>닉네임</th>
+                                    <th>킬</th>
+                                    <th>데스</th>
+                                    <th>결과</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 매치 데이터가 동적으로 추가됩니다 -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="modal-body">
-                        <canvas id="eloModalGraph"></canvas>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- KDR 모달 -->
-        <div class="modal fade" id="kdrModal" tabindex="-1" aria-labelledby="kdrModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl"> <!-- modal-xl로 크기를 확장 -->
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="kdrModalLabel">KDR 그래프</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <canvas id="kdrModalGraph"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Bootstrap JS 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // URL에서 닉네임 가져오기
+        const params = new URLSearchParams(window.location.search);
+        const nickname = params.get("nickname");
 
-        <!-- 모달 -->
-        <div class="modal fade" id="matchModal" tabindex="-1" aria-labelledby="matchModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="matchModalLabel">Match Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="table-responsive">
-                            <table id="matchDetails" class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>닉네임</th>
-                                        <th>킬</th>
-                                        <th>데스</th>
-                                        <th>결과</th>
-                                        <th>닉네임</th>
-                                        <th>킬</th>
-                                        <th>데스</th>
-                                        <th>결과</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- 매치 데이터가 동적으로 추가됩니다 -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        if (!nickname) {
+            alert("No user specified!");
+            window.location.href = "index.html";
+        }
 
-        <!-- Bootstrap JS 추가 -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            let eloHistory = []; // 전역 변수로 선언
-            let kdrHistory = []; // 전역 변수로 선언
-
-            document.addEventListener("DOMContentLoaded", function () {
-                const params = new URLSearchParams(window.location.search);
-                const nickname = params.get("nickname");
-
-                if (nickname) {
-                    // CSV 파일 로드 및 유저 데이터 표시
-                    fetch('https://yusi0.github.io/KPFM/lboard.csv')
-                        .then(response => response.text())
-                        .then(data => {
-                            const jsonData = csvToJson(data);
-                            const userData = jsonData.find(player => player["Nickname"] === nickname);
-
-                            if (userData) {
-                                displayUserStats(userData);
-                            } else {
-                                alert("User not found.");
-                            }
-                        })
-                        .catch(error => console.error("Error loading CSV:", error));
-                }
-
-                function csvToJson(csvData) {
-                    const rows = csvData.trim().split('\n');
-                    const headers = rows[0].split(',').map(header => header.trim());
-                    return rows.slice(1).map(row => {
-                        const values = row.split(',').map(value => value.trim());
-                        return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                    });
-                }
-
-                function displayUserStats(userData) {
-                    document.getElementById("statNickname").textContent = userData["Nickname"];
-                    document.getElementById("statELO").textContent = userData["ELO"];
-                    document.getElementById("statRank").textContent = userData["Tier"];
-                    document.getElementById("statKDR").textContent = userData["KDR"];
-                    document.getElementById("statWR").textContent = `${userData["Wins"]}%`;
-                    document.getElementById("statKPR").textContent = userData["KPR"];
-                    document.getElementById("statMatches").textContent = userData["Total Matches"];
-                }
-            });
-
-            // URL에서 닉네임 가져오기
-            const params = new URLSearchParams(window.location.search);
-            const nickname = params.get("nickname");
-
-            if (!nickname) {
-                alert("No user specified!");
-                window.location.href = "index.html";
-            }
-
-            // 데이터를 가져와서 해당 사용자의 스탯 표시
-            fetch('https://yusi0.github.io/KPFM/match.csv')
-                .then(response => response.text())
-                .then(data => {
-                    const rows = data.trim().split('\n');
-                    const headers = rows[0].split(',').map(header => header.trim());
-                    const matches = rows.slice(1).map(row => {
-                        const values = row.split(',').map(value => value.trim());
-                        return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                    });
-
-                    processUserStats(nickname, matches);
-                })
-                .catch(error => console.error("Error loading CSV:", error));
-
-            function calculateTier(elo) {
-                const baseElo = 1500; // 기본 ELO
-                const tierNames = [
-                    "Copper 3", "Copper 2", "Copper 1",
-                    "Bronze 3", "Bronze 2", "Bronze 1",
-                    "Silver 3", "Silver 2", "Silver 1",
-                    "Gold 3", "Gold 2", "Gold 1",
-                    "Platinum 3", "Platinum 2", "Platinum 1",
-                    "Diamond 3", "Diamond 2", "Diamond 1",
-                    "Champion"
-                ];
-
-                // ELO 점수를 100점 단위로 매핑
-                let tierIndex = Math.floor((elo - baseElo) / 100) + 9; // Gold 3이 index 9
-                tierIndex = Math.max(0, Math.min(tierIndex, tierNames.length - 1)); // 범위를 0~tierNames.length-1로 제한
-
-                return tierNames[tierIndex];
-            }
-
-            function calculateElo(playerElo, opponentElo, result, kills, deaths, totalMatches, wins, k = 50, killWeight = 0.2, deathWeight = 0.1, initialK = 50) {
-                if (deaths === 0) {
-                    deaths = 1; // 데스가 0인 경우 방지
-                }
-
-                // 상대 ELO 기반 예상 결과
-                const expectedResult = 1 / (1 + Math.pow(10, (opponentElo - playerElo) / 400));
-
-                // 초기 경기에서 더 큰 변동폭 적용
-                const baseK = totalMatches <= 5 ? initialK : k / (1 + totalMatches / 20);
-
-                // 승패 기반 점수 변화
-                const winLossFactor = result === 1 ? 1 : -1;
-                const eloChange = baseK * winLossFactor * (1.5 - expectedResult);
-
-                // KDA 보조 점수
-                const performanceScore = (kills * killWeight - deaths * deathWeight);
-
-                // 최종 점수 계산
-                const newElo = playerElo + eloChange + performanceScore;
-
-                return Math.max(0, Math.round(newElo)); // ELO는 0 이상으로 제한
-            }
-
-            function processUserStats(nickname, matches) {
-                const userMatches = matches.filter(match => match.Nickname === nickname);
-
-                if (userMatches.length === 0) {
-                    alert("No data found for user: " + nickname);
-                    window.location.href = "index.html";
-                    return;
-                }
-
-                let kills = 0, deaths = 0, wins = 0, losses = 0, elo = 1500, matchesPlayed = 0;
-                eloHistory = []; // 초기화
-                kdrHistory = []; // 초기화
-
-                // 매치 데이터 계산
-                userMatches.forEach(match => {
-                    const opponentElo = parseInt(match.OpponentElo, 10) || 1500; // 상대방 ELO 기본값
-                    const result = match.Result === "Win" ? 1 : 0; // 승리: 1, 패배: 0
-                    const matchKills = parseInt(match.Kills, 10) || 0;
-                    const matchDeaths = parseInt(match.Deaths, 10) || 0;
-
-                    kills += matchKills;
-                    deaths += matchDeaths;
-                    matchesPlayed++;
-                    if (result === 1) wins++;
-                    else losses++;
-
-                    // 새로운 ELO 계산
-                    elo = calculateElo(
-                        elo, // 플레이어 ELO
-                        opponentElo, // 상대방 ELO
-                        result, // 경기 결과
-                        matchKills, // 킬 수
-                        matchDeaths, // 데스 수
-                        matchesPlayed, // 총 경기 수
-                        wins // 총 승리 수
-                    );
-
-                    // ELO 히스토리 및 KDR 업데이트
-                    eloHistory.push(elo);
-                    kdrHistory.push(kills / Math.max(1, deaths)); // 누적 KDR
+        // 데이터를 가져와서 해당 사용자의 스탯 표시
+        fetch('https://github.com/Yusi0/KPFM/match.csv')
+            .then(response => response.text())
+            .then(data => {
+                const rows = data.trim().split('\n');
+                const headers = rows[0].split(',').map(header => header.trim());
+                const matches = rows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
                 });
 
-                // 티어 계산
-                const tier = calculateTier(elo);
+                processUserStats(nickname, matches);
+            })
+            .catch(error => console.error("Error loading CSV:", error));
 
-                // 스탯 업데이트
-                document.getElementById("statNickname").textContent = nickname;
-                document.getElementById("statELO").textContent = elo; // 최종 ELO
-                document.getElementById("statRank").textContent = tier; // 티어
-                document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2); // KDR
-                document.getElementById("statWR").textContent = ((wins / matchesPlayed) * 100).toFixed(1) + '%'; // 승률
-                document.getElementById("statKPR").textContent = (kills / matchesPlayed).toFixed(1); // 킬 비율
-                document.getElementById("statMatches").textContent = matchesPlayed; // 플레이한 매치 수
+        function processUserStats(nickname, matches) {
+            // 해당 유저가 참여한 매치 필터링
+            const userMatches = matches.filter(match => match.Nickname === nickname);
 
-                // 그래프 렌더링
-                renderELOTrend(eloHistory);
-                renderKDRTrend(kdrHistory);
+            if (userMatches.length === 0) {
+                alert("No data found for user: " + nickname);
+                window.location.href = "index.html";
+                return;
             }
-            function displayMatchDetails(round, matches) {
-                const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
-                matchDetailsBody.innerHTML = "";
 
-                // 팀별로 데이터 분리
-                const team1Players = matches.filter(player =>
-                    String(player.Round) === String(round) && String(player.Team) === "1"
-                );
-                const team2Players = matches.filter(player =>
-                    String(player.Round) === String(round) && String(player.Team) === "2"
-                );
+            let kills = 0, deaths = 0, wins = 0, losses = 0, elo = 1500, matchesPlayed = 0;
+            const eloHistory = [];
+            const kdrHistory = [];
 
-                // 두 팀 중 가장 많은 플레이어 수
-                const maxPlayers = Math.max(team1Players.length, team2Players.length);
+            // 매치 데이터 계산
+            userMatches.forEach(match => {
+                const round = parseInt(match.Round, 10); // 매치 번호
+                const team = parseInt(match.Team, 10); // 유저가 속한 팀
+                const matchKills = parseInt(match.Kills, 10) || 0;
+                const matchDeaths = parseInt(match.Deaths, 10) || 0;
+                const winningTeam = parseInt(match['Winning Team'], 10); // 승리 팀
 
-                // 테이블에 데이터 추가
-                for (let i = 0; i < maxPlayers; i++) {
-                    const team1Player = team1Players[i] || {};
-                    const team2Player = team2Players[i] || {};
+                const won = team === winningTeam;
 
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
+                kills += matchKills;
+                deaths += matchDeaths;
+                matchesPlayed++;
+                if (won) wins++;
+                else losses++;
+
+                const eloChange = won ? 20 : -15; // 간단한 ELO 변화 계산
+                elo += eloChange;
+
+                eloHistory.push(elo);
+                kdrHistory.push(kills / Math.max(1, deaths));
+
+                // 매치 내역 테이블에 데이터 추가
+                const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
+                const row = document.createElement("tr");
+                row.innerHTML = `
+            <td class="clickable" data-match-index="${round}">${round}</td>
+            <td>${matchKills}</td>
+            <td>${matchDeaths}</td>
+            <td>${won ? 'Win' : 'Loss'}</td>
+        `;
+                matchHistoryTable.appendChild(row);
+
+                // 매치 디테일 이벤트 추가
+                row.querySelector('.clickable').addEventListener('click', () => {
+                    displayMatchDetails(round, matches);
+                });
+            });
+
+            // 스탯 업데이트
+            document.getElementById("statNickname").textContent = nickname;
+            document.getElementById("statELO").textContent = elo;
+            document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
+            document.getElementById("statWR").textContent = ((wins / matchesPlayed) * 100).toFixed(1) + '%';
+            document.getElementById("statKPR").textContent = (kills / matchesPlayed).toFixed(1);
+            document.getElementById("statMatches").textContent = matchesPlayed;
+
+            renderELOTrend(eloHistory);
+            renderKDRTrend(kdrHistory);
+        }
+
+        function displayMatchDetails(round, matches) {
+            const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
+            matchDetailsBody.innerHTML = "";
+
+            // 팀별로 데이터 분리
+            const team1Players = matches.filter(player =>
+                String(player.Round) === String(round) && String(player.Team) === "1"
+            );
+            const team2Players = matches.filter(player =>
+                String(player.Round) === String(round) && String(player.Team) === "2"
+            );
+
+            // 두 팀 중 가장 많은 플레이어 수
+            const maxPlayers = Math.max(team1Players.length, team2Players.length);
+
+            // 테이블에 데이터 추가
+            for (let i = 0; i < maxPlayers; i++) {
+                const team1Player = team1Players[i] || {};
+                const team2Player = team2Players[i] || {};
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
             <td class="team1">${team1Player.Nickname || ""}</td>
             <td class="team1">${team1Player.Kills || ""}</td>
             <td class="team1">${team1Player.Deaths || ""}</td>
@@ -584,106 +486,46 @@
             <td class="team2">${team2Player.Deaths || ""}</td>
             <td class="team2">${team2Player.Team === team2Player['Winning Team'] ? 'Win' : 'Loss'}</td>
         `;
-                    matchDetailsBody.appendChild(row);
-                }
-
-                // 모달 표시
-                const matchModal = new bootstrap.Modal(document.getElementById("matchModal"));
-                matchModal.show();
+                matchDetailsBody.appendChild(row);
             }
 
-            function renderELOTrend(eloHistory) {
-                const ctx = document.getElementById("eloTrend").getContext("2d");
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: eloHistory.map((_, i) => `${i + 1}`),
-                        datasets: [{
-                            label: 'ELO',
-                            data: eloHistory,
-                            borderColor: '#ff7896',
-                            fill: true,
-                        }],
-                    },
-                });
-            }
+            // 모달 표시
+            const matchModal = new bootstrap.Modal(document.getElementById("matchModal"));
+            matchModal.show();
+        }
 
-            function renderKDRTrend(kdrHistory) {
-                const ctx = document.getElementById("kdrTrend").getContext("2d");
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: kdrHistory.map((_, i) => `${i + 1}`),
-                        datasets: [{
-                            label: '누적 KDR',
-                            data: kdrHistory,
-                            borderColor: '#fa2334',
-                            fill: false,
-                        }],
-                    },
-                });
-            }
-            let eloChart; // ELO Chart 객체
-            let kdrChart; // KDR Chart 객체
-
-            // ELO 모달 열릴 때
-            document.getElementById("eloModal").addEventListener("show.bs.modal", () => {
-                const ctx = document.getElementById("eloModalGraph").getContext("2d");
-
-                // 기존 그래프 제거
-                if (eloChart) {
-                    eloChart.destroy();
-                }
-
-                // 새 그래프 생성
-                eloChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: eloHistory.map((_, i) => `Match ${i + 1}`),
-                        datasets: [{
-                            label: 'ELO',
-                            data: eloHistory,
-                            borderColor: '#ff7896',
-                            backgroundColor: 'rgba(255, 120, 150, 0.2)',
-                            borderWidth: 2,
-                        }],
-                    },
-                    options: {
-                        responsive: true, // 부모 요소에 맞게 반응형으로 설정
-                        maintainAspectRatio: false, // 비율 고정 해제
-                    },
-                });
+        function renderELOTrend(eloHistory) {
+            const ctx = document.getElementById("eloTrend").getContext("2d");
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: eloHistory.map((_, i) => `${i + 1}`),
+                    datasets: [{
+                        label: 'ELO',
+                        data: eloHistory,
+                        borderColor: '#ff7896',
+                        fill: true,
+                    }],
+                },
             });
+        }
 
-            // KDR 모달 열릴 때
-            document.getElementById("kdrModal").addEventListener("show.bs.modal", () => {
-                const ctx = document.getElementById("kdrModalGraph").getContext("2d");
-
-                // 기존 그래프 제거
-                if (kdrChart) {
-                    kdrChart.destroy();
-                }
-
-                // 새 그래프 생성
-                kdrChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: kdrHistory.map((_, i) => `Match ${i + 1}`),
-                        datasets: [{
-                            label: 'KDR',
-                            data: kdrHistory,
-                            borderColor: '#fa2334',
-                            backgroundColor: 'rgba(250, 35, 52, 0.2)',
-                            borderWidth: 2,
-                        }],
-                    },
-                    options: {
-                        responsive: true, // 부모 요소에 맞게 반응형으로 설정
-                        maintainAspectRatio: false, // 비율 고정 해제
-                    },
-                });
+        function renderKDRTrend(kdrHistory) {
+            const ctx = document.getElementById("kdrTrend").getContext("2d");
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: kdrHistory.map((_, i) => `${i + 1}`),
+                    datasets: [{
+                        label: '누적 KDR',
+                        data: kdrHistory,
+                        borderColor: '#fa2334',
+                        fill: false,
+                    }],
+                },
             });
-        </script>
+        }
+    </script>
 </body>
 
 </html>
