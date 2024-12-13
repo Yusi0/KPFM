@@ -18,16 +18,21 @@
         }
 
         .container {
+            display: flex;
+            flex-direction: column;
+            /* 세로로 배치 */
+            align-items: center;
+            /* 가로 중앙 정렬 */
+            justify-content: flex-start;
+            /* 상단에 배치 */
             width: 90%;
             max-width: 1000px;
             background: #1E1E1E;
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
             padding: 30px;
-            margin: 20px;
+            margin: 20px auto;
             overflow: hidden;
-            padding-right: 20px;
-            margin-right: 20px;
         }
 
         h1,
@@ -275,13 +280,12 @@
             /* Hover 시 셀 배경 */
         }
 
+
         .membership-card {
-            width: 400px;
-            /* 카드 너비 */
-            height: 700;
-            /* 높이를 자동으로 확장 */
-            max-height: 500px;
-            /* 최대 높이 제한 */
+            width: 100%;
+            /* 컨테이너 너비에 맞춤 */
+            max-width: 400px;
+            /* 최대 너비 제한 */
             background-color: #1E1E1E;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -289,6 +293,7 @@
             font-family: 'Roboto', Arial, sans-serif;
             overflow: hidden;
             margin: 20px auto;
+            /* 컨테이너 안에서 중앙 정렬 */
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -296,21 +301,18 @@
         }
 
         .card-content {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            /* 2열 레이아웃 */
+            display: flex;
+            flex-wrap: wrap;
+            /* 내용물이 많을 경우 줄 바꿈 */
+            justify-content: space-between;
+            /* 가로 정렬 */
             gap: 10px;
-            overflow-y: auto;
-            /* 내용이 많을 경우 스크롤 */
-            max-height: 700px;
-            /* 최대 높이 제한 */
+            /* 카드 간격 */
         }
 
         .card-header {
             text-align: center;
             background-color: #BB86FC;
-
-            /* 헤더 배경 */
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
