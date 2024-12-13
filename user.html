@@ -27,6 +27,12 @@
             padding: 30px;
             margin: 30px auto;
             overflow: hidden;
+
+            /* 추가된 스타일 */
+            padding-right: 20px;
+            /* 내부 우측 여백 추가 */
+            margin-right: 20px;
+            /* 외부 우측 마진 추가 */
         }
 
         h1,
@@ -37,6 +43,20 @@
             /* 포인트 컬러 */
             margin-bottom: 25px;
             text-shadow: 0 2px 6px rgba(187, 134, 252, 0.5);
+        }
+
+        .row {
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+        .col-md-6 {
+            padding-right: 15px;
+        }
+
+        .table-responsive {
+            margin-right: 20px;
+            /* 우측 여백 */
         }
 
         table {
@@ -195,8 +215,6 @@
             /* 내용이 많을 경우 스크롤 */
             max-height: 700px;
             /* 최대 높이 제한 */
-            padding-right: 10px;
-            /* 스크롤바와 간격 확보 */
         }
 
         .card-header {
@@ -447,16 +465,24 @@
                     return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
                 });
 
+                // ELO 값을 기준으로 정렬
+                leaderboard.sort((a, b) => parseInt(b.ELO, 10) - parseInt(a.ELO, 10));
+
+                // 등수 계산
+                leaderboard.forEach((player, index) => {
+                    player.Rank = index + 1; // Rank는 1부터 시작
+                });
+
+                // 현재 플레이어의 정보를 찾기
                 const userStats = leaderboard.find(player => player.Nickname === nickname);
                 if (userStats) {
                     document.getElementById("statELO").textContent = parseInt(userStats.ELO, 10) || 1500;
+                    document.getElementById("statRank").textContent = `#${userStats.Rank}` || "N/A";
                     document.getElementById("statTier").textContent = userStats.Tier || "Unranked";
 
                     // 티어 색상 적용
                     const tierElement = document.getElementById("statTier");
-
-                    // 숫자가 포함된 티어에서 숫자를 제거
-                    const tierName = userStats.Tier.replace(/\d+/g, '').trim(); // 숫자를 제거하고 공백을 제거
+                    const tierName = userStats.Tier.replace(/\d+/g, '').trim(); // 숫자 제거 후 비교
                     switch (tierName) {
                         case 'Copper':
                             tierElement.style.color = '#B87333'; // 적갈색
