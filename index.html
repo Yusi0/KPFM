@@ -159,7 +159,7 @@
     <script>
         let leaderboardData = [];
 
-        fetch('match.csv')
+        fetch('https://yusi0.github.io/KPFM/match.csv')
             .then(response => response.text())
             .then(data => {
                 const rows = data.trim().split('\n');
