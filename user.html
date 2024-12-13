@@ -59,67 +59,75 @@
             /* 우측 여백 */
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #1A1A1A;
-            /* 테이블 전체 어두운 배경 */
+        /* 매치 내역 테이블 스타일 */
+        .table-dark {
+            background-color: #242424;
+            /* 어두운 테이블 배경 */
+            color: #E0E0E0;
+            /* 기본 텍스트 색상 */
+            border: 1px solid #444;
+            /* 테두리 색상 */
             border-radius: 8px;
             overflow: hidden;
         }
 
-        th,
-        td {
-            padding: 15px;
-            text-align: center;
-            border: 1px solid #333;
-            /* 어두운 테두리 */
-            color: #E0E0E0;
-            /* 밝은 텍스트 */
-            background-color: #1A1A1A;
-            /* 기본 셀 배경 */
+        .table-dark thead {
+            background-color: #333;
+            /* 헤더 배경색 */
+            color: #FFD700;
+            /* 헤더 텍스트 강조 색상 */
+            font-weight: bold;
+            text-transform: uppercase;
+            /* 텍스트 대문자화 */
         }
 
-        th {
-            background-color: #2C2C2C;
-            /* 헤더 배경 */
-            color: #BB86FC;
-            /* 포인트 텍스트 색상 */
-            font-weight: 700;
-            text-transform: uppercase;
+        .table-dark tbody tr {
+            background-color: #1E1E1E;
+            /* 기본 행 배경 */
+            transition: all 0.3s ease;
         }
 
         .table-dark tbody tr:nth-child(odd) {
-            background-color: #1A1A1A;
-            /* 홀수 줄 배경 */
+            background-color: #2A2A2A;
+            /* 홀수 행 배경 */
         }
 
         .table-dark tbody tr:nth-child(even) {
-            background-color: #232323;
-            /* 짝수 줄 배경 */
+            background-color: #1F1F1F;
+            /* 짝수 행 배경 */
         }
-
-        tbody tr:hover {
-            background-color: #2C2C2C;
-            /* Hover 시 배경 */
-            transform: scale(1.01);
-            box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
-        }
-
-        /* 모달 내부 테이블 스타일 */
-        .table-dark {
-            background-color: #1A1A1A;
-            /* 테이블 전체 어두운 배경 */
-            color: #E0E0E0;
-            /* 기본 텍스트 색상 */
-        }
-
 
         .table-dark tbody tr:hover {
-            background-color: #2C2C2C;
-            /* Hover 시 행 배경 */
-            transition: all 0.3s ease;
+            background-color: #444;
+            /* Hover 시 행 강조 */
+            transform: scale(1.02);
+            /* 살짝 확대 효과 */
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+            /* Hover 시 그림자 */
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            /* 셀 패딩 */
+            text-align: center;
+            /* 텍스트 중앙 정렬 */
+            border-bottom: 1px solid #444;
+            /* 셀 사이 테두리 */
+        }
+
+        th {
+            background-color: #333;
+            /* 헤더 배경 */
+            font-size: 14px;
+            /* 헤더 텍스트 크기 */
+        }
+
+        td {
+            font-size: 13px;
+            /* 일반 셀 텍스트 크기 */
+            color: #E0E0E0;
+            /* 기본 텍스트 색상 */
         }
 
         .modal-content {
@@ -583,6 +591,7 @@
             <td>${matchDeaths}</td>
             <td>${won ? 'Win' : 'Loss'}</td>
         `;
+
                 matchHistoryTable.appendChild(row);
 
                 // 매치 디테일 표시 이벤트 추가
