@@ -199,6 +199,77 @@
         .tier-unranked {
             color: #E0E0E0;
         }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        #autocompleteList {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            /* 최대 높이 설정 */
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            /* 기본적으로 숨김 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            scrollbar-width: none;
+            /* Firefox 스크롤바 숨기기 */
+            -ms-overflow-style: none;
+            /* IE 스크롤바 숨기기 */
+        }
+
+        #autocompleteList::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Edge, Safari 스크롤바 숨기기 */
+        }
+
+        #autocompleteList div {
+            padding: 10px;
+            background-color: #1E1E1E;
+            color: #E0E0E0;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+        }
+
+        #autocompleteList div:hover {
+            background-color: #BB86FC;
+            color: #121212;
+        }
+
+        .tag-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #2A2A2A;
+            color: #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .tag button {
+            background: none;
+            border: none;
+            color: #BB86FC;
+            margin-left: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -206,8 +277,11 @@
     <div class="container">
         <h1>KPFM Leaderboard</h1>
         <div class="search-container">
-            <input type="text" id="searchBox" placeholder="Search user..." list="nicknameList">
-            <datalist id="nicknameList"></datalist>
+            <input type="text" id="searchBox" placeholder="Search user..." autocomplete="off">
+            <div id="autocompleteList" class="dropdown"></div>
+        </div>
+        <div id="filterTags" class="tag-container">
+            <!-- 선택된 유저 태그가 추가됩니다 -->
         </div>
         <div class="table-container">
             <table id="leaderboard">
@@ -259,27 +333,95 @@
             })
             .catch(error => console.error("Error loading lboard.csv:", error));
 
+        let selectedUsers = new Set(); // 선택된 유저 저장
+
         document.getElementById("searchBox").addEventListener("input", function () {
             const input = this.value.trim().toLowerCase();
-            const minChars = 4; // 최소 입력 글자 수
-            const dataList = document.getElementById("nicknameList");
-            dataList.innerHTML = ''; // 기존 옵션 초기화
+            const autocompleteList = document.getElementById("autocompleteList");
+            autocompleteList.innerHTML = ""; // 기존 추천 항목 초기화
 
-            if (input.length >= minChars) {
-                const matchingPlayers = leaderboardData.filter(player => player.nickname.toLowerCase().startsWith(input));
-                matchingPlayers.forEach(player => {
-                    const option = document.createElement("option");
-                    option.value = player.nickname;
-                    dataList.appendChild(option);
-                });
+            if (input.length > 0) {
+                const filteredPlayers = leaderboardData.filter(player =>
+                    player.nickname.toLowerCase().includes(input)
+                );
 
-                // 첫 번째 매칭된 플레이어의 닉네임 가져오기
-                if (matchingPlayers.length > 0) {
-                    const nickname = matchingPlayers[0].nickname; // 첫 번째 일치 항목의 닉네임
-                    window.location.href = `user.html?nickname=${encodeURIComponent(nickname)}`;
+                if (filteredPlayers.length > 0) {
+                    filteredPlayers.forEach(player => {
+                        const listItem = document.createElement("div");
+                        listItem.textContent = player.nickname;
+
+                        // 클릭하면 태그 추가 및 추천 숨기기
+                        listItem.addEventListener("click", () => {
+                            addFilterTag(player.nickname);
+                            autocompleteList.style.display = "none";
+                            this.value = ""; // 검색창 초기화
+                        });
+
+                        autocompleteList.appendChild(listItem);
+                    });
+                    autocompleteList.style.display = "block"; // 드롭다운 표시
+                } else {
+                    autocompleteList.style.display = "none"; // 검색 결과 없으면 숨기기
                 }
+            } else {
+                autocompleteList.style.display = "none"; // 입력값 없으면 숨기기
             }
         });
+
+        // 포커스 아웃 시 드롭다운 숨기기
+        document.getElementById("searchBox").addEventListener("blur", () => {
+            setTimeout(() => {
+                document.getElementById("autocompleteList").style.display = "none";
+            }, 200); // 클릭 이벤트 실행 후 숨기기
+        });
+
+        // 필터 태그 추가 함수
+        function addFilterTag(nickname) {
+            if (selectedUsers.has(nickname)) {
+                alert("This user is already added.");
+                return;
+            }
+
+            selectedUsers.add(nickname);
+            updateFilterTags();
+            updateFilteredLeaderboard();
+        }
+
+        // 필터 태그 업데이트 함수
+        function updateFilterTags() {
+            const filterTags = document.getElementById("filterTags");
+            filterTags.innerHTML = ""; // 기존 태그 초기화
+
+            selectedUsers.forEach(nickname => {
+                const tag = document.createElement("div");
+                tag.classList.add("tag");
+                tag.innerHTML = `
+            ${nickname}
+            <button>&times;</button>
+        `;
+
+                // 태그 삭제 버튼 이벤트
+                tag.querySelector("button").addEventListener("click", () => {
+                    selectedUsers.delete(nickname);
+                    updateFilterTags();
+                    updateFilteredLeaderboard();
+                });
+
+                filterTags.appendChild(tag);
+            });
+        }
+
+        // 필터링된 리더보드 업데이트
+        function updateFilteredLeaderboard() {
+            if (selectedUsers.size === 0) {
+                renderLeaderboard(leaderboardData); // 선택된 유저가 없으면 전체 표시
+            } else {
+                const filteredPlayers = leaderboardData.filter(player =>
+                    selectedUsers.has(player.nickname)
+                );
+                renderLeaderboard(filteredPlayers);
+            }
+        }
         function processMatches(matches) {
             const playerStats = {};
 
