@@ -77,38 +77,23 @@
         }
 
         .table-responsive {
-            margin-right: 20px;
-            /* 우측 여백 */
+            width: 100%;
+            /* 컨테이너 너비를 화면 너비에 맞춤 */
+            max-width: 100%;
+            /* 최대 너비 제한 */
+            overflow-x: hidden;
+            /* 가로 스크롤 활성화 */
         }
 
         /* 매치 내역 테이블 스타일 */
+
         .table-dark {
-            background-color: #242424;
-            /* 어두운 테이블 배경 */
-            color: #E0E0E0;
-            /* 기본 텍스트 색상 */
-            border: 1px solid #444;
-            /* 테두리 색상 */
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .table-dark thead {
-            background-color: #333;
-            /* 헤더 배경색 */
-            color: #FFD700;
-            /* 헤더 텍스트 강조 색상 */
-            font-weight: bold;
-            text-transform: uppercase;
-            /* 텍스트 대문자화 */
-        }
-
-        .table-dark tbody tr {
-            background-color: #1E1E1E;
-            /* 기본 행 배경 */
-            transition: all 0.3s ease;
-            cursor: pointer;
-            /* 클릭 가능한 커서 */
+            width: 100%;
+            /* 테이블 너비를 컨테이너에 맞춤 */
+            min-width: 600px;
+            /* 최소 너비 설정 */
+            border-collapse: collapse;
+            /* 테두리 중첩 */
         }
 
         .table-dark tbody tr:nth-child(odd) {
@@ -413,6 +398,74 @@
             /* 주황색 */
             font-weight: bold;
         }
+
+        /* 맵 테이블 */
+        #mapWinRate {
+            width: 100%;
+            /* 테이블 너비를 컨테이너에 맞춤 */
+            border-collapse: collapse;
+            /* 테두리 중첩 */
+            min-width: 400px;
+            /* 최소 너비 */
+            max-width: 100%;
+            /* 화면에 맞게 조정 */
+            table-layout: auto;
+            /* 열 너비를 내용에 따라 조정 */
+        }
+
+        #mapWinRate th,
+        #mapWinRate td {
+            text-align: center;
+            /* 텍스트 중앙 정렬 */
+            padding: 12px;
+            /* 셀 패딩 */
+        }
+
+        #mapWinRate th {
+            background-color: #333;
+            color: #e0e0e0;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        #mapWinRate td {
+            font-size: 14px;
+            color: #E0E0E0;
+        }
+
+        #mapWinRate tbody tr:nth-child(odd) {
+            background-color: #2A2A2A;
+        }
+
+        #mapWinRate tbody tr:nth-child(even) {
+            background-color: #1F1F1F;
+        }
+
+        #mapWinRate tbody tr:hover {
+            background-color: #444;
+            transform: scale(1.01);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+
+        #mapWinRate td:nth-child(1) {
+            font-weight: bold;
+            color: #BB86FC;
+            text-align: center;
+
+        }
+
+        #mapWinRate td:nth-child(4) {
+            font-weight: bold;
+            color: #4CAF50;
+            /* 기본적으로 승률 강조 색 */
+            text-align: center;
+        }
+
+        #mapWinRate td:nth-child(4).low-rate {
+            color: #FF9800;
+            /* 낮은 승률 강조 색 */
+        }
     </style>
 </head>
 
@@ -472,7 +525,21 @@
                 <canvas id="kdrTrend"></canvas>
             </div>
         </div>
-        <h3> </h3>
+        <div class="table-responsive mt-5">
+            <table id="mapWinRate" class="table table-dark">
+                <thead class="table-dark">
+                    <tr>
+                        <th>맵</th>
+                        <th>승리</th>
+                        <th>총 플레이</th>
+                        <th>승률</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 맵별 승률 데이터가 동적으로 추가됩니다 -->
+                </tbody>
+            </table>
+        </div>
         <h3>매치 내역</h3>
         <div class="table-responsive">
             <table id="matchHistory" class="table table-dark">
@@ -482,6 +549,7 @@
                         <th>킬</th>
                         <th>데스</th>
                         <th>결과</th>
+                        <th>맵</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -650,6 +718,46 @@
             })
             .catch(error => console.error("Error loading aftercalc.csv:", error));
 
+        function renderMapWinRate(nickname, matches) {
+            // 맵별 데이터 초기화
+            const mapStats = {};
+
+            matches.forEach(match => {
+                if (match.Nickname !== nickname) return;
+
+                const mapName = match.Map || "Unknown";
+                if (mapName === "na") return; // NA 값을 건너뜀
+
+                const isWin = parseInt(match.Team, 10) === parseInt(match['Winning Team'], 10);
+
+                // 맵 데이터 초기화
+                if (!mapStats[mapName]) {
+                    mapStats[mapName] = { wins: 0, total: 0 };
+                }
+
+                // 승리 및 총 플레이 횟수 업데이트
+                if (isWin) mapStats[mapName].wins++;
+                mapStats[mapName].total++;
+            });
+
+            // 맵별 승률 테이블에 데이터 추가
+            const mapWinRateTable = document.getElementById("mapWinRate").querySelector("tbody");
+            mapWinRateTable.innerHTML = ""; // 기존 데이터 초기화
+
+            Object.entries(mapStats).forEach(([mapName, stats]) => {
+                const winRate = ((stats.wins / stats.total) * 100).toFixed(1); // 승률 계산
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+            <td>${mapName}</td>
+            <td>${stats.wins}</td>
+            <td>${stats.total}</td>
+            <td class="${winRate < 50 ? 'low-rate' : ''}">${winRate}%</td>
+        `;
+                mapWinRateTable.appendChild(row);
+            });
+        }
+
         function processUserStats(nickname, matches) {
             const userMatches = matches.filter(match => match.Nickname === nickname);
 
@@ -658,12 +766,23 @@
                 window.location.href = "index.html";
                 return;
             }
+            renderMapWinRate(nickname, userMatches); // 맵별 승률 데이터 생성
 
             const kdrHistory = [];
             let totalKills = 0;
             let totalDeaths = 0;
 
-            // ELO 증감 데이터를 aftercalc.csv에서 가져오기
+            // 맵 이름 변환 함수
+            const mapNameTransform = (map) => {
+                const mapNames = {
+                    metro: "Metro",
+                    warehouse: "Warehouse",
+                    desert: "Desert Storm",
+                    elevation: "Elevation"
+                };
+                return mapNames[map.toLowerCase()] || map; // 변환 가능한 이름은 변환하고, 그렇지 않으면 원래 값 반환
+            };
+
             fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
                 .then(response => response.text())
                 .then(data => {
@@ -674,7 +793,6 @@
                         return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
                     });
 
-                    // 유저의 라운드별 ELO 데이터 필터링
                     const userRounds = aftercalc.filter(round => round.Nickname === nickname);
                     if (userRounds.length === 0) {
                         console.warn("No round data found for user in aftercalc.csv.");
@@ -688,6 +806,7 @@
                         const roundNumber = match.Round || "Unknown";
                         const kills = parseInt(match.Kills, 10) || 0;
                         const deaths = parseInt(match.Deaths, 10) || 0;
+                        const map = mapNameTransform(match.Map || "Unknown"); // 맵 이름 변환
 
                         // 누적 킬/데스 업데이트
                         totalKills += kills;
@@ -711,6 +830,7 @@
                     <td>${kills}</td>
                     <td>${deaths}</td>
                     <td>${eloChangeText}</td>
+                    <td>${map}</td> <!-- 변환된 맵 이름 추가 -->
                 `;
                         row.addEventListener("click", () => {
                             displayMatchDetails(roundNumber, matches);
@@ -724,7 +844,6 @@
                 })
                 .catch(error => console.error("Error loading aftercalc.csv:", error));
         }
-
 
         function displayMatchDetails(round, matches) {
             const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
