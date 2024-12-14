@@ -162,7 +162,6 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
             /* 모달 내부 여백 */
             background-color: #1E1E1E;
             /* 다크모드 배경 */
@@ -170,9 +169,6 @@
             /* 모서리 둥글게 */
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
             max-height: 90vh;
-            /* 화면 높이를 초과하지 않도록 제한 */
-            overflow: auto;
-            /* 콘텐츠가 많을 경우 스크롤 추가 */
         }
 
         .modal-content .table-responsive {
@@ -186,7 +182,6 @@
         .modal-content .table {
             margin: auto;
             /* 테이블을 모달 내 중앙 정렬 */
-            width: 80%;
             /* 테이블 너비 제한 */
             max-width: 100%;
             /* 화면에 맞추기 */
@@ -538,6 +533,19 @@
             margin: 0;
             /* 여백 제거 */
         }
+
+        #modalRoundTitle {
+            font-size: 1.5rem;
+            /* 제목 크기 */
+            font-weight: bold;
+            /* 두껍게 */
+            text-align: center;
+            /* 텍스트 중앙 정렬 */
+            color: #FFD700;
+            /* 금색 */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            /* 텍스트 그림자 */
+        }
     </style>
 </head>
 
@@ -608,6 +616,7 @@
                 <canvas id="kdrTrend"></canvas>
             </div>
         </div>
+        <h3><br>맵별 통계</h3>
         <div class="table-responsive">
             <table id="mapWinRate" class="table table-dark">
                 <thead class="table-dark">
@@ -623,7 +632,7 @@
                 </tbody>
             </table>
         </div>
-        <h3>매치 내역</h3>
+        <h3><br>매치 내역</h3>
         <div class="table-responsive">
             <table id="matchHistory" class="table table-dark">
                 <thead class="table-dark">
@@ -647,6 +656,9 @@
     <div class="modal fade" id="matchModal" tabindex="-1" aria-labelledby="matchModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="modalRoundTitle" class="modal-title"></h5>
+                </div>
                 <div class="table-responsive">
                     <table id="matchDetails" class="table table-striped table-hover">
                         <thead class="table-dark">
@@ -806,14 +818,25 @@
             .catch(error => console.error("Error loading aftercalc.csv:", error));
 
         function renderMapWinRate(nickname, matches) {
+            // 맵 이름 변환 함수
+            const mapNameTransform = (map) => {
+                const mapNames = {
+                    metro: "Metro",
+                    desert: "Desert Storm",
+                    elevation: "Elevation",
+                    warehouse: "Warehouse",
+                };
+                return mapNames[map.toLowerCase()] || map; // 변환 가능한 이름은 변환, 없으면 원래 이름 반환
+            };
+
             // 맵별 데이터 초기화
             const mapStats = {};
 
             matches.forEach(match => {
                 if (match.Nickname !== nickname) return;
 
-                const mapName = match.Map || "Unknown";
-                if (mapName === "na") return; // NA 값을 건너뜀
+                const mapName = mapNameTransform(match.Map || "Unknown");
+                if (mapName === "na") return; // "na" 맵은 건너뜀
 
                 const isWin = parseInt(match.Team, 10) === parseInt(match['Winning Team'], 10);
 
@@ -844,7 +867,6 @@
                 mapWinRateTable.appendChild(row);
             });
         }
-
         function processUserStats(nickname, matches) {
             const userMatches = matches.filter(match => match.Nickname === nickname);
 
@@ -935,6 +957,10 @@
         function displayMatchDetails(round, matches) {
             const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
             matchDetailsBody.innerHTML = "";
+
+            // 모달의 제목에 라운드 정보 추가
+            const modalRoundTitle = document.getElementById("modalRoundTitle");
+            modalRoundTitle.textContent = `${round}라운드`;
 
             // aftercalc.csv 데이터 가져오기
             fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
