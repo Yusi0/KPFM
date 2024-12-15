@@ -454,7 +454,7 @@
     <script>
         let leaderboardData = [];
         const timestamp = `?timestamp=${Date.now()}`;
-        fetch('https://yusi0.github.io/KPFM/match.csv')
+        fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`)
             .then(response => response.text())
             .then(data => {
                 const rows = data.trim().split('\n');
@@ -467,7 +467,7 @@
             })
             .catch(error => console.error("Error loading match.csv:", error));
 
-        fetch('https://yusi0.github.io/KPFM/lboard.csv')
+        fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`)
             .then(response => response.text())
             .then(data => {
                 const rows = data.trim().split('\n');
