@@ -285,16 +285,27 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
             background-color: rgba(0, 0, 0, 0.5);
+            /* 반투명 배경 */
+            overflow: hidden;
+            /* 스크롤 방지 */
         }
 
         .modal-content {
-            max-width: 90%;
-            width: 90%;
-            /* 모달 너비를 동적으로 설정 */
-            height: auto;
-            margin: 5% auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            max-width: 80%;
+            min-width: 300px;
+            width: auto;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+            /* 내용이 넘칠 경우 스크롤 */
         }
 
         #teamTable {
@@ -495,7 +506,7 @@
         // 모달 열기
         openModalButton.addEventListener("click", () => {
             if (selectedUsers.size < 2) {
-                alert("At least two users are required to create teams.");
+                alert("최소 두 명 이상의 유저가 필요합니다.");
                 return;
             }
 
@@ -710,7 +721,7 @@
         // 필터 태그 추가 함수
         function addFilterTag(nickname) {
             if (selectedUsers.has(nickname)) {
-                alert("This user is already added.");
+                alert("이미 추가된 유저입니다.");
                 return;
             }
 
