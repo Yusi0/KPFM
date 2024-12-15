@@ -299,14 +299,19 @@
             background-color: #1E1E1E;
             border-radius: 8px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-            max-width: 80%;
+            width: 90%;
+            /* 모달 너비를 화면 크기의 90%로 설정 */
+            max-width: 800px;
+            /* 최대 너비 제한 */
             min-width: 300px;
-            width: auto;
+            /* 최소 너비 제한 */
             padding: 20px;
             max-height: 90vh;
+            /* 화면 높이의 90%로 제한 */
             overflow-y: auto;
-            /* 내용이 넘칠 경우 스크롤 */
+            /* 넘칠 경우 스크롤 */
         }
+
 
         #teamTable {
             width: 100%;
@@ -316,6 +321,8 @@
             /* 셀 크기를 균등하게 유지 */
             word-wrap: break-word;
             /* 긴 텍스트 자동 줄바꿈 */
+            overflow-wrap: break-word;
+            /* 긴 단어 줄바꿈 */
         }
 
         #teamTable th,
@@ -410,16 +417,6 @@
         <div class="table-container">
             <table id="leaderboard">
                 <thead>
-                    <tr>
-                        <th>순위</th>
-                        <th>닉네임</th>
-                        <th>KDR</th>
-                        <th>승률</th>
-                        <th>KPR</th>
-                        <th>매치 수</th>
-                        <th>ELO</th>
-                        <th>티어</th>
-                    </tr>
                 </thead>
                 <tbody>
                     <!-- Leaderboard rows will be dynamically generated -->
@@ -436,11 +433,9 @@
                     <tr>
                         <th>Phantom</th>
                         <th>KDR</th>
-                        <th>KPR</th>
                         <th>ELO</th>
                         <th>Ghost</th>
                         <th>KDR</th>
-                        <th>KPR</th>
                         <th>ELO</th>
                     </tr>
                 </thead>
@@ -458,7 +453,7 @@
 
     <script>
         let leaderboardData = [];
-
+        const timestamp = `?timestamp=${Date.now()}`;
         fetch('https://yusi0.github.io/KPFM/match.csv')
             .then(response => response.text())
             .then(data => {
@@ -572,11 +567,9 @@
                 row.innerHTML = `
             <td>${phantomPlayer.nickname || ""}</td>
             <td>${(phantomPlayer.kills / Math.max(1, phantomPlayer.deaths)).toFixed(2) || ""}</td>
-            <td>${(phantomPlayer.kills / phantomPlayer.matches).toFixed(1) || ""}</td>
             <td>${phantomPlayer.elo || ""}</td>
             <td>${ghostPlayer.nickname || ""}</td>
             <td>${(ghostPlayer.kills / Math.max(1, ghostPlayer.deaths)).toFixed(2) || ""}</td>
-            <td>${(ghostPlayer.kills / ghostPlayer.matches).toFixed(1) || ""}</td>
             <td>${ghostPlayer.elo || ""}</td>
         `;
                 teamTable.appendChild(row);
@@ -602,8 +595,9 @@
             autocompleteList.innerHTML = ""; // 기존 추천 항목 초기화
 
             if (input.length > 0) {
+                // 필터링: 입력 값이 포함된 닉네임 중, selectedUsers에 없는 유저만 표시
                 const filteredPlayers = leaderboardData.filter(player =>
-                    player.nickname.toLowerCase().includes(input)
+                    player.nickname.toLowerCase().includes(input) && !selectedUsers.has(player.nickname)
                 );
 
                 if (filteredPlayers.length > 0) {
@@ -628,7 +622,6 @@
                 autocompleteList.style.display = "none"; // 입력값 없으면 숨기기
             }
         });
-
 
         let currentAutocompleteIndex = -1; // 현재 선택된 추천 항목의 인덱스
 
@@ -801,17 +794,17 @@
         function updateLeaderboardWithEloAndTier(leaderboard) {
             // ELO와 Tier 정보를 병합
             leaderboard.forEach(rankEntry => {
-                const player = leaderboardData.find(p => p.nickname === rankEntry.Nickname);
+                const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
                 if (player) {
-                    player.elo = parseInt(rankEntry.ELO, 10);
-                    player.tier = rankEntry.Tier;
+                    player.elo = parseInt(rankEntry.ELO, 10) || 0; // ELO 값이 없을 경우 0으로 초기화
+                    player.tier = rankEntry.Tier || 'Unranked'; // 티어 값이 없을 경우 Unranked로 설정
                 }
             });
 
             // ELO 기준 정렬 후 순위 부여
             leaderboardData.sort((a, b) => b.elo - a.elo);
             leaderboardData.forEach((player, index) => {
-                player.rank = index + 1; // 실제 순위 부여
+                player.rank = player.elo > 0 ? index + 1 : 'Undefined'; // ELO가 0보다 크면 순위 부여
             });
 
             renderLeaderboard(leaderboardData);
@@ -859,19 +852,40 @@
                 }
 
                 row.innerHTML = `
-            <td>${player.rank}</td> <!-- 실제 순위 표시 -->
-            <td><a href="user.html?nickname=${encodeURIComponent(player.nickname)}" style="color: #BB86FC; text-decoration: none;">${player.nickname}</a></td>
-            <td>${(player.kills / Math.max(1, player.deaths)).toFixed(2)}</td>
-            <td>${((player.wins / player.matches) * 100).toFixed(1)}%</td>
-            <td>${(player.kills / player.matches).toFixed(1)}</td>
-            <td>${player.matches}</td>
-            <td>${player.elo || 'N/A'}</td>
-            <td class="${tierClass}">${player.tier || 'Unranked'}</td>
+            <td>
+                <span class="stat-value" style="font-weight: bold;">#${player.rank}</span>
+            </td>
+            <td>
+                <a href="user.html?nickname=${encodeURIComponent(player.nickname)}" 
+                   style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a>
+            </td>
+            <td>
+                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
+                ${(player.kills / Math.max(1, player.deaths)).toFixed(2)}
+            </td>
+            <td>
+                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Win Rate</small>
+                ${((player.wins / player.matches) * 100).toFixed(1)}%
+            </td>
+            <td>
+                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KPR</small>
+                ${(player.kills / player.matches).toFixed(1)}
+            </td>
+            <td>
+                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Matches</small>
+                ${player.matches}
+            </td>
+            <td>
+                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${tierName}</small>
+                ${player.elo || 'N/A'}
+            </td>
+            <td class="${tierClass}">
+                ${player.tier || 'Unranked'}
+            </td>
         `;
                 tbody.appendChild(row);
             });
         }
-
     </script>
 </body>
 
