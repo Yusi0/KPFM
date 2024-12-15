@@ -36,7 +36,7 @@
 
         html,
         body {
-            overflow-x: auto;
+            overflow-x: hidden;
         }
 
         h1 {
@@ -81,6 +81,8 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            /* iOS에서 부드러운 스크롤 */
             /* 좌우 스크롤 유지 */
         }
 
@@ -796,15 +798,23 @@
             leaderboard.forEach(rankEntry => {
                 const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
                 if (player) {
-                    player.elo = parseInt(rankEntry.ELO, 10) || 0; // ELO 값이 없을 경우 0으로 초기화
-                    player.tier = rankEntry.Tier || 'Unranked'; // 티어 값이 없을 경우 Unranked로 설정
+                    player.elo = parseInt(rankEntry.ELO, 10) || 0;
+                    player.tier = rankEntry.Tier || 'Unranked';
                 }
             });
 
-            // ELO 기준 정렬 후 순위 부여
+            // ELO 기준 정렬
             leaderboardData.sort((a, b) => b.elo - a.elo);
-            leaderboardData.forEach((player, index) => {
-                player.rank = player.elo > 0 ? index + 1 : 'Undefined'; // ELO가 0보다 크면 순위 부여
+
+            // 매치 수가 5 초과인 플레이어에게만 순위를 부여
+            let rankCounter = 1;
+            leaderboardData.forEach(player => {
+                if (player.matches > 5 && player.elo > 0) {
+                    player.rank = rankCounter;
+                    rankCounter++;
+                } else {
+                    player.rank = 'N/A';
+                }
             });
 
             renderLeaderboard(leaderboardData);
@@ -814,42 +824,39 @@
             const tbody = document.querySelector("#leaderboard tbody");
             tbody.innerHTML = '';
 
-            data.forEach(player => {
-                const row = document.createElement('tr');
+            const isFiltered = selectedUsers.size > 0;
 
-                // 행 클릭 이벤트 추가
+            data.forEach(player => {
+                // 필터 없음: 매치 수 5 이하인 플레이어 제외
+                if (!isFiltered && player.matches <= 5) {
+                    return;
+                }
+
+                // 필터 있음: 매치 수 5 이하인 플레이어도 표시하되 티어/엘로를 Unranked/N/A 처리
+                let originalTier = player.tier;
+                let originalElo = player.elo;
+                if (isFiltered && player.matches <= 5) {
+                    player.tier = 'Unranked';
+                    player.elo = 'N/A';
+                }
+
+                const tierName = player.tier?.split(' ')[0] || 'Unranked';
+                let tierClass = 'tier-unranked';
+                switch (tierName) {
+                    case 'Copper': tierClass = 'tier-copper'; break;
+                    case 'Bronze': tierClass = 'tier-bronze'; break;
+                    case 'Silver': tierClass = 'tier-silver'; break;
+                    case 'Gold': tierClass = 'tier-gold'; break;
+                    case 'Platinum': tierClass = 'tier-platinum'; break;
+                    case 'Diamond': tierClass = 'tier-diamond'; break;
+                    case 'Champion': tierClass = 'tier-champion'; break;
+                    default: tierClass = 'tier-unranked';
+                }
+
+                const row = document.createElement('tr');
                 row.addEventListener("click", () => {
                     window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
                 });
-
-                // 티어에서 숫자를 제거한 이름 추출
-                const tierName = player.tier?.split(' ')[0] || 'Unranked';
-                let tierClass = 'tier-unranked';
-
-                // 티어에 따른 클래스 설정
-                switch (tierName) {
-                    case 'Copper':
-                        tierClass = 'tier-copper';
-                        break;
-                    case 'Bronze':
-                        tierClass = 'tier-bronze';
-                        break;
-                    case 'Silver':
-                        tierClass = 'tier-silver';
-                        break;
-                    case 'Gold':
-                        tierClass = 'tier-gold';
-                        break;
-                    case 'Platinum':
-                        tierClass = 'tier-platinum';
-                        break;
-                    case 'Diamond':
-                        tierClass = 'tier-diamond';
-                        break;
-                    case 'Champion':
-                        tierClass = 'tier-champion';
-                        break;
-                }
 
                 row.innerHTML = `
             <td>
@@ -883,7 +890,12 @@
                 ${player.tier || 'Unranked'}
             </td>
         `;
+
                 tbody.appendChild(row);
+
+                // 표시 후 원복
+                player.tier = originalTier;
+                player.elo = originalElo;
             });
         }
     </script>
