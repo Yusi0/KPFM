@@ -498,7 +498,7 @@
 <body>
     <div class="container">
         <div
-            style="display: flex; align-items: center; justify-content: flex-start; margin-left: -130px; margin-bottom: 20px; gap: 100px;">
+            style="display: flex; align-items: center; justify-content: flex-start; margin-left: -145px; margin-bottom: 20px; gap: 100px;">
             <button id="backButton" class="btn btn-secondary"
                 style="display: flex; align-items: center; padding: 5px 10px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -1050,15 +1050,13 @@
             let minY = 0;
             let maxY = Math.max(...kdrHistory);
 
+            // 1라운드를 제외한 나머지 라운드의 최소/최댓값을 기준으로 범위 설정
             if (kdrHistory.length > 1) {
-                const diff = Math.abs(kdrHistory[1] - kdrHistory[0]);
-                if (diff >= 0.8) {
-                    const sliced = kdrHistory.slice(1);
-                    const slicedMin = Math.min(...sliced);
-                    const slicedMax = Math.max(...sliced);
-                    minY = slicedMin - 0.05;
-                    maxY = slicedMax + 0.05;
-                }
+                const sliced = kdrHistory.slice(1);
+                const slicedMin = Math.min(...sliced);
+                const slicedMax = Math.max(...sliced);
+                minY = slicedMin - 0.05;
+                maxY = slicedMax + 0.05;
             }
 
             new Chart(ctx, {
@@ -1106,11 +1104,11 @@
                                 mode: 'xy', // x,y축 모두 확대/축소 가능
                             },
                             pan: {
-                                enabled: true, // 팬(이동) 기능 활성화
+                                enabled: true,
                                 mode: 'xy'
                             },
                             limits: {
-                                y: { min: 0 }, // y축 최소값 제한 (옵션)
+                                y: { min: 0 }, // y축 최소값 제한
                             }
                         }
                     }
