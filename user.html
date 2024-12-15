@@ -412,55 +412,6 @@
             font-weight: bold;
         }
 
-        /* 맵 테이블 */
-        #mapWinRate {
-            width: 100%;
-            /* 테이블 너비를 컨테이너에 맞춤 */
-            border-collapse: collapse;
-            /* 테두리 중첩 */
-            min-width: 400px;
-            /* 최소 너비 */
-            max-width: 100%;
-            /* 화면에 맞게 조정 */
-            table-layout: auto;
-            /* 열 너비를 내용에 따라 조정 */
-        }
-
-        #mapWinRate th,
-        #mapWinRate td {
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
-            padding: 12px;
-            /* 셀 패딩 */
-        }
-
-        #mapWinRate th {
-            background-color: #333;
-            color: #e0e0e0;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 14px;
-        }
-
-        #mapWinRate td {
-            font-size: 14px;
-            color: #E0E0E0;
-        }
-
-        #mapWinRate tbody tr:nth-child(odd) {
-            background-color: #2A2A2A;
-        }
-
-        #mapWinRate tbody tr:nth-child(even) {
-            background-color: #1F1F1F;
-        }
-
-        #mapWinRate tbody tr:hover {
-            background-color: #444;
-            transform: scale(1.01);
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
-        }
-
         #mapWinRate td:nth-child(1) {
             font-weight: bold;
             color: #BB86FC;
@@ -545,6 +496,10 @@
             /* 금색 */
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
             /* 텍스트 그림자 */
+        }
+
+        #matchHistory td:nth-child(2) {
+            vertical-align: middle;
         }
     </style>
 </head>
@@ -638,10 +593,10 @@
                 <thead class="table-dark">
                     <tr>
                         <th>매치</th>
+                        <th>ELO</th>
+                        <th>KDR</th>
                         <th>킬</th>
                         <th>데스</th>
-                        <th>결과</th>
-                        <th>맵</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -921,6 +876,9 @@
                         totalKills += kills;
                         totalDeaths += deaths;
 
+                        const hkdr = (kills / Math.max(1, deaths)).toFixed(2);
+                        kdrHistory.push(hkdr);
+
                         // KDR 업데이트
                         kdrHistory.push(totalKills / Math.max(1, totalDeaths));
 
@@ -929,18 +887,35 @@
                         const previousELO = index > 0 ? parseInt(userRounds[index - 1]?.ELO, 10) || 1500 : 1500;
                         const eloChange = currentELO - previousELO;
                         const eloChangeText = eloChange > 0
-                            ? `<span style="color: #28a745;">+${eloChange}</span>` // 초록색
-                            : `<span style="color: #dc3545;">${eloChange}</span>`; // 빨간색
+                            ? `<span style="color: #28a745; font-size: 0.9em;">+${eloChange}</span>` // 초록색, 크기 작게
+                            : `<span style="color: #dc3545; font-size: 0.9em;">${eloChange}</span>`; // 빨간색, 크기 작게
+
+                        // 결과 텍스트 (ELO 값은 굵게 표시)
+                        const resultText = `<span style="font-weight: bold;">${currentELO}</span> ${eloChangeText}`;
+
 
                         // 매치 테이블 업데이트
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                    <td>${roundNumber}</td>
-                    <td>${kills}</td>
-                    <td>${deaths}</td>
-                    <td>${eloChangeText}</td>
-                    <td>${map}</td> <!-- 변환된 맵 이름 추가 -->
-                `;
+        <td>
+            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${map}</small>
+            ${roundNumber}
+        </td>
+        <td>${resultText}</td>
+        </td>
+        <td>
+            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
+            ${hkdr}
+        </td>
+        <td>
+            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Kills</small>
+            ${kills}
+        </td>
+        <td>
+            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Deaths</small>
+            ${deaths}
+        </td>
+    `;
                         row.addEventListener("click", () => {
                             displayMatchDetails(roundNumber, matches);
                         });
