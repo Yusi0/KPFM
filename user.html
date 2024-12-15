@@ -823,10 +823,6 @@
             }
             renderMapWinRate(nickname, userMatches); // 맵별 승률 데이터 생성
 
-            const kdrHistory = [];
-            let totalKills = 0;
-            let totalDeaths = 0;
-
             // 맵 이름 변환 함수
             const mapNameTransform = (map) => {
                 const mapNames = {
@@ -857,35 +853,37 @@
                     const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
                     matchHistoryTable.innerHTML = ""; // 기존 데이터 초기화
 
+                    const kdrHistory = [];
+                    let totalKills = 0;
+                    let totalDeaths = 0;
+
                     userMatches.forEach((match, index) => {
-                        const roundNumber = match.Round || "Unknown";
                         const kills = parseInt(match.Kills, 10) || 0;
                         const deaths = parseInt(match.Deaths, 10) || 0;
-                        const map = mapNameTransform(match.Map || "Unknown"); // 맵 이름 변환
 
                         // 누적 킬/데스 업데이트
                         totalKills += kills;
                         totalDeaths += deaths;
 
+                        // 해당 판 KDR
                         const hkdr = (kills / Math.max(1, deaths)).toFixed(2);
-                        kdrHistory.push(hkdr);
+                        // 누적 KDR
+                        const cumulativeKDR = totalKills / Math.max(1, totalDeaths);
 
-                        // KDR 업데이트
-                        kdrHistory.push(totalKills / Math.max(1, totalDeaths));
+                        // 그래프용 배열에는 누적 KDR만 저장
+                        kdrHistory.push(cumulativeKDR);
 
-                        // ELO 증감 계산
+                        // 매치 테이블 행 생성 시 hkdr 표시
+                        const roundNumber = match.Round || "Unknown";
+                        const map = mapNameTransform(match.Map || "Unknown");
                         const currentELO = parseInt(userRounds[index]?.ELO, 10) || 1500;
                         const previousELO = index > 0 ? parseInt(userRounds[index - 1]?.ELO, 10) || 1500 : 1500;
                         const eloChange = currentELO - previousELO;
                         const eloChangeText = eloChange > 0
-                            ? `<span style="color: #28a745; font-size: 0.9em;">+${eloChange}</span>` // 초록색, 크기 작게
-                            : `<span style="color: #dc3545; font-size: 0.9em;">${eloChange}</span>`; // 빨간색, 크기 작게
-
-                        // 결과 텍스트 (ELO 값은 굵게 표시)
+                            ? `<span style="color: #28a745; font-size: 0.9em;">+${eloChange}</span>`
+                            : `<span style="color: #dc3545; font-size: 0.9em;">${eloChange}</span>`;
                         const resultText = `<span style="font-weight: bold; font-size: 1.2em;">${currentELO}</span> ${eloChangeText}`;
 
-
-                        // 매치 테이블 업데이트
                         const row = document.createElement("tr");
                         row.innerHTML = `
         <td>
@@ -905,7 +903,6 @@
             ${hkdr}
         </td>
         <td>${resultText}</td>
-
     `;
                         row.addEventListener("click", () => {
                             displayMatchDetails(roundNumber, matches);
@@ -914,7 +911,7 @@
                         matchHistoryTable.appendChild(row);
                     });
 
-                    // KDR 그래프 렌더링
+                    // 이제 kdrHistory는 모든 매치에 대해 누적 KDR만 갖고 있으므로, 이 배열을 그대로 그래프에 사용
                     renderKDRTrend(kdrHistory);
                 })
                 .catch(error => console.error("Error loading aftercalc.csv:", error));
