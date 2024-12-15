@@ -489,7 +489,7 @@
             /* 텍스트 그림자 */
         }
 
-        #matchHistory td:nth-child(2) {
+        #matchHistory td:nth-child(5) {
             vertical-align: middle;
         }
     </style>
@@ -584,10 +584,10 @@
                 <thead class="table-dark">
                     <tr>
                         <th>매치</th>
-                        <th>ELO</th>
                         <th>KDR</th>
                         <th>킬</th>
                         <th>데스</th>
+                        <th>ELO</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -882,7 +882,7 @@
                             : `<span style="color: #dc3545; font-size: 0.9em;">${eloChange}</span>`; // 빨간색, 크기 작게
 
                         // 결과 텍스트 (ELO 값은 굵게 표시)
-                        const resultText = `<span style="font-weight: bold;">${currentELO}</span> ${eloChangeText}`;
+                        const resultText = `<span style="font-weight: bold; font-size: 1.2em;">${currentELO}</span> ${eloChangeText}`;
 
 
                         // 매치 테이블 업데이트
@@ -891,8 +891,6 @@
         <td>
             <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${map}</small>
             ${roundNumber}
-        </td>
-        <td>${resultText}</td>
         </td>
         <td>
             <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
@@ -906,6 +904,8 @@
             <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Deaths</small>
             ${deaths}
         </td>
+        <td>${resultText}</td>
+
     `;
                         row.addEventListener("click", () => {
                             displayMatchDetails(roundNumber, matches);
