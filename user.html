@@ -641,6 +641,7 @@
             window.location.href = "index.html";
         } else {
             console.log("닉네임 값 확인:", nickname); // 디버깅용
+            document.title = `${nickname} - KPFM`; 
             document.getElementById("statNickname").textContent = nickname;
         }
 
