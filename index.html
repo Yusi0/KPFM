@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* CSS 스타일은 이전과 동일하므로 변경 없습니다. */
         body {
             font-family: 'Roboto', Arial, sans-serif;
             background-color: #121212;
@@ -17,7 +15,6 @@
             display: flex;
             justify-content: center;
         }
-
         .container {
             width: 90%;
             max-width: 1000px;
@@ -28,7 +25,6 @@
             margin: 20px auto;
             overflow: hidden;
         }
-
         h1 {
             font-size: 28px;
             font-weight: 700;
@@ -36,13 +32,11 @@
             color: #BB86FC;
             margin-bottom: 25px;
         }
-
         .search-container {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
         }
-
         input {
             width: 100%;
             max-width: 400px;
@@ -55,31 +49,25 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
             transition: all 0.3s ease;
         }
-
         input:focus {
             outline: none;
             border-color: #BB86FC;
             box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
         }
-
         .table-container {
             width: 100%;
             margin-top: 20px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             background-color: #1E1E1E;
         }
-
-        th,
-        td {
+        th, td {
             padding: 15px;
             text-align: center;
             border-bottom: 1px solid #333;
         }
-
         th {
             position: sticky;
             top: 0;
@@ -87,198 +75,39 @@
             background-color: #333;
             color: #BB86FC;
         }
-
         tbody tr {
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
-
         tbody tr:hover {
             background-color: #3C3C3C;
         }
+        .tier-copper { color: #B87333; } .tier-bronze { color: #CD7F32; } .tier-silver { color: #C0C0C0; } .tier-gold { color: #FFD700; } .tier-platinum { color: #00BF
+            FF; } .tier-diamond { color: #8A2BE2; } .tier-champion { color: #DC143C; } .tier-unranked { color: #E0E0E0; }
+        
+        /* --- 검색 및 태그 스타일 (기존과 동일) --- */
+        .search-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
+        #autocompleteList { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1E1E1E; border: 1px solid #333; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; }
+        #autocompleteList div { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; }
+        #autocompleteList div:hover { background-color: #BB86FC; color: #121212; }
+        .tag-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .tag { display: inline-flex; align-items: center; padding: 5px 10px; background-color: #2A2A2A; border-radius: 8px; font-size: 14px; }
+        .tag button { background: none; border: none; color: #BB86FC; margin-left: 8px; cursor: pointer; }
+        
+        /* --- 모달 스타일 (기존과 동일) --- */
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #1E1E1E; border-radius: 8px; width: 90%; max-width: 800px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        #teamTable { width: 100%; table-layout: fixed; }
+        #teamTable th, #teamTable td { padding: 10px; text-align: center; border: 1px solid #333; white-space: nowrap; }
+        #teamTable th { background-color: #333; color: #BB86FC; }
+        .close { color: #E0E0E0; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-button { padding: 10px 20px; margin-left: 10px; font-size: 14px; background-color: #BB86FC; color: #121212; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .modal-button:hover { background-color: #9E6CE0; }
+        .modal-button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+        .win-rate-bar { display: flex; height: 20px; width: 100%; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+        .phantom-bar { height: 100%; background-color: #00BFFF; } .ghost-bar { height: 100%; background-color: #ff7300; }
 
-        .tier-copper {
-            color: #B87333;
-        }
-
-        .tier-bronze {
-            color: #CD7F32;
-        }
-
-        .tier-silver {
-            color: #C0C0C0;
-        }
-
-        .tier-gold {
-            color: #FFD700;
-        }
-
-        .tier-platinum {
-            color: #00BFFF;
-        }
-
-        .tier-diamond {
-            color: #8A2BE2;
-        }
-
-        .tier-champion {
-            color: #DC143C;
-        }
-
-        .tier-unranked {
-            color: #E0E0E0;
-        }
-
-        .search-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        #autocompleteList {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background-color: #1E1E1E;
-            border: 1px solid #333;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-
-        #autocompleteList div {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #333;
-        }
-
-        #autocompleteList div:hover {
-            background-color: #BB86FC;
-            color: #121212;
-        }
-
-        .tag-container {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            background-color: #2A2A2A;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .tag button {
-            background: none;
-            border: none;
-            color: #BB86FC;
-            margin-left: 8px;
-            cursor: pointer;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #1E1E1E;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-            padding: 20px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        #teamTable {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        #teamTable th,
-        #teamTable td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #333;
-            white-space: nowrap;
-        }
-
-        #teamTable th {
-            background-color: #333;
-            color: #BB86FC;
-        }
-
-        .close {
-            color: #E0E0E0;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .modal-button {
-            padding: 10px 20px;
-            margin-left: 10px;
-            font-size: 14px;
-            background-color: #BB86FC;
-            color: #121212;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .modal-button:hover {
-            background-color: #9E6CE0;
-        }
-
-        .modal-button:disabled {
-            background-color: #555;
-            color: #888;
-            cursor: not-allowed;
-        }
-
-        .win-rate-bar {
-            display: flex;
-            height: 20px;
-            width: 100%;
-            background-color: #333;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .phantom-bar {
-            height: 100%;
-            background-color: #00BFFF;
-        }
-
-        .ghost-bar {
-            height: 100%;
-            background-color: #ff7300;
-        }
-
+        /* --- 신규 모바일 카드 스타일 --- */
         .leaderboard-card {
             background-color: #2A2A2A;
             border-radius: 12px;
@@ -287,12 +116,10 @@
             border: 1px solid #333;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
         .leaderboard-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
         }
-
         .card-main-header {
             display: flex;
             justify-content: space-between;
@@ -301,65 +128,51 @@
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
-
         .card-rank {
             font-size: 1.2rem;
             font-weight: bold;
             color: #FFD700;
         }
-
         .card-nickname {
             font-size: 1.2rem;
             font-weight: bold;
             color: #BB86FC;
         }
-
         .card-stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
         }
-
         .card-stat {
             background-color: #1E1E1E;
             border-radius: 8px;
             padding: 10px;
             text-align: center;
         }
-
         .stat-title {
             display: block;
             font-size: 0.8rem;
             color: #9C9C9C;
             margin-bottom: 4px;
         }
-
         .stat-value {
             font-size: 1.1rem;
             font-weight: bold;
         }
 
-        #leaderboard {
-            display: table;
-        }
+        /* --- 반응형 디스플레이 제어 --- */
+        /* 기본 (데스크톱): 테이블 보이기, 모바일 컨테이너 숨기기 */
+        #leaderboard { display: table; }
+        #leaderboard-mobile-container { display: none; }
 
-        #leaderboard-mobile-container {
-            display: none;
-        }
-
+        /* 모바일 (화면 너비 768px 이하): 테이블 숨기기, 모바일 컨테이너 보이기 */
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            #leaderboard {
-                display: none;
-            }
-
-            #leaderboard-mobile-container {
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
+            .container { padding: 15px; }
+            #leaderboard { display: none; }
+            #leaderboard-mobile-container { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
             }
         }
     </style>
@@ -373,29 +186,31 @@
     <div class="container" style="display: none;">
         <h1>KPFM Leaderboard</h1>
         <div class="search-container">
-            <input type="text" id="searchBox" placeholder="유저 검색 또는 비교할 유저 추가" autocomplete="off">
+            <input type="text" id="searchBox" placeholder="유저 검색 (비교하려면 목록에서 클릭)" autocomplete="off">
             <div id="autocompleteList" class="dropdown"></div>
-            <button id="teamBalanceButton" class="modal-button" disabled>Team Balancing</button>
+            <button id="teamBalanceButton" class="modal-button" disabled>Team Making</button>
         </div>
         <div id="filterTags" class="tag-container"></div>
         <div class="table-container">
+            <!-- 데스크톱용 테이블 -->
             <table id="leaderboard">
                 <thead></thead>
                 <tbody></tbody>
             </table>
+            <!-- 모바일용 카드 컨테이너 -->
             <div id="leaderboard-mobile-container"></div>
         </div>
     </div>
 
-    <div id="customModal" class="modal"><!-- 모달 내용 --></div>
+    <div id="customModal" class="modal"><!-- 모달 내용 (변경 없음) --></div>
 
     <script>
         let leaderboardData = [];
         let selectedUsers = new Set();
         const timestamp = `?timestamp=${Date.now()}`;
 
-        // ... 데이터 로딩 및 처리 함수들은 변경 없음 ...
         async function loadAndProcessData() {
+            // ... 데이터 로딩 및 처리 로직 (기존과 동일)
             const loadingIndicator = document.getElementById('loading');
             const mainContainer = document.querySelector('.container');
             try {
@@ -456,18 +271,18 @@
             leaderboardData.forEach(p => {
                 p.rank = (p.matches > 5 && p.elo > 0) ? rankCounter++ : 'N/A';
             });
-            // 초기 뷰는 전체 데이터를 보여줌
             renderLeaderboard(leaderboardData);
         }
 
-        // 렌더링 함수는 변경 없음
         function renderLeaderboard(data) {
             const desktopTable = document.querySelector("#leaderboard");
             const mobileContainer = document.querySelector("#leaderboard-mobile-container");
 
+            // Clear previous content
             desktopTable.innerHTML = '';
             mobileContainer.innerHTML = '';
-
+            
+            // --- 데스크톱 테이블 헤더 생성 ---
             const thead = desktopTable.createTHead();
             const headerRow = thead.insertRow();
             const headers = ["Rank", "Nickname", "KDR", "Win Rate", "KPR", "Matches", "ELO", "Tier"];
@@ -478,50 +293,71 @@
             });
             const desktopTbody = desktopTable.createTBody();
 
+            // --- 데이터 루프 돌면서 데스크톱/모바일 뷰 동시 생성 ---
             data.forEach(player => {
                 const tierName = player.tier?.split(' ')[0] || 'Unranked';
                 const tierClass = `tier-${tierName.toLowerCase()}`;
                 const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
                 const winRate = player.matches > 0 ? ((player.wins / player.matches) * 100).toFixed(1) + '%' : '0.0%';
                 const kpr = player.matches > 0 ? (player.kills / player.matches).toFixed(1) : '0.0';
+
                 const navigateToUser = () => window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
+
+                // 1. 데스크톱 뷰 생성 (테이블 행)
                 const row = desktopTbody.insertRow();
                 row.addEventListener("click", navigateToUser);
-                row.innerHTML = `<td>${player.rank}</td><td><a href="#" style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a></td><td>${kdr}</td><td>${winRate}</td><td>${kpr}</td><td>${player.matches}</td><td>${player.elo || 'N/A'}</td><td class="${tierClass}">${player.tier || 'Unranked'}</td>`;
+                row.innerHTML = `
+                    <td><span class="stat-value" style="font-weight: bold; color: #FFD700;">#${player.rank}</span></td>
+                    <td><a href="#" style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a></td>
+                    <td>${kdr}</td>
+                    <td>${winRate}</td>
+                    <td>${kpr}</td>
+                    <td>${player.matches}</td>
+                    <td>${player.elo || 'N/A'}</td>
+                    <td class="${tierClass}">${player.tier || 'Unranked'}</td>
+                `;
+
+                // 2. 모바일 뷰 생성 (카드)
                 const card = document.createElement('div');
                 card.className = 'leaderboard-card';
                 card.addEventListener("click", navigateToUser);
-                card.innerHTML = `<div class="card-main-header"><span class="card-rank">#${player.rank}</span><span class="card-nickname">${player.nickname}</span></div><div class="card-stats-grid"><div class="card-stat"><span class="stat-title">ELO</span><span class="stat-value">${player.elo || 'N/A'}</span></div><div class="card-stat"><span class="stat-title">Tier</span><span class="stat-value ${tierClass}">${player.tier || 'Unranked'}</span></div><div class="card-stat"><span class="stat-title">KDR</span><span class="stat-value">${kdr}</span></div><div class="card-stat"><span class="stat-title">승률</span><span class="stat-value">${winRate}</span></div></div>`;
+                card.innerHTML = `
+                    <div class="card-main-header">
+                        <span class="card-rank">#${player.rank}</span>
+                        <span class="card-nickname">${player.nickname}</span>
+                    </div>
+                    <div class="card-stats-grid">
+                        <div class="card-stat">
+                            <span class="stat-title">ELO</span>
+                            <span class="stat-value">${player.elo || 'N/A'}</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-title">Tier</span>
+                            <span class="stat-value ${tierClass}">${player.tier || 'Unranked'}</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-title">KDR</span>
+                            <span class="stat-value">${kdr}</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="stat-title">승률</span>
+                            <span class="stat-value">${winRate}</span>
+                        </div>
+                    </div>
+                `;
                 mobileContainer.appendChild(card);
             });
         }
-
-        // --- 신규 함수: 메인 뷰 업데이트 로직 ---
-        function updateMainView() {
-            const searchTerm = document.getElementById("searchBox").value.trim().toLowerCase();
-            let dataToShow;
-
-            if (selectedUsers.size > 0) {
-                // 태그가 있으면, 태그된 유저만 필터링해서 보여줌
-                dataToShow = leaderboardData.filter(player => selectedUsers.has(player.nickname));
-            } else {
-                // 태그가 없으면, 검색어로 전체 리스트를 필터링 (기존 로직)
-                dataToShow = searchTerm.length > 0
-                    ? leaderboardData.filter(p => p.nickname.toLowerCase().includes(searchTerm))
-                    : leaderboardData;
-            }
-
-            renderLeaderboard(dataToShow);
-        }
-
-        // --- 검색 및 태그 이벤트 핸들러 수정 ---
+        
+        // --- 검색 및 태그 관련 로직 (기존과 동일하게 작동) ---
         const searchBox = document.getElementById("searchBox");
         searchBox.addEventListener("input", function () {
-            // 메인 뷰 업데이트는 updateMainView 함수에 맡김
-            updateMainView();
-
-            // 자동완성 목록 로직은 그대로 유지 (비교할 유저를 찾아야 하므로)
             const input = this.value.trim().toLowerCase();
+            const filteredData = input.length > 0 
+                ? leaderboardData.filter(p => p.nickname.toLowerCase().includes(input))
+                : leaderboardData;
+            renderLeaderboard(filteredData);
+
             const autocompleteList = document.getElementById("autocompleteList");
             autocompleteList.innerHTML = "";
             if (input.length > 0) {
@@ -533,7 +369,8 @@
                         item.addEventListener("click", () => {
                             addFilterTag(player.nickname);
                             autocompleteList.style.display = "none";
-                            this.value = ""; // 검색창 비우기
+                            this.value = "";
+                            renderLeaderboard(leaderboardData);
                         });
                         autocompleteList.appendChild(item);
                     });
@@ -552,7 +389,6 @@
             selectedUsers.add(nickname);
             updateFilterTags();
             updateTeamBalanceButtonState();
-            updateMainView(); // 변경점: 태그 추가 후 메인 뷰 업데이트
         }
 
         function updateFilterTags() {
@@ -566,7 +402,6 @@
                     selectedUsers.delete(nickname);
                     updateFilterTags();
                     updateTeamBalanceButtonState();
-                    updateMainView(); // 변경점: 태그 제거 후 메인 뷰 업데이트
                 });
                 filterTags.appendChild(tag);
             });
@@ -577,12 +412,12 @@
             teamBalanceButton.disabled = selectedUsers.size < 2;
         }
 
-        // 모달 관련 로직은 변경 없음
+        // --- 모달 관련 로직 (기존과 동일) ---
+        // (이 부분은 수정할 필요 없이 그대로 두시면 됩니다)
         const openModalButton = document.getElementById("teamBalanceButton");
         const closeModalButton = document.getElementById("closeModalButton");
         const modal = document.getElementById("customModal");
-        if (modal) {
-            const modalContent = modal.querySelector('.modal-content');
+        if(modal) { // modal이 null이 아닐 때만 이벤트 리스너 추가
             closeModalButton.addEventListener("click", () => modal.style.display = "none");
             window.addEventListener("click", (event) => { if (event.target === modal) modal.style.display = "none"; });
             openModalButton.addEventListener("click", () => {
@@ -597,5 +432,4 @@
         function displayTeams({ phantom, ghost }) { /* ... */ }
     </script>
 </body>
-
 </html>
