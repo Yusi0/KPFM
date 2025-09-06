@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPFM</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: 'Roboto', Arial, sans-serif;
@@ -406,7 +407,13 @@
 </head>
 
 <body>
-    <div class="container">
+    <!-- 로딩 인디케이터 추가 -->
+    <div id="loading" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px;">
+        loading...
+    </div>
+
+    <!-- 메인 컨테이너는 처음에 숨김 -->
+    <div class="container" style="display: none;">
         <h1>KPFM Leaderboard</h1>
         <div class="search-container">
             <input type="text" id="searchBox" placeholder="Search user..." autocomplete="off">
@@ -419,6 +426,7 @@
         <div class="table-container">
             <table id="leaderboard">
                 <thead>
+                    <!-- 테이블 헤더는 JS에서 동적으로 생성 가능하지만, 여기서는 renderLeaderboard에서 처리 -->
                 </thead>
                 <tbody>
                     <!-- Leaderboard rows will be dynamically generated -->
@@ -456,32 +464,65 @@
     <script>
         let leaderboardData = [];
         const timestamp = `?timestamp=${Date.now()}`;
-        fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`)
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.trim().split('\n');
-                const headers = rows[0].split(',').map(header => header.trim());
-                const matches = rows.slice(1).map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                });
-                processMatches(matches);
-            })
-            .catch(error => console.error("Error loading match.csv:", error));
 
-        fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`)
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.trim().split('\n');
-                const headers = rows[0].split(',').map(header => header.trim());
-                const leaderboard = rows.slice(1).map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                });
-                updateLeaderboardWithEloAndTier(leaderboard);
-            })
-            .catch(error => console.error("Error loading lboard.csv:", error));
+        // 데이터를 로드하고 처리하는 메인 함수 (async/await 사용)
+        async function loadAndProcessData() {
+            const loadingIndicator = document.getElementById('loading');
+            const mainContainer = document.querySelector('.container');
 
+            try {
+                // 두 fetch 요청을 동시에 보내고, 둘 다 완료될 때까지 기다림
+                const [matchResponse, lboardResponse] = await Promise.all([
+                    fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`),
+                    fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`)
+                ]);
+
+                // 응답이 정상인지 확인
+                if (!matchResponse.ok || !lboardResponse.ok) {
+                    throw new Error('네트워크 응답이 올바르지 않습니다.');
+                }
+
+                // 두 응답을 텍스트로 변환하는 작업을 동시에 하고, 둘 다 완료될 때까지 기다림
+                const [matchText, lboardText] = await Promise.all([
+                    matchResponse.text(),
+                    lboardResponse.text()
+                ]);
+
+                // --- 이제 모든 데이터가 준비되었으므로, 순서대로 처리 ---
+
+                // 1. match.csv 데이터 처리 (lboard.csv보다 반드시 먼저!)
+                const matchRows = matchText.trim().split('\n');
+                const matchHeaders = matchRows[0].split(',').map(header => header.trim());
+                const matches = matchRows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(matchHeaders.map((header, index) => [header, values[index]]));
+                });
+                processMatches(matches); // leaderboardData 생성
+
+                // 2. lboard.csv 데이터 처리
+                const lboardRows = lboardText.trim().split('\n');
+                const lboardHeaders = lboardRows[0].split(',').map(header => header.trim());
+                const leaderboard = lboardRows.slice(1).map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return Object.fromEntries(lboardHeaders.map((header, index) => [header, values[index]]));
+                });
+                updateLeaderboardWithEloAndTier(leaderboard); // leaderboardData에 ELO, Tier 추가
+
+            } catch (error) {
+                console.error("데이터를 불러오는 중 오류가 발생했습니다:", error);
+                loadingIndicator.textContent = '데이터를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.';
+            } finally {
+                // 성공하든 실패하든 로딩 인디케이터를 숨기고 메인 컨텐츠를 표시
+                loadingIndicator.style.display = 'none';
+                mainContainer.style.display = 'block';
+            }
+        }
+
+        // 페이지가 로드되면 메인 함수 실행
+        document.addEventListener('DOMContentLoaded', loadAndProcessData);
+
+
+        // ----------------- 아래는 기존 함수들 (변경 없음) -----------------
 
         // 모달 요소 가져오기
         const openModalButton = document.getElementById("openModalButton");
@@ -541,6 +582,7 @@
         // 예상 승률 계산 함수
         function calculateWinRate(phantomElo, ghostElo) {
             const totalElo = phantomElo + ghostElo;
+            if (totalElo === 0) return { phantomWinRate: "50.0%", ghostWinRate: "50.0%" };
             return {
                 phantomWinRate: ((phantomElo / totalElo) * 100).toFixed(1) + "%",
                 ghostWinRate: ((ghostElo / totalElo) * 100).toFixed(1) + "%"
@@ -567,13 +609,13 @@
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
-            <td>${phantomPlayer.nickname || ""}</td>
-            <td>${(phantomPlayer.kills / Math.max(1, phantomPlayer.deaths)).toFixed(2) || ""}</td>
-            <td>${phantomPlayer.elo || ""}</td>
-            <td>${ghostPlayer.nickname || ""}</td>
-            <td>${(ghostPlayer.kills / Math.max(1, ghostPlayer.deaths)).toFixed(2) || ""}</td>
-            <td>${ghostPlayer.elo || ""}</td>
-        `;
+                    <td>${phantomPlayer.nickname || ""}</td>
+                    <td>${phantomPlayer.nickname ? (phantomPlayer.kills / Math.max(1, phantomPlayer.deaths)).toFixed(2) : ""}</td>
+                    <td>${phantomPlayer.elo || ""}</td>
+                    <td>${ghostPlayer.nickname || ""}</td>
+                    <td>${ghostPlayer.nickname ? (ghostPlayer.kills / Math.max(1, ghostPlayer.deaths)).toFixed(2) : ""}</td>
+                    <td>${ghostPlayer.elo || ""}</td>
+                `;
                 teamTable.appendChild(row);
             }
 
@@ -821,9 +863,20 @@
         }
 
         function renderLeaderboard(data) {
-            const tbody = document.querySelector("#leaderboard tbody");
-            tbody.innerHTML = '';
+            const table = document.querySelector("#leaderboard");
+            table.innerHTML = ''; // 테이블 전체 초기화
 
+            // 헤더 생성
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            const headers = ["Rank", "Nickname", "KDR", "Win Rate", "KPR", "Matches", "ELO", "Tier"];
+            headers.forEach(text => {
+                const th = document.createElement("th");
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
             const isFiltered = selectedUsers.size > 0;
 
             data.forEach(player => {
@@ -853,45 +906,43 @@
                     default: tierClass = 'tier-unranked';
                 }
 
-                const row = document.createElement('tr');
+                const row = tbody.insertRow();
                 row.addEventListener("click", () => {
                     window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
                 });
 
                 row.innerHTML = `
-            <td>
-                <span class="stat-value" style="font-weight: bold;">#${player.rank}</span>
-            </td>
-            <td>
-                <a href="user.html?nickname=${encodeURIComponent(player.nickname)}" 
-                   style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a>
-            </td>
-            <td>
-                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
-                ${(player.kills / Math.max(1, player.deaths)).toFixed(2)}
-            </td>
-            <td>
-                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Win Rate</small>
-                ${((player.wins / player.matches) * 100).toFixed(1)}%
-            </td>
-            <td>
-                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KPR</small>
-                ${(player.kills / player.matches).toFixed(1)}
-            </td>
-            <td>
-                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Matches</small>
-                ${player.matches}
-            </td>
-            <td>
-                <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${tierName}</small>
-                ${player.elo || 'N/A'}
-            </td>
-            <td class="${tierClass}">
-                ${player.tier || 'Unranked'}
-            </td>
-        `;
-
-                tbody.appendChild(row);
+                    <td>
+                        <span class="stat-value" style="font-weight: bold;">#${player.rank}</span>
+                    </td>
+                    <td>
+                        <a href="user.html?nickname=${encodeURIComponent(player.nickname)}" 
+                           style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a>
+                    </td>
+                    <td>
+                        <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
+                        ${(player.kills / Math.max(1, player.deaths)).toFixed(2)}
+                    </td>
+                    <td>
+                        <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Win Rate</small>
+                        ${((player.wins / player.matches) * 100).toFixed(1)}%
+                    </td>
+                    <td>
+                        <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KPR</small>
+                        ${(player.kills / player.matches).toFixed(1)}
+                    </td>
+                    <td>
+                        <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Matches</small>
+                        ${player.matches}
+                    </td>
+                    <td>
+                        <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${tierName}</small>
+                        ${player.elo || 'N/A'}
+                    </td>
+                    <td class="${tierClass}">
+                        ${player.tier || 'Unranked'}
+                    </td>
+                `;
 
                 // 표시 후 원복
                 player.tier = originalTier;
