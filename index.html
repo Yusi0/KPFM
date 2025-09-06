@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             display: flex;
             justify-content: center;
         }
+
         .container {
             width: 90%;
             max-width: 1000px;
@@ -25,6 +27,7 @@
             margin: 20px auto;
             overflow: hidden;
         }
+
         h1 {
             font-size: 28px;
             font-weight: 700;
@@ -32,11 +35,13 @@
             color: #BB86FC;
             margin-bottom: 25px;
         }
+
         .search-container {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
         }
+
         input {
             width: 100%;
             max-width: 400px;
@@ -49,25 +54,31 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
             transition: all 0.3s ease;
         }
+
         input:focus {
             outline: none;
             border-color: #BB86FC;
             box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
         }
+
         .table-container {
             width: 100%;
             margin-top: 20px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             background-color: #1E1E1E;
         }
-        th, td {
+
+        th,
+        td {
             padding: 15px;
             text-align: center;
             border-bottom: 1px solid #333;
         }
+
         th {
             position: sticky;
             top: 0;
@@ -75,36 +86,199 @@
             background-color: #333;
             color: #BB86FC;
         }
+
         tbody tr {
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
+
         tbody tr:hover {
             background-color: #3C3C3C;
         }
-        .tier-copper { color: #B87333; } .tier-bronze { color: #CD7F32; } .tier-silver { color: #C0C0C0; } .tier-gold { color: #FFD700; } .tier-platinum { color: #00BFFF; } .tier-diamond { color: #8A2BE2; } .tier-champion { color: #DC143C; } .tier-unranked { color: #E0E0E0; }
-        
+
+        .tier-copper {
+            color: #B87333;
+        }
+
+        .tier-bronze {
+            color: #CD7F32;
+        }
+
+        .tier-silver {
+            color: #C0C0C0;
+        }
+
+        .tier-gold {
+            color: #FFD700;
+        }
+
+        .tier-platinum {
+            color: #00BFFF;
+        }
+
+        .tier-diamond {
+            color: #8A2BE2;
+        }
+
+        .tier-champion {
+            color: #DC143C;
+        }
+
+        .tier-unranked {
+            color: #E0E0E0;
+        }
+
         /* --- 검색 및 태그 스타일 (기존과 동일) --- */
-        .search-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
-        #autocompleteList { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1E1E1E; border: 1px solid #333; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; }
-        #autocompleteList div { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; }
-        #autocompleteList div:hover { background-color: #BB86FC; color: #121212; }
-        .tag-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-        .tag { display: inline-flex; align-items: center; padding: 5px 10px; background-color: #2A2A2A; border-radius: 8px; font-size: 14px; }
-        .tag button { background: none; border: none; color: #BB86FC; margin-left: 8px; cursor: pointer; }
-        
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        #autocompleteList {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        #autocompleteList div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+        }
+
+        #autocompleteList div:hover {
+            background-color: #BB86FC;
+            color: #121212;
+        }
+
+        .tag-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #2A2A2A;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .tag button {
+            background: none;
+            border: none;
+            color: #BB86FC;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+
         /* --- 모달 스타일 (기존과 동일) --- */
-        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); }
-        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #1E1E1E; border-radius: 8px; width: 90%; max-width: 800px; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        #teamTable { width: 100%; table-layout: fixed; }
-        #teamTable th, #teamTable td { padding: 10px; text-align: center; border: 1px solid #333; white-space: nowrap; }
-        #teamTable th { background-color: #333; color: #BB86FC; }
-        .close { color: #E0E0E0; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .modal-button { padding: 10px 20px; margin-left: 10px; font-size: 14px; background-color: #BB86FC; color: #121212; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
-        .modal-button:hover { background-color: #9E6CE0; }
-        .modal-button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
-        .win-rate-bar { display: flex; height: 20px; width: 100%; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 10px; }
-        .phantom-bar { height: 100%; background-color: #00BFFF; } .ghost-bar { height: 100%; background-color: #ff7300; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #teamTable {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        #teamTable th,
+        #teamTable td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #333;
+            white-space: nowrap;
+        }
+
+        #teamTable th {
+            background-color: #333;
+            color: #BB86FC;
+        }
+
+        .close {
+            color: #E0E0E0;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            font-size: 14px;
+            background-color: #BB86FC;
+            color: #121212;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            background-color: #9E6CE0;
+        }
+
+        .modal-button:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .win-rate-bar {
+            display: flex;
+            height: 20px;
+            width: 100%;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .phantom-bar {
+            height: 100%;
+            background-color: #00BFFF;
+        }
+
+        .ghost-bar {
+            height: 100%;
+            background-color: #ff7300;
+        }
 
         /* --- 신규 모바일 카드 스타일 --- */
         .leaderboard-card {
@@ -115,10 +289,12 @@
             border: 1px solid #333;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .leaderboard-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
         }
+
         .card-main-header {
             display: flex;
             justify-content: space-between;
@@ -127,33 +303,39 @@
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
+
         .card-rank {
             font-size: 1.2rem;
             font-weight: bold;
             color: #FFD700;
         }
+
         .card-nickname {
             font-size: 1.2rem;
             font-weight: bold;
             color: #BB86FC;
         }
+
         .card-stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
         }
+
         .card-stat {
             background-color: #1E1E1E;
             border-radius: 8px;
             padding: 10px;
             text-align: center;
         }
+
         .stat-title {
             display: block;
             font-size: 0.8rem;
             color: #9C9C9C;
             margin-bottom: 4px;
         }
+
         .stat-value {
             font-size: 1.1rem;
             font-weight: bold;
@@ -161,17 +343,28 @@
 
         /* --- 반응형 디스플레이 제어 --- */
         /* 기본 (데스크톱): 테이블 보이기, 모바일 컨테이너 숨기기 */
-        #leaderboard { display: table; }
-        #leaderboard-mobile-container { display: none; }
+        #leaderboard {
+            display: table;
+        }
+
+        #leaderboard-mobile-container {
+            display: none;
+        }
 
         /* 모바일 (화면 너비 768px 이하): 테이블 숨기기, 모바일 컨테이너 보이기 */
         @media (max-width: 768px) {
-            .container { padding: 15px; }
-            #leaderboard { display: none; }
-            #leaderboard-mobile-container { 
-                display: flex; 
-                flex-direction: column; 
-                gap: 15px; 
+            .container {
+                padding: 15px;
+            }
+
+            #leaderboard {
+                display: none;
+            }
+
+            #leaderboard-mobile-container {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
             }
         }
     </style>
@@ -257,7 +450,7 @@
             leaderboardData = Object.values(playerStats);
         }
 
-        function updateLeaderboardWithEloAndTier(leaderboard) {
+function updateLeaderboardWithEloAndTier(leaderboard) {
             leaderboard.forEach(rankEntry => {
                 const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
                 if (player) {
@@ -265,11 +458,27 @@
                     player.tier = rankEntry.Tier || 'Unranked';
                 }
             });
+
             leaderboardData.sort((a, b) => b.elo - a.elo);
             let rankCounter = 1;
             leaderboardData.forEach(p => {
                 p.rank = (p.matches > 5 && p.elo > 0) ? rankCounter++ : 'N/A';
             });
+
+            leaderboardData.sort((a, b) => {
+                const isARanked = a.rank !== 'N/A';
+                const isBRanked = b.rank !== 'N/A';
+
+                if (isARanked && !isBRanked) {
+                    return -1;
+                }
+                if (!isARanked && isBRanked) {
+                    return 1;
+                }
+
+                return b.elo - a.elo;
+            });
+
             renderLeaderboard(leaderboardData);
         }
 
@@ -280,7 +489,7 @@
             // Clear previous content
             desktopTable.innerHTML = '';
             mobileContainer.innerHTML = '';
-            
+
             // --- 데스크톱 테이블 헤더 생성 ---
             const thead = desktopTable.createTHead();
             const headerRow = thead.insertRow();
@@ -302,7 +511,7 @@
 
                 const navigateToUser = () => window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
 
-                // 1. 데스크톱 뷰 생성 (테이블 행)
+                // 1. 데스크톱 뷰 생성 (테이블 행)  
                 const row = desktopTbody.insertRow();
                 row.addEventListener("click", navigateToUser);
                 row.innerHTML = `
@@ -347,12 +556,12 @@
                 mobileContainer.appendChild(card);
             });
         }
-        
+
         // --- 검색 및 태그 관련 로직 (기존과 동일하게 작동) ---
         const searchBox = document.getElementById("searchBox");
         searchBox.addEventListener("input", function () {
             const input = this.value.trim().toLowerCase();
-            const filteredData = input.length > 0 
+            const filteredData = input.length > 0
                 ? leaderboardData.filter(p => p.nickname.toLowerCase().includes(input))
                 : leaderboardData;
             renderLeaderboard(filteredData);
@@ -416,7 +625,7 @@
         const openModalButton = document.getElementById("teamBalanceButton");
         const closeModalButton = document.getElementById("closeModalButton");
         const modal = document.getElementById("customModal");
-        if(modal) { // modal이 null이 아닐 때만 이벤트 리스너 추가
+        if (modal) { // modal이 null이 아닐 때만 이벤트 리스너 추가
             closeModalButton.addEventListener("click", () => modal.style.display = "none");
             window.addEventListener("click", (event) => { if (event.target === modal) modal.style.display = "none"; });
             openModalButton.addEventListener("click", () => {
@@ -431,4 +640,5 @@
         function displayTeams({ phantom, ghost }) { /* ... */ }
     </script>
 </body>
+
 </html>
