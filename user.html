@@ -253,9 +253,10 @@
             color: #c4b5fd;
         }
 
-        canvas {
-            width: 100% !important;
-            height: 300px !important;
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 320px;
         }
 
         .section {
@@ -573,9 +574,10 @@
                         <div class="chart-title">
                             ELO Trend
                         </div>
-
-                        <canvas id="eloTrend"></canvas>
-
+                        
+                        <div class="chart-wrapper">
+                            <canvas id="eloTrend"></canvas>
+                        </div>
                     </div>
 
                     <div class="chart-card">
@@ -584,8 +586,9 @@
                             KDR Trend
                         </div>
 
-                        <canvas id="kdrTrend"></canvas>
-
+                        <div class="chart-wrapper">
+                            <canvas id="kdrTrend"></canvas>
+                        </div>
                     </div>
 
                 </div>
@@ -1073,7 +1076,7 @@ function renderELOTrend() {
 
         options: {
             responsive: true,
-
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
@@ -1144,7 +1147,7 @@ function renderKDRTrend(matches) {
 
         options: {
             responsive: true,
-
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
