@@ -767,7 +767,25 @@
         }
 
         function renderLeaderboard(data) {
-
+        
+            data.sort((a, b) => {
+        
+                const aSelected = selectedUsers.has(a.nickname);
+                const bSelected = selectedUsers.has(b.nickname);
+        
+                if (aSelected && !bSelected) return -1;
+        
+                if (!aSelected && bSelected) return 1;
+        
+                return (b.elo || 0) - (a.elo || 0);
+            });
+        
+            const desktopTable =
+                document.querySelector("#leaderboard");
+        
+            const mobileContainer =
+                document.querySelector("#leaderboard-mobile-container");
+            
             const tbody =
                 document.querySelector('#leaderboard tbody');
 
