@@ -695,6 +695,475 @@
         </div>
 
     </div>
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const nickname = params.get("nickname");
+
+if (!nickname) {
+    alert("No user specified!");
+    window.location.href = "index.html";
+}
+
+const avatarLetter = document.getElementById("avatarLetter");
+const statNickname = document.getElementById("statNickname");
+
+statNickname.textContent = nickname;
+avatarLetter.textContent = nickname[0]?.toUpperCase() || "P";
+
+document.title = `${nickname} - KPFM`;
+
+document.getElementById("backButton")
+    .addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+let allMatches = [];
+let eloHistory = [];
+let tierHistory = [];
+
+Promise.all([
+    fetch(`https://yusi0.github.io/KPFM/match.csv?timestamp=${Date.now()}`)
+        .then(r => r.text()),
+
+    fetch(`https://yusi0.github.io/KPFM/lboard.csv?timestamp=${Date.now()}`)
+        .then(r => r.text()),
+
+    fetch(`https://yusi0.github.io/KPFM/aftercalc.csv?timestamp=${Date.now()}`)
+        .then(r => r.text())
+])
+.then(([matchText, leaderboardText, aftercalcText]) => {
+
+    const matches = csvToJson(matchText);
+    const leaderboard = csvToJson(leaderboardText);
+    const aftercalc = csvToJson(aftercalcText);
+
+    allMatches = matches;
+
+    processLeaderboard(leaderboard);
+    processUserStats(matches, aftercalc);
+
+})
+.catch(err => {
+    console.error(err);
+    alert("데이터 로딩 실패");
+});
+
+function csvToJson(text) {
+
+    const rows = text.trim().split('\n');
+
+    const headers = rows[0]
+        .split(',')
+        .map(h => h.trim());
+
+    return rows.slice(1).map(row => {
+
+        const values = row
+            .split(',')
+            .map(v => v.trim());
+
+        return Object.fromEntries(
+            headers.map((h, i) => [h, values[i]])
+        );
+
+    });
+}
+
+function processLeaderboard(leaderboard) {
+
+    leaderboard.sort((a, b) =>
+        parseInt(b.ELO || 0) - parseInt(a.ELO || 0)
+    );
+
+    leaderboard.forEach((player, index) => {
+        player.rank = index + 1;
+    });
+
+    const user = leaderboard.find(
+        p => p.Nickname === nickname
+    );
+
+    if (!user) {
+        alert("유저를 찾을 수 없습니다.");
+        return;
+    }
+
+    const kills = parseInt(user.Kills || 0);
+    const deaths = parseInt(user.Deaths || 0);
+    const wins = parseInt(user.Wins || 0);
+    const losses = parseInt(user.Losses || 0);
+    const matches = parseInt(user.Total || 0);
+
+    document.getElementById("statELO").textContent =
+        user.ELO || 1500;
+
+    document.getElementById("statRank").textContent =
+        `#${user.rank}`;
+
+    document.getElementById("statTier").textContent =
+        user.Tier || "Unranked";
+
+    document.getElementById("statKDR").textContent =
+        (kills / Math.max(1, deaths)).toFixed(2);
+
+    document.getElementById("statKPR").textContent =
+        (kills / Math.max(1, matches)).toFixed(1);
+
+    document.getElementById("statWR").textContent =
+        ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
+
+    document.getElementById("statTotalKD").textContent =
+        `${kills} / ${deaths}`;
+
+    document.getElementById("statTotalWL").textContent =
+        `${wins} / ${losses}`;
+
+    document.getElementById("statMatches").textContent =
+        matches;
+
+    applyTierColor(user.Tier || "Unranked");
+}
+
+function applyTierColor(tier) {
+
+    const el = document.getElementById("statTier");
+
+    const tierName = tier
+        .split(' ')[0]
+        .toLowerCase();
+
+    el.className = `tier-label tier-${tierName}`;
+}
+
+function processUserStats(matches, aftercalc) {
+
+    const userMatches = matches.filter(
+        m => m.Nickname === nickname
+    );
+
+    const userRounds = aftercalc.filter(
+        r => r.Nickname === nickname
+    );
+
+    renderMapStats(userMatches);
+    renderMatchHistory(userMatches, userRounds);
+
+    eloHistory = userRounds.map(r =>
+        parseInt(r.ELO || 1500)
+    );
+
+    tierHistory = userRounds.map(r =>
+        r.Tier || 'Unranked'
+    );
+
+    renderELOTrend();
+    renderKDRTrend(userMatches);
+}
+
+function renderMapStats(matches) {
+
+    const tbody = document.querySelector(
+        '#mapWinRate tbody'
+    );
+
+    tbody.innerHTML = '';
+
+    const stats = {};
+
+    matches.forEach(match => {
+
+        const rawMap = (match.Map || 'Unknown').toLowerCase();
+
+        const mapNames = {
+            metro: "Metro",
+            warehouse: "Warehouse",
+            desert: "Desert Storm",
+            elevation: "Elevation"
+        };
+
+        const map = mapNames[rawMap] || rawMap;
+
+        if (!stats[map]) {
+            stats[map] = {
+                wins: 0,
+                total: 0
+            };
+        }
+
+        stats[map].total++;
+
+        if (match.Team === match['Winning Team']) {
+            stats[map].wins++;
+        }
+    });
+
+    Object.entries(stats).forEach(([map, data]) => {
+
+        const rate = (
+            (data.wins / data.total) * 100
+        ).toFixed(1);
+
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>${map}</td>
+            <td>${data.wins}</td>
+            <td>${data.total}</td>
+            <td class="${rate < 50 ? 'negative' : 'positive'}">
+                ${rate}%
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function renderMatchHistory(matches, userRounds) {
+
+    const tbody = document.querySelector(
+        '#matchHistory tbody'
+    );
+
+    tbody.innerHTML = '';
+
+    matches.forEach((match, index) => {
+
+        const kills = parseInt(match.Kills || 0);
+        const deaths = parseInt(match.Deaths || 0);
+
+        const kdr = (
+            kills / Math.max(1, deaths)
+        ).toFixed(2);
+
+        const currentELO = parseInt(
+            userRounds[index]?.ELO || 1500
+        );
+
+        const previousELO = index > 0
+            ? parseInt(userRounds[index - 1]?.ELO || 1500)
+            : 1500;
+
+        const diff = currentELO - previousELO;
+
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>
+                <div class="match-pill">
+                    ${match.Round || '-'}
+                </div>
+            </td>
+
+            <td>${kills}</td>
+
+            <td>${deaths}</td>
+
+            <td>${kdr}</td>
+
+            <td>
+                ${currentELO}
+                <span class="${diff >= 0 ? 'positive' : 'negative'}">
+                    (${diff >= 0 ? '+' : ''}${diff})
+                </span>
+            </td>
+        `;
+
+        row.addEventListener('click', () => {
+            displayMatchDetails(match.Round);
+        });
+
+        tbody.appendChild(row);
+    });
+}
+
+function displayMatchDetails(round) {
+
+    const modal = document.getElementById('matchModal');
+
+    const tbody = document.querySelector(
+        '#matchDetails tbody'
+    );
+
+    tbody.innerHTML = '';
+
+    document.getElementById(
+        'modalRoundTitle'
+    ).textContent = `${round} Round`;
+
+    const roundPlayers = allMatches.filter(
+        p => String(p.Round) === String(round)
+    );
+
+    const phantom = roundPlayers.filter(
+        p => p.Team === '1'
+    );
+
+    const ghost = roundPlayers.filter(
+        p => p.Team === '2'
+    );
+
+    const max = Math.max(
+        phantom.length,
+        ghost.length
+    );
+
+    for (let i = 0; i < max; i++) {
+
+        const p1 = phantom[i] || {};
+        const p2 = ghost[i] || {};
+
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>${p1.Nickname || ''}</td>
+            <td>${p1.Kills || ''}</td>
+            <td>${p1.Deaths || ''}</td>
+            <td>${p1.ELO || ''}</td>
+
+            <td>${p2.Nickname || ''}</td>
+            <td>${p2.Kills || ''}</td>
+            <td>${p2.Deaths || ''}</td>
+            <td>${p2.ELO || ''}</td>
+        `;
+
+        tbody.appendChild(row);
+    }
+
+    modal.classList.add('show');
+}
+
+function renderELOTrend() {
+
+    const ctx = document
+        .getElementById('eloTrend')
+        .getContext('2d');
+
+    new Chart(ctx, {
+
+        type: 'line',
+
+        data: {
+            labels: eloHistory.map((_, i) => i + 1),
+
+            datasets: [{
+                label: 'ELO',
+
+                data: eloHistory,
+
+                borderColor: '#8b5cf6',
+
+                backgroundColor:
+                    'rgba(139,92,246,0.15)',
+
+                tension: 0.3,
+
+                fill: true
+            }]
+        },
+
+        options: {
+            responsive: true,
+
+            plugins: {
+                legend: {
+                    display: false
+                },
+
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+
+                            const tier =
+                                tierHistory[
+                                    context.dataIndex
+                                ] || 'Unranked';
+
+                            return `ELO: ${context.raw} (${tier})`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderKDRTrend(matches) {
+
+    const ctx = document
+        .getElementById('kdrTrend')
+        .getContext('2d');
+
+    let totalKills = 0;
+    let totalDeaths = 0;
+
+    const kdrHistory = matches.map(match => {
+
+        totalKills += parseInt(match.Kills || 0);
+
+        totalDeaths += parseInt(match.Deaths || 0);
+
+        return (
+            totalKills / Math.max(1, totalDeaths)
+        ).toFixed(2);
+    });
+
+    new Chart(ctx, {
+
+        type: 'line',
+
+        data: {
+
+            labels: kdrHistory.map((_, i) => i + 1),
+
+            datasets: [{
+
+                label: 'KDR',
+
+                data: kdrHistory,
+
+                borderColor: '#ec4899',
+
+                backgroundColor:
+                    'rgba(236,72,153,0.12)',
+
+                tension: 0.3,
+
+                fill: true
+            }]
+        },
+
+        options: {
+            responsive: true,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+document.getElementById('closeModal')
+    .addEventListener('click', () => {
+
+        document.getElementById('matchModal')
+            .classList.remove('show');
+
+    });
+
+window.addEventListener('click', e => {
+
+    const modal =
+        document.getElementById('matchModal');
+
+    if (e.target === modal) {
+        modal.classList.remove('show');
+    }
+});
+
+</script>
 
 </body>
 
