@@ -727,23 +727,36 @@
 
         }
 
-        function refreshLeaderboard() {
-
-            let filteredData;
-        
-            if (selectedUsers.size > 0) {
-        
-                filteredData = leaderboardData.filter(
-                    p => selectedUsers.has(p.nickname)
-                );
-        
-            } else {
-        
-                filteredData = leaderboardData;
+            function refreshLeaderboard() {
+            
+                const input =
+                    document.getElementById('searchBox')
+                        .value
+                        .trim()
+                        .toLowerCase();
+            
+                let filteredData = leaderboardData;
+            
+                // 태그 필터
+                if (selectedUsers.size > 0) {
+            
+                    filteredData = filteredData.filter(
+                        p => selectedUsers.has(p.nickname)
+                    );
+                }
+            
+                // 검색어 필터
+                if (input.length > 0) {
+            
+                    filteredData = filteredData.filter(
+                        p => p.nickname
+                            .toLowerCase()
+                            .includes(input)
+                    );
+                }
+            
+                renderLeaderboard(filteredData);
             }
-        
-            renderLeaderboard(filteredData);
-        }
                 
         function updateLeaderboardWithEloAndTier(leaderboard) {
 
