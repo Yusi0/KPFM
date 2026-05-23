@@ -1019,11 +1019,18 @@
         function addFilterTag(nickname) {
 
             if (selectedUsers.has(nickname)) return;
-
+        
             selectedUsers.add(nickname);
-
+        
             updateFilterTags();
-
+            updateTeamBalanceButtonState();
+        
+            // 추가 즉시 리더보드 갱신
+            renderLeaderboard(
+                leaderboardData.filter(
+                    p => selectedUsers.has(p.nickname)
+                )
+            );
         }
 
         function updateFilterTags() {
@@ -1050,6 +1057,20 @@
                     selectedUsers.delete(nickname);
 
                     updateFilterTags();
+                    updateTeamBalanceButtonState();
+                    
+                    if (selectedUsers.size > 0) {
+                    
+                        renderLeaderboard(
+                            leaderboardData.filter(
+                                p => selectedUsers.has(p.nickname)
+                            )
+                        );
+                    
+                    } else {
+                    
+                        renderLeaderboard(leaderboardData);
+                    }
 
                 };
 
