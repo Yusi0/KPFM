@@ -2,643 +2,1043 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KPFM 리더보드</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KPFM Leaderboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #070b14;
+            --bg2: #0f172a;
+
+            --panel: rgba(15, 23, 42, 0.72);
+            --panel-solid: #111827;
+
+            --border: rgba(255, 255, 255, 0.08);
+
+            --text: #f8fafc;
+            --muted: #94a3b8;
+
+            --accent: #8b5cf6;
+            --accent2: #6366f1;
+
+            --gold: #fbbf24;
+
+            --shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+
+            --radius: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: #121212;
             margin: 0;
-            color: #E0E0E0;
-            display: flex;
-            justify-content: center;
+            min-height: 100%;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at top left,
+                    rgba(99, 102, 241, 0.18),
+                    transparent 30%),
+                radial-gradient(circle at top right,
+                    rgba(139, 92, 246, 0.14),
+                    transparent 25%),
+                linear-gradient(180deg, #020617, #0f172a);
+            color: var(--text);
+        }
+
+        body {
+            padding: 32px 16px;
         }
 
         .container {
-            width: 90%;
-            max-width: 1000px;
-            background: #1E1E1E;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-            padding: 30px;
-            margin: 20px auto;
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+
+            border: 1px solid var(--border);
+            border-radius: 32px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .hero {
+            position: relative;
+            padding: 42px 42px 28px;
+            border-bottom: 1px solid var(--border);
             overflow: hidden;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            text-align: center;
-            color: #BB86FC;
-            margin-bottom: 25px;
+        .hero::before {
+            content: "";
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            top: -250px;
+            right: -100px;
+            background: radial-gradient(circle,
+                    rgba(139, 92, 246, 0.25),
+                    transparent 70%);
+            pointer-events: none;
         }
 
-        .search-container {
+        .title-row {
             display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 1;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg,
+                    #c084fc,
+                    #8b5cf6,
+                    #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .top-stat-boxes {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .top-stat {
+            min-width: 120px;
+
+            background: rgba(255, 255, 255, 0.04);
+
+            border: 1px solid rgba(255, 255, 255, 0.06);
+
+            border-radius: 20px;
+
+            padding: 16px 18px;
+        }
+
+        .top-stat-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .top-stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .controls {
+            display: flex;
+            gap: 14px;
+            padding: 28px 42px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
         }
 
         input {
             width: 100%;
-            max-width: 400px;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            background-color: #1E1E1E;
-            color: #E0E0E0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+            height: 60px;
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+
+            background: rgba(255, 255, 255, 0.04);
+
+            color: white;
+            font-size: 15px;
+
+            padding: 0 20px;
+
+            outline: none;
+
+            transition: 0.25s ease;
         }
 
         input:focus {
-            outline: none;
-            border-color: #BB86FC;
-            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+            border-color: rgba(139, 92, 246, 0.7);
+
+            box-shadow:
+                0 0 0 5px rgba(139, 92, 246, 0.12);
         }
 
-        .table-container {
+        button {
+            border: none;
+            border-radius: 20px;
+
+            padding: 0 26px;
+
+            height: 60px;
+
+            background: linear-gradient(135deg,
+                    #8b5cf6,
+                    #6366f1);
+
+            color: white;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition: 0.22s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 14px 25px rgba(99, 102, 241, 0.28);
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #autocompleteList {
+            position: absolute;
             width: 100%;
-            margin-top: 20px;
+            top: calc(100% + 8px);
+
+            background: #111827;
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            border-radius: 18px;
+
+            overflow: hidden;
+            z-index: 50;
+
+            display: none;
+        }
+
+        #autocompleteList div {
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        #autocompleteList div:hover {
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+
+            padding: 0 42px 26px;
+        }
+
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 10px 16px;
+
+            border-radius: 999px;
+
+            background: rgba(139, 92, 246, 0.12);
+
+            border: 1px solid rgba(139, 92, 246, 0.22);
+
+            font-size: 14px;
+        }
+
+        .tag button {
+            height: auto;
+            width: auto;
+            padding: 0;
+            background: transparent;
+            font-size: 18px;
+        }
+
+        .leaderboard-wrap {
+            padding: 0 24px 24px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #1E1E1E;
+            overflow: hidden;
         }
 
-        th,
-        td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #333;
-        }
-
-        th {
+        thead th {
             position: sticky;
             top: 0;
-            z-index: 2;
-            background-color: #333;
-            color: #BB86FC;
+
+            background: rgba(255, 255, 255, 0.03);
+
+            backdrop-filter: blur(12px);
+
+            color: #c4b5fd;
+
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            padding: 20px 18px;
+            text-align: left;
+
+            border-bottom: 1px solid var(--border);
         }
 
         tbody tr {
+            transition: 0.2s ease;
             cursor: pointer;
-            transition: background-color 0.2s ease;
         }
 
         tbody tr:hover {
-            background-color: #3C3C3C;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        td {
+            padding: 22px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .rank {
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .nickname {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+
+            border-radius: 14px;
+
+            background:
+                linear-gradient(135deg,
+                    rgba(139, 92, 246, 0.8),
+                    rgba(99, 102, 241, 0.8));
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-weight: 700;
+        }
+
+        .nickname-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nickname-main {
+            font-weight: 700;
+        }
+
+        .nickname-sub {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-width: 70px;
+
+            padding: 8px 12px;
+
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.04);
+
+            border: 1px solid rgba(255, 255, 255, 0.05);
+
+            font-weight: 700;
         }
 
         .tier-copper {
-            color: #B87333;
+            color: #c08457;
         }
 
         .tier-bronze {
-            color: #CD7F32;
+            color: #cd7f32;
         }
 
         .tier-silver {
-            color: #C0C0C0;
+            color: #d1d5db;
         }
 
         .tier-gold {
-            color: #FFD700;
+            color: #facc15;
         }
 
         .tier-platinum {
-            color: #00BFFF;
+            color: #38bdf8;
         }
 
         .tier-diamond {
-            color: #8A2BE2;
+            color: #c084fc;
         }
 
         .tier-champion {
-            color: #DC143C;
+            color: #f43f5e;
         }
 
         .tier-unranked {
-            color: #E0E0E0;
+            color: #94a3b8;
         }
 
-        /* --- 검색 및 태그 스타일 (기존과 동일) --- */
-        .search-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        #autocompleteList {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background-color: #1E1E1E;
-            border: 1px solid #333;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
+        #mobileCards {
             display: none;
         }
 
-        #autocompleteList div {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #333;
-        }
+        .mobile-card {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.05),
+                    rgba(255, 255, 255, 0.02));
 
-        #autocompleteList div:hover {
-            background-color: #BB86FC;
-            color: #121212;
-        }
+            border: 1px solid rgba(255, 255, 255, 0.06);
 
-        .tag-container {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
+            border-radius: 24px;
 
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            background-color: #2A2A2A;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .tag button {
-            background: none;
-            border: none;
-            color: #BB86FC;
-            margin-left: 8px;
-            cursor: pointer;
-        }
-
-        /* --- 모달 스타일 (기존과 동일) --- */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #1E1E1E;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
             padding: 20px;
-            max-height: 90vh;
-            overflow-y: auto;
+
+            margin-bottom: 16px;
         }
 
-        #teamTable {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        #teamTable th,
-        #teamTable td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #333;
-            white-space: nowrap;
-        }
-
-        #teamTable th {
-            background-color: #333;
-            color: #BB86FC;
-        }
-
-        .close {
-            color: #E0E0E0;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .modal-button {
-            padding: 10px 20px;
-            margin-left: 10px;
-            font-size: 14px;
-            background-color: #BB86FC;
-            color: #121212;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .modal-button:hover {
-            background-color: #9E6CE0;
-        }
-
-        .modal-button:disabled {
-            background-color: #555;
-            color: #888;
-            cursor: not-allowed;
-        }
-
-        .win-rate-bar {
-            display: flex;
-            height: 20px;
-            width: 100%;
-            background-color: #333;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .phantom-bar {
-            height: 100%;
-            background-color: #00BFFF;
-        }
-
-        .ghost-bar {
-            height: 100%;
-            background-color: #ff7300;
-        }
-
-        /* --- 신규 모바일 카드 스타일 --- */
-        .leaderboard-card {
-            background-color: #2A2A2A;
-            border-radius: 12px;
-            padding: 15px;
-            cursor: pointer;
-            border: 1px solid #333;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .leaderboard-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.2);
-        }
-
-        .card-main-header {
+        .mobile-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+
+            margin-bottom: 18px;
         }
 
-        .card-rank {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #FFD700;
-        }
-
-        .card-nickname {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #BB86FC;
-        }
-
-        .card-stats-grid {
+        .mobile-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
 
-        .card-stat {
-            background-color: #1E1E1E;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
+        .mobile-stat {
+            background: rgba(255, 255, 255, 0.04);
+
+            border-radius: 16px;
+
+            padding: 14px;
         }
 
-        .stat-title {
-            display: block;
-            font-size: 0.8rem;
-            color: #9C9C9C;
-            margin-bottom: 4px;
+        .mobile-stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
         }
 
-        .stat-value {
-            font-size: 1.1rem;
-            font-weight: bold;
+        .mobile-stat-value {
+            font-weight: 700;
+            font-size: 1.05rem;
         }
 
-        /* --- 반응형 디스플레이 제어 --- */
-        /* 기본 (데스크톱): 테이블 보이기, 모바일 컨테이너 숨기기 */
-        #leaderboard {
-            display: table;
+        #loading {
+            position: fixed;
+            inset: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 18px;
+            font-weight: 600;
+
+            background: #020617;
+            z-index: 999;
         }
 
-        #leaderboard-mobile-container {
-            display: none;
-        }
-
-        /* 모바일 (화면 너비 768px 이하): 테이블 숨기기, 모바일 컨테이너 보이기 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+        @media (max-width: 900px) {
+            body {
+                padding: 10px;
             }
 
-            #leaderboard {
+            .hero {
+                padding: 28px 20px 22px;
+            }
+
+            .controls {
+                padding: 20px;
+            }
+
+            .tag-container {
+                padding: 0 20px 20px;
+            }
+
+            .leaderboard-wrap {
+                padding: 0 14px 14px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            table {
                 display: none;
             }
 
-            #leaderboard-mobile-container {
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
+            #mobileCards {
+                display: block;
+            }
+
+            button {
+                width: 100%;
             }
         }
     </style>
 </head>
 
 <body>
-    <div id="loading" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px;">
-        데이터를 불러오는 중입니다...
+
+    <div id="loading">
+        데이터 불러오는 중...
     </div>
 
-    <div class="container" style="display: none;">
-        <h1>KPFM Leaderboard</h1>
-        <div class="search-container">
-            <input type="text" id="searchBox" placeholder="유저 검색 (비교하려면 목록에서 클릭)" autocomplete="off">
-            <div id="autocompleteList" class="dropdown"></div>
-            <button id="teamBalanceButton" class="modal-button" disabled>Team Making</button>
-        </div>
+    <div class="container" style="display:none;">
+
+        <section class="hero">
+
+            <div class="title-row">
+
+                <div>
+                    <h1>
+                        <span class="gradient-text">KPFM</span>
+                        Leaderboard
+                    </h1>
+
+                    <div class="hero-sub">
+                        Competitive ranking dashboard
+                    </div>
+                </div>
+
+                <div class="top-stat-boxes">
+                    <div class="top-stat">
+                        <div class="top-stat-label">PLAYERS</div>
+                        <div class="top-stat-value" id="playerCount">0</div>
+                    </div>
+
+                    <div class="top-stat">
+                        <div class="top-stat-label">RANKED</div>
+                        <div class="top-stat-value" id="rankedCount">0</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="controls">
+
+            <div class="search-wrapper">
+                <input type="text"
+                    id="searchBox"
+                    placeholder="Search player..."
+                    autocomplete="off">
+
+                <div id="autocompleteList"></div>
+            </div>
+
+            <button id="teamBalanceButton" disabled>
+                Team Making
+            </button>
+
+        </section>
+
         <div id="filterTags" class="tag-container"></div>
-        <div class="table-container">
-            <!-- 데스크톱용 테이블 -->
+
+        <section class="leaderboard-wrap">
+
             <table id="leaderboard">
-                <thead></thead>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>KDR</th>
+                        <th>Win Rate</th>
+                        <th>KPR</th>
+                        <th>Matches</th>
+                        <th>ELO</th>
+                        <th>Tier</th>
+                    </tr>
+                </thead>
+
                 <tbody></tbody>
             </table>
-            <!-- 모바일용 카드 컨테이너 -->
-            <div id="leaderboard-mobile-container"></div>
-        </div>
+
+            <div id="mobileCards"></div>
+
+        </section>
+
     </div>
 
-    <div id="customModal" class="modal"><!-- 모달 내용 (변경 없음) --></div>
-
     <script>
+
         let leaderboardData = [];
         let selectedUsers = new Set();
+
         const timestamp = `?timestamp=${Date.now()}`;
 
         async function loadAndProcessData() {
-            // ... 데이터 로딩 및 처리 로직 (기존과 동일)
-            const loadingIndicator = document.getElementById('loading');
-            const mainContainer = document.querySelector('.container');
+
+            const loading = document.getElementById('loading');
+            const container = document.querySelector('.container');
+
             try {
+
                 const [matchResponse, lboardResponse] = await Promise.all([
                     fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`),
                     fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`)
                 ]);
-                if (!matchResponse.ok || !lboardResponse.ok) throw new Error('Network response was not ok.');
-                const [matchText, lboardText] = await Promise.all([matchResponse.text(), lboardResponse.text()]);
+
+                const [matchText, lboardText] = await Promise.all([
+                    matchResponse.text(),
+                    lboardResponse.text()
+                ]);
 
                 const matchRows = matchText.trim().split('\n');
                 const matchHeaders = matchRows[0].split(',').map(h => h.trim());
-                const matches = matchRows.slice(1).map(row => Object.fromEntries(matchHeaders.map((h, i) => [h, row.split(',').map(v => v.trim())[i]])));
+
+                const matches = matchRows.slice(1).map(row =>
+                    Object.fromEntries(
+                        matchHeaders.map((h, i) => [
+                            h,
+                            row.split(',').map(v => v.trim())[i]
+                        ])
+                    )
+                );
+
                 processMatches(matches);
 
                 const lboardRows = lboardText.trim().split('\n');
                 const lboardHeaders = lboardRows[0].split(',').map(h => h.trim());
-                const leaderboard = lboardRows.slice(1).map(row => Object.fromEntries(lboardHeaders.map((h, i) => [h, row.split(',').map(v => v.trim())[i]])));
+
+                const leaderboard = lboardRows.slice(1).map(row =>
+                    Object.fromEntries(
+                        lboardHeaders.map((h, i) => [
+                            h,
+                            row.split(',').map(v => v.trim())[i]
+                        ])
+                    )
+                );
+
                 updateLeaderboardWithEloAndTier(leaderboard);
-            } catch (error) {
-                console.error("Error loading data:", error);
-                loadingIndicator.textContent = '데이터 로딩 실패. 새로고침 해주세요.';
+
+            } catch (err) {
+
+                console.error(err);
+                loading.innerText = '데이터 로딩 실패';
+
             } finally {
-                loadingIndicator.style.display = 'none';
-                mainContainer.style.display = 'block';
+
+                loading.style.display = 'none';
+                container.style.display = 'block';
+
             }
+
         }
+
         document.addEventListener('DOMContentLoaded', loadAndProcessData);
 
         function processMatches(matches) {
+
             const playerStats = {};
+
             matches.forEach(match => {
+
                 const nickname = match.Nickname;
+
                 if (!nickname) return;
+
                 if (!playerStats[nickname]) {
-                    playerStats[nickname] = { nickname, matches: 0, kills: 0, deaths: 0, wins: 0, losses: 0 };
+
+                    playerStats[nickname] = {
+                        nickname,
+                        matches: 0,
+                        kills: 0,
+                        deaths: 0,
+                        wins: 0,
+                        losses: 0
+                    };
+
                 }
+
                 const p = playerStats[nickname];
+
                 p.matches++;
                 p.kills += parseInt(match.Kills, 10) || 0;
                 p.deaths += parseInt(match.Deaths, 10) || 0;
-                if (parseInt(match['Winning Team'], 10) === parseInt(match.Team, 10)) p.wins++;
-                else p.losses++;
+
+                if (parseInt(match['Winning Team']) === parseInt(match.Team)) {
+                    p.wins++;
+                } else {
+                    p.losses++;
+                }
+
             });
+
             leaderboardData = Object.values(playerStats);
+
         }
 
-function updateLeaderboardWithEloAndTier(leaderboard) {
+        function updateLeaderboardWithEloAndTier(leaderboard) {
+
             leaderboard.forEach(rankEntry => {
-                const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
+
+                const player = leaderboardData.find(
+                    p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase()
+                );
+
                 if (player) {
-                    player.elo = parseInt(rankEntry.ELO, 10) || 0;
+
+                    player.elo = parseInt(rankEntry.ELO) || 0;
                     player.tier = rankEntry.Tier || 'Unranked';
+
                 }
+
             });
 
             leaderboardData.sort((a, b) => b.elo - a.elo);
+
             let rankCounter = 1;
+
             leaderboardData.forEach(p => {
-                p.rank = (p.matches > 5 && p.elo > 0) ? rankCounter++ : 'N/A';
-            });
 
-            leaderboardData.sort((a, b) => {
-                const isARanked = a.rank !== 'N/A';
-                const isBRanked = b.rank !== 'N/A';
+                p.rank = (p.matches > 5 && p.elo > 0)
+                    ? rankCounter++
+                    : 'N/A';
 
-                if (isARanked && !isBRanked) {
-                    return -1;
-                }
-                if (!isARanked && isBRanked) {
-                    return 1;
-                }
-
-                return b.elo - a.elo;
             });
 
             renderLeaderboard(leaderboardData);
+
+            document.getElementById('playerCount').innerText =
+                leaderboardData.length;
+
+            document.getElementById('rankedCount').innerText =
+                leaderboardData.filter(p => p.rank !== 'N/A').length;
+
         }
 
         function renderLeaderboard(data) {
-            const desktopTable = document.querySelector("#leaderboard");
-            const mobileContainer = document.querySelector("#leaderboard-mobile-container");
 
-            // Clear previous content
-            desktopTable.innerHTML = '';
-            mobileContainer.innerHTML = '';
+            const tbody =
+                document.querySelector('#leaderboard tbody');
 
-            // --- 데스크톱 테이블 헤더 생성 ---
-            const thead = desktopTable.createTHead();
-            const headerRow = thead.insertRow();
-            const headers = ["Rank", "Nickname", "KDR", "Win Rate", "KPR", "Matches", "ELO", "Tier"];
-            headers.forEach(text => {
-                const th = document.createElement("th");
-                th.textContent = text;
-                headerRow.appendChild(th);
-            });
-            const desktopTbody = desktopTable.createTBody();
+            const mobile =
+                document.getElementById('mobileCards');
 
-            // --- 데이터 루프 돌면서 데스크톱/모바일 뷰 동시 생성 ---
+            tbody.innerHTML = '';
+            mobile.innerHTML = '';
+
             data.forEach(player => {
-                const tierName = player.tier?.split(' ')[0] || 'Unranked';
-                const tierClass = `tier-${tierName.toLowerCase()}`;
-                const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
-                const winRate = player.matches > 0 ? ((player.wins / player.matches) * 100).toFixed(1) + '%' : '0.0%';
-                const kpr = player.matches > 0 ? (player.kills / player.matches).toFixed(1) : '0.0';
 
-                const navigateToUser = () => window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
+                const tierName =
+                    player.tier?.split(' ')[0] || 'Unranked';
 
-                // 1. 데스크톱 뷰 생성 (테이블 행)  
-                const row = desktopTbody.insertRow();
-                row.addEventListener("click", navigateToUser);
+                const tierClass =
+                    `tier-${tierName.toLowerCase()}`;
+
+                const kdr =
+                    (player.kills / Math.max(1, player.deaths)).toFixed(2);
+
+                const winRate =
+                    player.matches > 0
+                        ? ((player.wins / player.matches) * 100).toFixed(1) + '%'
+                        : '0%';
+
+                const kpr =
+                    player.matches > 0
+                        ? (player.kills / player.matches).toFixed(1)
+                        : '0';
+
+                const goToProfile = () => {
+
+                    window.location.href =
+                        `user.html?nickname=${encodeURIComponent(player.nickname)}`;
+
+                };
+
+                const row = document.createElement('tr');
+
+                row.onclick = goToProfile;
+
                 row.innerHTML = `
-                    <td><span class="stat-value" style="font-weight: bold; color: #FFD700;">#${player.rank}</span></td>
-                    <td><a href="#" style="color: #BB86FC; text-decoration: none; font-weight: bold;">${player.nickname}</a></td>
-                    <td>${kdr}</td>
-                    <td>${winRate}</td>
-                    <td>${kpr}</td>
+                    <td class="rank">#${player.rank}</td>
+
+                    <td>
+                        <div class="nickname">
+
+                            <div class="avatar">
+                                ${player.nickname[0].toUpperCase()}
+                            </div>
+
+                            <div class="nickname-meta">
+                                <div class="nickname-main">
+                                    ${player.nickname}
+                                </div>
+
+                                <div class="nickname-sub ${tierClass}">
+                                    ${player.tier || 'Unranked'}
+                                </div>
+                            </div>
+
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="stat-pill">${kdr}</div>
+                    </td>
+
+                    <td>
+                        <div class="stat-pill">${winRate}</div>
+                    </td>
+
+                    <td>
+                        <div class="stat-pill">${kpr}</div>
+                    </td>
+
                     <td>${player.matches}</td>
-                    <td>${player.elo || 'N/A'}</td>
-                    <td class="${tierClass}">${player.tier || 'Unranked'}</td>
+
+                    <td>
+                        <strong>${player.elo || 'N/A'}</strong>
+                    </td>
+
+                    <td class="${tierClass}">
+                        ${player.tier || 'Unranked'}
+                    </td>
                 `;
 
-                // 2. 모바일 뷰 생성 (카드)
+                tbody.appendChild(row);
+
                 const card = document.createElement('div');
-                card.className = 'leaderboard-card';
-                card.addEventListener("click", navigateToUser);
+
+                card.className = 'mobile-card';
+
+                card.onclick = goToProfile;
+
                 card.innerHTML = `
-                    <div class="card-main-header">
-                        <span class="card-rank">#${player.rank}</span>
-                        <span class="card-nickname">${player.nickname}</span>
+                    <div class="mobile-top">
+
+                        <div class="nickname">
+
+                            <div class="avatar">
+                                ${player.nickname[0].toUpperCase()}
+                            </div>
+
+                            <div class="nickname-meta">
+                                <div class="nickname-main">
+                                    ${player.nickname}
+                                </div>
+
+                                <div class="nickname-sub ${tierClass}">
+                                    ${player.tier || 'Unranked'}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="rank">
+                            #${player.rank}
+                        </div>
+
                     </div>
-                    <div class="card-stats-grid">
-                        <div class="card-stat">
-                            <span class="stat-title">ELO</span>
-                            <span class="stat-value">${player.elo || 'N/A'}</span>
+
+                    <div class="mobile-grid">
+
+                        <div class="mobile-stat">
+                            <div class="mobile-stat-label">ELO</div>
+                            <div class="mobile-stat-value">
+                                ${player.elo || 'N/A'}
+                            </div>
                         </div>
-                        <div class="card-stat">
-                            <span class="stat-title">Tier</span>
-                            <span class="stat-value ${tierClass}">${player.tier || 'Unranked'}</span>
+
+                        <div class="mobile-stat">
+                            <div class="mobile-stat-label">KDR</div>
+                            <div class="mobile-stat-value">
+                                ${kdr}
+                            </div>
                         </div>
-                        <div class="card-stat">
-                            <span class="stat-title">KDR</span>
-                            <span class="stat-value">${kdr}</span>
+
+                        <div class="mobile-stat">
+                            <div class="mobile-stat-label">WIN RATE</div>
+                            <div class="mobile-stat-value">
+                                ${winRate}
+                            </div>
                         </div>
-                        <div class="card-stat">
-                            <span class="stat-title">승률</span>
-                            <span class="stat-value">${winRate}</span>
+
+                        <div class="mobile-stat">
+                            <div class="mobile-stat-label">MATCHES</div>
+                            <div class="mobile-stat-value">
+                                ${player.matches}
+                            </div>
                         </div>
+
                     </div>
                 `;
-                mobileContainer.appendChild(card);
+
+                mobile.appendChild(card);
+
             });
+
         }
 
-        // --- 검색 및 태그 관련 로직 (기존과 동일하게 작동) ---
-        const searchBox = document.getElementById("searchBox");
-        searchBox.addEventListener("input", function () {
-            const input = this.value.trim().toLowerCase();
-            const filteredData = input.length > 0
-                ? leaderboardData.filter(p => p.nickname.toLowerCase().includes(input))
-                : leaderboardData;
-            renderLeaderboard(filteredData);
+        const searchBox = document.getElementById('searchBox');
 
-            const autocompleteList = document.getElementById("autocompleteList");
-            autocompleteList.innerHTML = "";
+        searchBox.addEventListener('input', function () {
+
+            const input =
+                this.value.trim().toLowerCase();
+
+            const filtered =
+                input.length > 0
+                    ? leaderboardData.filter(p =>
+                        p.nickname.toLowerCase().includes(input))
+                    : leaderboardData;
+
+            renderLeaderboard(filtered);
+
+            const autocomplete =
+                document.getElementById('autocompleteList');
+
+            autocomplete.innerHTML = '';
+
             if (input.length > 0) {
-                const autocompletePlayers = leaderboardData.filter(p => p.nickname.toLowerCase().includes(input) && !selectedUsers.has(p.nickname));
-                if (autocompletePlayers.length > 0) {
-                    autocompletePlayers.forEach(player => {
-                        const item = document.createElement("div");
-                        item.textContent = player.nickname;
-                        item.addEventListener("click", () => {
+
+                const players =
+                    leaderboardData.filter(p =>
+                        p.nickname.toLowerCase().includes(input));
+
+                if (players.length > 0) {
+
+                    players.forEach(player => {
+
+                        const item =
+                            document.createElement('div');
+
+                        item.textContent =
+                            player.nickname;
+
+                        item.onclick = () => {
+
                             addFilterTag(player.nickname);
-                            autocompleteList.style.display = "none";
-                            this.value = "";
-                            renderLeaderboard(leaderboardData);
-                        });
-                        autocompleteList.appendChild(item);
+
+                            autocomplete.style.display = 'none';
+
+                            searchBox.value = '';
+
+                        };
+
+                        autocomplete.appendChild(item);
+
                     });
-                    autocompleteList.style.display = "block";
-                } else {
-                    autocompleteList.style.display = "none";
+
+                    autocomplete.style.display = 'block';
+
                 }
+
             } else {
-                autocompleteList.style.display = "none";
+
+                autocomplete.style.display = 'none';
+
             }
+
         });
-        searchBox.addEventListener("blur", () => setTimeout(() => document.getElementById("autocompleteList").style.display = "none", 200));
 
         function addFilterTag(nickname) {
+
             if (selectedUsers.has(nickname)) return;
+
             selectedUsers.add(nickname);
+
             updateFilterTags();
-            updateTeamBalanceButtonState();
+
         }
 
         function updateFilterTags() {
-            const filterTags = document.getElementById("filterTags");
-            filterTags.innerHTML = "";
+
+            const container =
+                document.getElementById('filterTags');
+
+            container.innerHTML = '';
+
             selectedUsers.forEach(nickname => {
-                const tag = document.createElement("div");
-                tag.className = "tag";
-                tag.innerHTML = `${nickname} <button>&times;</button>`;
-                tag.querySelector("button").addEventListener("click", () => {
+
+                const tag =
+                    document.createElement('div');
+
+                tag.className = 'tag';
+
+                tag.innerHTML = `
+                    ${nickname}
+                    <button>&times;</button>
+                `;
+
+                tag.querySelector('button').onclick = () => {
+
                     selectedUsers.delete(nickname);
+
                     updateFilterTags();
-                    updateTeamBalanceButtonState();
-                });
-                filterTags.appendChild(tag);
+
+                };
+
+                container.appendChild(tag);
+
             });
+
+            document.getElementById('teamBalanceButton').disabled =
+                selectedUsers.size < 2;
+
         }
 
-        function updateTeamBalanceButtonState() {
-            const teamBalanceButton = document.getElementById("teamBalanceButton");
-            teamBalanceButton.disabled = selectedUsers.size < 2;
-        }
-
-        // --- 모달 관련 로직 (기존과 동일) ---
-        // (이 부분은 수정할 필요 없이 그대로 두시면 됩니다)
-        const openModalButton = document.getElementById("teamBalanceButton");
-        const closeModalButton = document.getElementById("closeModalButton");
-        const modal = document.getElementById("customModal");
-        if (modal) { // modal이 null이 아닐 때만 이벤트 리스너 추가
-            closeModalButton.addEventListener("click", () => modal.style.display = "none");
-            window.addEventListener("click", (event) => { if (event.target === modal) modal.style.display = "none"; });
-            openModalButton.addEventListener("click", () => {
-                const filteredPlayers = leaderboardData.filter(player => selectedUsers.has(player.nickname));
-                const teams = assignTeams(filteredPlayers);
-                displayTeams(teams);
-                modal.style.display = "block";
-            });
-        }
-        function assignTeams(players) { /* ... */ }
-        function calculateWinRate(phantomElo, ghostElo) { /* ... */ }
-        function displayTeams({ phantom, ghost }) { /* ... */ }
     </script>
+
 </body>
 
 </html>
