@@ -782,10 +782,7 @@
         
             const desktopTable =
                 document.querySelector("#leaderboard");
-        
-            const mobileContainer =
-                document.querySelector("#leaderboard-mobile-container");
-            
+                    
             const tbody =
                 document.querySelector('#leaderboard tbody');
 
@@ -978,8 +975,17 @@
 
                 const players =
                     leaderboardData.filter(p =>
-                        p.nickname.toLowerCase().includes(input));
-
+                
+                        p.nickname
+                            .toLowerCase()
+                            .includes(input)
+                
+                        &&
+                
+                        !selectedUsers.has(p.nickname)
+                
+                    );
+                                
                 if (players.length > 0) {
 
                     players.forEach(player => {
@@ -1083,6 +1089,19 @@
 
         }
 
+        document.addEventListener('click', (e) => {
+
+            const autocomplete =
+                document.getElementById('autocompleteList');
+        
+            const searchWrapper =
+                document.querySelector('.search-wrapper');
+        
+            if (!searchWrapper.contains(e.target)) {
+        
+                autocomplete.style.display = 'none';
+            }
+        });
     </script>
 
 </body>
