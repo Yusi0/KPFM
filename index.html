@@ -727,6 +727,24 @@
 
         }
 
+        function refreshLeaderboard() {
+
+            let filteredData;
+        
+            if (selectedUsers.size > 0) {
+        
+                filteredData = leaderboardData.filter(
+                    p => selectedUsers.has(p.nickname)
+                );
+        
+            } else {
+        
+                filteredData = leaderboardData;
+            }
+        
+            renderLeaderboard(filteredData);
+        }
+                
         function updateLeaderboardWithEloAndTier(leaderboard) {
 
             leaderboard.forEach(rankEntry => {
@@ -946,77 +964,64 @@
 
         const searchBox = document.getElementById('searchBox');
 
-        searchBox.addEventListener('input', function () {
-
-            const input =
-                this.value.trim().toLowerCase();
-
-            let filteredData;
-
-            if (selectedUsers.size > 0) {
+            searchBox.addEventListener('input', function () {
             
-                filteredData = leaderboardData.filter(
-                    p => selectedUsers.has(p.nickname)
-                );
+                const input =
+                    this.value.trim().toLowerCase();
             
-            } else {
+                refreshLeaderboard();
             
-                filteredData = leaderboardData;
-            }
+                const autocomplete =
+                    document.getElementById('autocompleteList');
             
-            renderLeaderboard(filteredData);
-
-            const autocomplete =
-                document.getElementById('autocompleteList');
-
-            autocomplete.innerHTML = '';
-
-            if (input.length > 0) {
-
-                const players =
-                    leaderboardData.filter(p =>
-                
-                        p.nickname
-                            .toLowerCase()
-                            .includes(input)
-                
-                    );
-                                
-                if (players.length > 0) {
-
-                    players.forEach(player => {
-
-                        const item =
-                            document.createElement('div');
-
-                        item.textContent =
-                            player.nickname;
-
-                        item.onclick = () => {
-
-                            addFilterTag(player.nickname);
-
-                            autocomplete.style.display = 'none';
-
-                            searchBox.value = '';
-
-                        };
-
-                        autocomplete.appendChild(item);
-
-                    });
-
-                    autocomplete.style.display = 'block';
-
+                autocomplete.innerHTML = '';
+            
+                if (input.length > 0) {
+            
+                    const players =
+                        leaderboardData.filter(p =>
+            
+                            p.nickname
+                                .toLowerCase()
+                                .includes(input)
+            
+                        );
+            
+                    if (players.length > 0) {
+            
+                        players.forEach(player => {
+            
+                            const item =
+                                document.createElement('div');
+            
+                            item.textContent =
+                                player.nickname;
+            
+                            item.onclick = () => {
+            
+                                addFilterTag(player.nickname);
+            
+                                autocomplete.style.display = 'none';
+            
+                                searchBox.value = '';
+            
+                            };
+            
+                            autocomplete.appendChild(item);
+            
+                        });
+            
+                        autocomplete.style.display = 'block';
+            
+                    }
+            
+                } else {
+            
+                    autocomplete.style.display = 'none';
+            
                 }
-
-            } else {
-
-                autocomplete.style.display = 'none';
-
-            }
-
-        });
+            
+            });
 
         function addFilterTag(nickname) {
 
@@ -1028,11 +1033,7 @@
             updateTeamBalanceButtonState();
         
             // 추가 즉시 리더보드 갱신
-            renderLeaderboard(
-                leaderboardData.filter(
-                    p => selectedUsers.has(p.nickname)
-                )
-            );
+            refreshLeaderboard();
         }
 
         function updateFilterTags() {
@@ -1060,19 +1061,7 @@
 
                     updateFilterTags();
                     updateTeamBalanceButtonState();
-                    
-                    if (selectedUsers.size > 0) {
-                    
-                        renderLeaderboard(
-                            leaderboardData.filter(
-                                p => selectedUsers.has(p.nickname)
-                            )
-                        );
-                    
-                    } else {
-                    
-                        renderLeaderboard(leaderboardData);
-                    }
+                    refreshLeaderboard();
 
                 };
 
