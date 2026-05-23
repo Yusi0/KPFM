@@ -954,13 +954,20 @@
             const input =
                 this.value.trim().toLowerCase();
 
-            const filtered =
-                input.length > 0
-                    ? leaderboardData.filter(p =>
-                        p.nickname.toLowerCase().includes(input))
-                    : leaderboardData;
+            let filteredData;
 
-            renderLeaderboard(filtered);
+            if (selectedUsers.size > 0) {
+            
+                filteredData = leaderboardData.filter(
+                    p => selectedUsers.has(p.nickname)
+                );
+            
+            } else {
+            
+                filteredData = leaderboardData;
+            }
+            
+            renderLeaderboard(filteredData);
 
             const autocomplete =
                 document.getElementById('autocompleteList');
