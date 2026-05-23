@@ -1,1122 +1,701 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>유저 스테이터스</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Player Status</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #030712;
+            --panel: rgba(15, 23, 42, 0.72);
+            --panel-solid: #111827;
+
+            --border: rgba(255, 255, 255, 0.07);
+
+            --text: #f8fafc;
+            --muted: #94a3b8;
+
+            --accent: #8b5cf6;
+            --accent2: #6366f1;
+
+            --green: #22c55e;
+            --red: #ef4444;
+            --gold: #fbbf24;
+
+            --radius: 28px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: #121212;
             margin: 0;
-            color: #E0E0E0;
-            display: flex;
-            justify-content: center;
+            min-height: 100%;
+            font-family: 'Inter', sans-serif;
+
+            background:
+                radial-gradient(circle at top left,
+                    rgba(99, 102, 241, 0.2),
+                    transparent 25%),
+
+                radial-gradient(circle at top right,
+                    rgba(139, 92, 246, 0.15),
+                    transparent 30%),
+
+                linear-gradient(180deg,
+                    #020617,
+                    #0f172a);
+
+            color: var(--text);
         }
 
-        .container {
+        body {
+            padding: 28px 14px;
+        }
+
+        .page {
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        .topbar {
             display: flex;
-            flex-direction: column;
-            /* 세로로 배치 */
             align-items: center;
-            /* 가로 중앙 정렬 */
-            justify-content: flex-start;
-            /* 상단에 배치 */
-            width: 90%;
-            max-width: 1000px;
-            background: #1E1E1E;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-            padding: 30px;
-            margin: 20px auto;
-            overflow: hidden;
-        }
-
-        h1,
-        h3 {
-            font-weight: 700;
-            text-align: center;
-            color: #BB86FC;
-            margin-bottom: 25px;
-        }
-
-        .row {
-            margin-right: 0;
-            margin-left: 0;
-        }
-
-        .col-md-6 {
-            padding-right: 15px;
-        }
-
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            /* 행 내부에서 줄 바꿈 허용 */
             justify-content: space-between;
+
+            margin-bottom: 28px;
         }
 
-        .col-md-6 {
-            flex: 1 1 80%;
-            /* 각 컬럼이 너비 48%를 차지 */
-            margin: 1%;
-            /* 컬럼 간격 */
-            position: relative;
-            /* 캔버스 반응형 비율 유지 */
+        .back-btn {
+            width: 52px;
+            height: 52px;
+
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            background: rgba(255, 255, 255, 0.05);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            transition: 0.2s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+
+        .gradient-text {
+            background:
+                linear-gradient(135deg,
+                    #c084fc,
+                    #8b5cf6,
+                    #6366f1);
+
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 24px;
+
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--panel);
+
+            border: 1px solid var(--border);
+
+            border-radius: var(--radius);
+
+            backdrop-filter: blur(18px);
+
+            overflow: hidden;
+
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .profile-card {
+            padding: 28px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+
+            margin-bottom: 26px;
+        }
+
+        .avatar {
+            width: 78px;
+            height: 78px;
+
+            border-radius: 24px;
+
+            background:
+                linear-gradient(135deg,
+                    #8b5cf6,
+                    #6366f1);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .nickname-wrap h2 {
+            margin: 0;
+            font-size: 1.7rem;
+        }
+
+        .tier-label {
+            margin-top: 8px;
+            display: inline-flex;
+
+            padding: 8px 14px;
+
+            border-radius: 999px;
+
+            background: rgba(255, 255, 255, 0.05);
+
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .stat-box {
+            padding: 18px;
+
+            border-radius: 20px;
+
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.04),
+                    rgba(255, 255, 255, 0.02));
+
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-title {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.45rem;
+            font-weight: 800;
+        }
+
+        .charts-panel {
+            padding: 24px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-card {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.04),
+                    rgba(255, 255, 255, 0.02));
+
+            border: 1px solid rgba(255, 255, 255, 0.05);
+
+            border-radius: 24px;
+
+            padding: 18px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 700;
+
+            margin-bottom: 18px;
+
+            color: #c4b5fd;
         }
 
         canvas {
-            width: 100%;
-            height: 100%;
-            /* 높이는 자동으로 비율에 맞게 조정 */
-            aspect-ratio: 5 / 4;
-            /* 16:9 비율 유지 */
+            width: 100% !important;
+            height: 300px !important;
         }
 
-        .table-responsive {
-            width: 100%;
-            /* 컨테이너 너비를 화면 너비에 맞춤 */
-            max-width: 100%;
-            /* 최대 너비 제한 */
-            overflow-x: hidden;
-            /* 가로 스크롤 활성화 */
+        .section {
+            margin-top: 24px;
         }
 
-        th,
-        td {
-            width: auto;
-            /* 셀 너비를 내용에 맞게 */
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
+        .section-card {
+            padding: 24px;
         }
 
-        /* 매치 내역 테이블 스타일 */
+        .section-title {
+            margin-bottom: 20px;
 
-        .table-dark {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        table {
             width: 100%;
-            table-layout: fixed;
-            /* 테이블 너비 고정 */
             border-collapse: collapse;
-            /* 테두리 중첩 */
         }
 
+        thead th {
+            text-align: left;
 
-        .table-dark th,
-        .table-dark td {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            text-overflow: ellipsis;
-            white-space: normal;
-            padding: 8px;
-            font-size: 13px;
-        }
+            padding: 16px;
 
-        .table-dark tbody tr:hover {
-            background-color: #444;
-            /* Hover 시 행 강조 */
-            transform: scale(1.02);
-            /* 살짝 확대 효과 */
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
-            /* Hover 시 그림자 */
-        }
-
-
-        th,
-        td {
-            padding: 12px 15px;
-            /* 셀 패딩 */
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
-            border-bottom: 1px solid #444;
-            /* 셀 사이 테두리 */
-        }
-
-        th {
-            background-color: #333;
-            /* 헤더 배경 */
-            font-size: 14px;
-            /* 헤더 텍스트 크기 */
-        }
-
-        td {
-            font-size: 13px;
-            /* 일반 셀 텍스트 크기 */
-            color: #E0E0E0;
-            /* 기본 텍스트 색상 */
-        }
-
-        .modal-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            /* 모달 내부 여백 */
-            background-color: #1E1E1E;
-            /* 다크모드 배경 */
-            border-radius: 8px;
-            /* 모서리 둥글게 */
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-            max-height: 90vh;
-        }
-
-        .modal-content .table-responsive {
-            display: flex;
-            justify-content: center;
-            /* 가로 중앙 정렬 */
-            align-items: center;
-            /* 세로 중앙 정렬 */
-        }
-
-        .modal-content .table {
-            margin: auto;
-            /* 테이블을 모달 내 중앙 정렬 */
-            /* 테이블 너비 제한 */
-            max-width: 100%;
-            /* 화면에 맞추기 */
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
-        }
-
-        .modal-content .table th {
-            background-color: #2e2e2e;
-            /* 헤더 배경 */
-            color: #BB86FC;
-            /* 헤더 텍스트 */
-        }
-
-        .modal-content .table td {
-            color: #E0E0E0;
-            /* 기본 텍스트 */
-            border: 1px solid #444;
-        }
-
-        .modal-content .table tbody tr:nth-child(odd) td {
-            background-color: #2A2A2A;
-            /* 홀수 행 연한 색 */
-        }
-
-        .modal-content .table tbody tr:nth-child(even) td {
-            background-color: #303030;
-            /* 짝수 행 진한 색 */
-        }
-
-        .modal-content .table tbody tr:hover td {
-            background-color: #444;
-            /* Hover 시 강조 */
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
-            /* Hover 시 그림자 */
-        }
-
-        .modal-dialog {
-            display: flex;
-            justify-content: center;
-            /* 가로 중앙 정렬 */
-            align-items: center;
-            /* 세로 중앙 정렬 */
-            min-height: 100vh;
-            /* 화면 전체 높이 */
-            margin: 0 auto;
-            /* 자동 여백으로 중앙 정렬 */
-            max-width: 90%;
-            /* 최대 너비 설정 */
-        }
-
-        .modal-content {
-            width: 100%;
-            /* 모달 콘텐츠를 최대 너비로 설정 */
-            max-width: 800px;
-            /* 최대 너비 제한 */
-            margin: auto;
-            /* 중앙 정렬 */
-            border-radius: 12px;
-            /* 둥근 모서리 */
-            overflow: hidden;
-            /* 넘치는 콘텐츠 숨김 */
-        }
-
-        .modal-content .table {
-            margin: 0 auto;
-            /* 테이블을 중앙 정렬 */
-            max-width: 100%;
-            /* 테이블의 최대 너비를 모달에 맞춤 */
-        }
-
-        .modal-content .table th,
-        .modal-content .table td {
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
-            vertical-align: middle;
-            /* 수직 중앙 정렬 */
-        }
-
-        .team1 {
-            color: #FFD700;
-            /* 팀 1 텍스트 색상 */
-            font-weight: 600;
-        }
-
-        .team2 {
-            color: #00BFFF;
-            /* 팀 2 텍스트 색상 */
-            font-weight: 600;
-        }
-
-        .table-hover tbody tr:hover td {
-            background-color: #2C2C2C;
-            /* Hover 시 셀 배경 */
-        }
-
-
-        .membership-card {
-            width: 100%;
-            /* 컨테이너 너비에 맞춤 */
-            max-width: 400px;
-            /* 최대 너비 제한 */
-            background-color: #1E1E1E;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            color: #E0E0E0;
-            font-family: 'Roboto', Arial, sans-serif;
-            overflow: hidden;
-            margin: 20px auto;
-            /* 컨테이너 안에서 중앙 정렬 */
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .card-content {
-            display: flex;
-            flex-wrap: wrap;
-            /* 내용물이 많을 경우 줄 바꿈 */
-            justify-content: space-between;
-            /* 가로 정렬 */
-            gap: 10px;
-            /* 카드 간격 */
-        }
-
-        .card-header {
-            text-align: center;
-            background-color: #BB86FC;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .card-header h2 {
-            margin: 0;
-            font-size: 22px;
-            font-weight: 700;
-
-            /* 닉네임 크기 */
-            color: #121212;
-            /* 헤더 텍스트 색상 */
-        }
-
-        .card-content {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            /* 2열 레이아웃 */
-            gap: 10px;
-            /* 카드 간격 */
-            flex-grow: 1;
-            /* 남은 공간 채우기 */
-        }
-
-        .card-stat {
-            background-color: #2C2C2C;
-            /* 통계 카드 배경 */
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            /* 작은 그림자 */
-        }
-
-        .card-stat .stat-title {
             font-size: 12px;
-            /* 제목 크기 줄이기 */
-            color: #9C9C9C;
-            margin-bottom: 5px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+
+            color: #c4b5fd;
+
+            border-bottom: 1px solid var(--border);
         }
 
-        .card-stat .stat-value {
-            font-size: 16px;
-            /* 값 크기 줄이기 */
-            font-weight: bold;
-            color: #E0E0E0;
+        tbody td {
+            padding: 18px 16px;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        #statRank {
-            color: #FFD700;
-            /* 노란색 */
-            font-weight: bold;
-            /* 강조 */
+        tbody tr {
+            transition: 0.2s ease;
         }
 
-        .tier-card {
-            grid-column: span 2;
-            /* 2칸을 차지 */
-            height: 100px;
-            /* 높이를 기존 카드의 두 배로 설정 */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .positive {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .negative {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        .tier-copper {
+            color: #c08457;
+        }
+
+        .tier-bronze {
+            color: #cd7f32;
+        }
+
+        .tier-silver {
+            color: #d1d5db;
+        }
+
+        .tier-gold {
+            color: #facc15;
+        }
+
+        .tier-platinum {
+            color: #38bdf8;
+        }
+
+        .tier-diamond {
+            color: #c084fc;
+        }
+
+        .tier-champion {
+            color: #f43f5e;
+        }
+
+        .tier-unranked {
+            color: #94a3b8;
+        }
+
+        .match-pill {
+            display: inline-flex;
             align-items: center;
-            font-size: 1.2rem;
-            background-color: #2C2C2C;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .tier-card .stat-title {
-            font-size: 14px;
-            /* 제목 크기 */
-            color: #9C9C9C;
-            margin-bottom: 5px;
-        }
-
-        .tier-card .stat-value {
-            font-size: 24px;
-            /* 값 크기 */
-            font-weight: bold;
-            color: #FFD700;
-            /* 티어 강조 색 */
-        }
-
-        /* Team 1 닉네임 색상 */
-        .team1-nickname {
-            color: #00BFFF;
-            /* 파란색 */
-            font-weight: bold;
-        }
-
-        /* Team 2 닉네임 색상 */
-        .team2-nickname {
-            color: #FFA500;
-            /* 주황색 */
-            font-weight: bold;
-        }
-
-        #mapWinRate td:nth-child(1) {
-            font-weight: bold;
-            color: #BB86FC;
-            text-align: center;
-
-        }
-
-        #mapWinRate td:nth-child(4) {
-            font-weight: bold;
-            color: #4CAF50;
-            /* 기본적으로 승률 강조 색 */
-            text-align: center;
-        }
-
-        #mapWinRate td:nth-child(4).low-rate {
-            color: #FF9800;
-            /* 낮은 승률 강조 색 */
-        }
-
-        #topBanner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1050;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #b50000;
-            font-size: 12;
-            /* 배경색 */
-            color: #f6f6f6;
-            /* 텍스트 색상 */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            /* 그림자 */
-            border: none;
-            /* 테두리 제거 */
-        }
-
-        #backButton {
-            background-color: #272727;
-            /* 버튼 색상 */
-            color: #fff;
-            /* 아이콘 색상 */
-            border: none;
-            /* 테두리 제거 */
-            border-radius: 20%;
-            /* 정사각형 내부에 원형 버튼 */
-            width: 40px;
-            /* 버튼 너비 */
-            height: 40px;
-            /* 버튼 높이 */
             justify-content: center;
+
+            padding: 8px 12px;
+
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.04);
+
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+
+            background: rgba(0, 0, 0, 0.65);
+
+            display: none;
+            align-items: center;
+            justify-content: center;
+
+            z-index: 100;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 95%;
+            max-width: 1100px;
+
+            background: #111827;
+
+            border-radius: 28px;
+
+            border: 1px solid rgba(255, 255, 255, 0.06);
+
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 22px 28px;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.06);
+
+            border: none;
+
+            width: 40px;
+            height: 40px;
+
+            border-radius: 14px;
+
+            color: white;
+
             cursor: pointer;
-            /* 클릭 커서 */
-            transition: background-color 0.3s ease;
         }
 
-        #backButton:hover {
-            background-color: #575757;
-            /* 호버 시 색상 */
+        .modal-body {
+            padding: 24px;
+            overflow-x: auto;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            color: #BB86FC;
-            text-align: center;
-            /* 중앙 정렬 */
-            flex-grow: 1;
-            /* 부모 요소 내 공간을 균등하게 차지 */
-            margin: 0;
-            /* 여백 제거 */
+        @media (max-width: 1100px) {
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
         }
 
-        #modalRoundTitle {
-            font-size: 1.5rem;
-            /* 제목 크기 */
-            font-weight: bold;
-            /* 두껍게 */
-            text-align: center;
-            /* 텍스트 중앙 정렬 */
-            color: #FFD700;
-            /* 금색 */
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-            /* 텍스트 그림자 */
-        }
+        @media (max-width: 768px) {
 
-        #matchHistory td:nth-child(5) {
-            vertical-align: middle;
+            .page-title {
+                font-size: 1.8rem;
+            }
+
+            .profile-card {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .section-card {
+                padding: 16px;
+            }
+
+            table {
+                font-size: 13px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 12px 10px;
+            }
+
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div
-            style="display: flex; align-items: center; justify-content: flex-start; margin-left: -145px; margin-bottom: 20px; gap: 100px;">
-            <button id="backButton" class="btn btn-secondary"
-                style="display: flex; align-items: center; padding: 5px 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-arrow-left" viewBox="0 0 16 16">
+
+    <div class="page">
+
+        <div class="topbar">
+
+            <button id="backButton" class="back-btn">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    fill="currentColor"
+                    viewBox="0 0 16 16">
+
                     <path fill-rule="evenodd"
                         d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708.708L2.707 7.5H14.5a.5.5 0 0 1 .5.5z" />
+
                 </svg>
+
             </button>
-            <h1 style="margin: 0;">유저 스테이터스</h1>
+
+            <div class="page-title">
+                <span class="gradient-text">Player</span> Status
+            </div>
+
+            <div style="width:52px;"></div>
+
         </div>
-        <div id="userStats" class="mb-4">
-            <div class="membership-card">
-                <div class="card-header">
-                    <h2 id="statNickname">닉네임</h2>
+
+        <div class="hero-grid">
+
+            <div class="card profile-card">
+
+                <div class="profile-header">
+
+                    <div class="avatar" id="avatarLetter">
+                        A
+                    </div>
+
+                    <div class="nickname-wrap">
+
+                        <h2 id="statNickname">
+                            Nickname
+                        </h2>
+
+                        <div class="tier-label" id="statTier">
+                            Unranked
+                        </div>
+
+                    </div>
+
                 </div>
-                <div class="card-content">
-                    <div class="tier-card">
-                        <span class="stat-title">티어</span>
-                        <span class="stat-value" id="statTier">Unranked</span>
+
+                <div class="stats-grid">
+
+                    <div class="stat-box">
+                        <div class="stat-title">Rank</div>
+                        <div class="stat-value" id="statRank">#0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">등수</span>
-                        <span class="stat-value" id="statRank">#1</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">ELO</div>
+                        <div class="stat-value" id="statELO">1500</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">ELO</span>
-                        <span class="stat-value" id="statELO">1500</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">KDR</div>
+                        <div class="stat-value" id="statKDR">0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">KDR</span>
-                        <span class="stat-value" id="statKDR">2.5</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">KPR</div>
+                        <div class="stat-value" id="statKPR">0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">총 킬 / 데스</span>
-                        <span class="stat-value" id="statTotalKD">0 / 0</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">Wins / Losses</div>
+                        <div class="stat-value" id="statTotalWL">0 / 0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">승률</span>
-                        <span class="stat-value" id="statWR">75%</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">Win Rate</div>
+                        <div class="stat-value" id="statWR">0%</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">총 승 / 패</span>
-                        <span class="stat-value" id="statTotalWL">0 / 0</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">Kills / Deaths</div>
+                        <div class="stat-value" id="statTotalKD">0 / 0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">KPR</span>
-                        <span class="stat-value" id="statKPR">1.2</span>
+
+                    <div class="stat-box">
+                        <div class="stat-title">Matches</div>
+                        <div class="stat-value" id="statMatches">0</div>
                     </div>
-                    <div class="card-stat">
-                        <span class="stat-title">플레이한 매치 수</span>
-                        <span class="stat-value" id="statMatches">20</span>
-                    </div>
+
                 </div>
+
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <canvas id="eloTrend"></canvas>
+
+            <div class="card charts-panel">
+
+                <div class="charts-grid">
+
+                    <div class="chart-card">
+
+                        <div class="chart-title">
+                            ELO Trend
+                        </div>
+
+                        <canvas id="eloTrend"></canvas>
+
+                    </div>
+
+                    <div class="chart-card">
+
+                        <div class="chart-title">
+                            KDR Trend
+                        </div>
+
+                        <canvas id="kdrTrend"></canvas>
+
+                    </div>
+
+                </div>
+
             </div>
-            <div class="col-md-6">
-                <canvas id="kdrTrend"></canvas>
+
+        </div>
+
+        <div class="section">
+
+            <div class="card section-card">
+
+                <div class="section-title">
+                    Map Statistics
+                </div>
+
+                <table id="mapWinRate">
+
+                    <thead>
+                        <tr>
+                            <th>Map</th>
+                            <th>Wins</th>
+                            <th>Total</th>
+                            <th>Win Rate</th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
+
             </div>
+
         </div>
-        <h3><br>맵별 통계</h3>
-        <div class="table-responsive">
-            <table id="mapWinRate" class="table table-dark">
-                <thead class="table-dark">
-                    <tr>
-                        <th>맵</th>
-                        <th>승리</th>
-                        <th>총 플레이</th>
-                        <th>승률</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 맵별 승률 데이터가 동적으로 추가됩니다 -->
-                </tbody>
-            </table>
+
+        <div class="section">
+
+            <div class="card section-card">
+
+                <div class="section-title">
+                    Match History
+                </div>
+
+                <table id="matchHistory">
+
+                    <thead>
+                        <tr>
+                            <th>Round</th>
+                            <th>Kills</th>
+                            <th>Deaths</th>
+                            <th>KDR</th>
+                            <th>ELO</th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
+
+            </div>
+
         </div>
-        <h3><br>매치 내역</h3>
-        <div class="table-responsive">
-            <table id="matchHistory" class="table table-dark">
-                <thead class="table-dark">
-                    <tr>
-                        <th>매치</th>
-                        <th>킬</th>
-                        <th>데스</th>
-                        <th>KDR</th>
-                        <th>ELO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 매치 데이터가 동적으로 추가됩니다 -->
-                </tbody>
-            </table>
-            <button id="showMore" class="btn btn-primary mt-3" style="display: none;">더보기</button>
-        </div>
+
     </div>
 
-    <!-- 모달 -->
-    <div class="modal fade" id="matchModal" tabindex="-1" aria-labelledby="matchModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 id="modalRoundTitle" class="modal-title"></h5>
-                </div>
-                <div class="table-responsive">
-                    <table id="matchDetails" class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Phantom</th>
-                                <th>K</th>
-                                <th>D</th>
-                                <th>ELO</th>
-                                <th>Ghost</th>
-                                <th>K</th>
-                                <th>D</th>
-                                <th>ELO</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- 매치 데이터가 동적으로 추가됩니다 -->
-                        </tbody>
-                    </table>
-                </div>
+    <div class="modal" id="matchModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2 id="modalRoundTitle">
+                    Match Details
+                </h2>
+
+                <button class="close-btn" id="closeModal">
+                    ✕
+                </button>
+
             </div>
+
+            <div class="modal-body">
+
+                <table id="matchDetails">
+
+                    <thead>
+
+                        <tr>
+                            <th>Phantom</th>
+                            <th>K</th>
+                            <th>D</th>
+                            <th>ELO</th>
+                            <th>Ghost</th>
+                            <th>K</th>
+                            <th>D</th>
+                            <th>ELO</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
+
+            </div>
+
         </div>
+
     </div>
 
-    <!-- Bootstrap JS 추가 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.3.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script>
-        // URL에서 닉네임 가져오기
-        const params = new URLSearchParams(window.location.search);
-        const nickname = params.get("nickname");
-
-        if (!nickname) {
-            alert("No user specified!");
-            window.location.href = "index.html";
-        } else {
-            console.log("닉네임 값 확인:", nickname); // 디버깅용
-            document.title = `${nickname} - KPFM`; 
-            document.getElementById("statNickname").textContent = nickname;
-        }
-
-        document.getElementById("backButton").addEventListener("click", function () {
-            window.location.href = "index.html";
-        });
-
-        let eloHistory = [];
-        let tierHistory = [];
-        let elo = 1500; // 기본 ELO 값
-
-        fetch(`https://yusi0.github.io/KPFM/match.csv?timestamp=${Date.now()}`)
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.trim().split('\n');
-                const headers = rows[0].split(',').map(header => header.trim());
-                const matches = rows.slice(1).map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                });
-
-                processUserStats(nickname, matches); // 유저 데이터 처리
-            })
-            .catch(error => console.error("Error loading match.csv:", error));
-
-        fetch('https://yusi0.github.io/KPFM/lboard.csv')
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.trim().split('\n');
-                const headers = rows[0].split(',').map(header => header.trim());
-                const leaderboard = rows.slice(1).map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                });
-
-                // ELO 값을 기준으로 정렬
-                leaderboard.sort((a, b) => parseInt(b.ELO, 10) - parseInt(a.ELO, 10));
-
-                // 등수 계산
-                leaderboard.forEach((player, index) => {
-                    player.Rank = index + 1; // Rank는 1부터 시작
-                });
-
-                // 현재 플레이어의 정보를 찾기
-                const userStats = leaderboard.find(player => player.Nickname === nickname);
-                if (userStats) {
-                    document.getElementById("statELO").textContent = parseInt(userStats.ELO, 10) || 1500;
-                    document.getElementById("statRank").textContent = `#${userStats.Rank}` || "N/A";
-                    document.getElementById("statTier").textContent = userStats.Tier || "Unranked";
-
-                    // 티어 색상 적용
-                    const tierElement = document.getElementById("statTier");
-                    const tierName = userStats.Tier.replace(/\d+/g, '').trim(); // 숫자 제거 후 비교
-                    switch (tierName) {
-                        case 'Copper':
-                            tierElement.style.color = '#B87333'; // 적갈색
-                            break;
-                        case 'Bronze':
-                            tierElement.style.color = '#CD7F32'; // 갈색
-                            break;
-                        case 'Silver':
-                            tierElement.style.color = '#C0C0C0'; // 은색
-                            break;
-                        case 'Gold':
-                            tierElement.style.color = '#FFD700'; // 노란색
-                            break;
-                        case 'Platinum':
-                            tierElement.style.color = '#00BFFF'; // 진한 하늘색
-                            break;
-                        case 'Diamond':
-                            tierElement.style.color = '#8A2BE2'; // 보라색
-                            break;
-                        case 'Champion':
-                            tierElement.style.color = '#DC143C'; // 진홍색
-                            break;
-                        default:
-                            tierElement.style.color = '#E0E0E0'; // 기본 색상 (밝은 회색)
-                            break;
-                    }
-                    // KDR, 총 킬 및 데스, 승패, KPR, 매치 수 업데이트
-                    const kills = parseInt(userStats.Kills, 10) || 0;
-                    const deaths = parseInt(userStats.Deaths, 10) || 0;
-                    const wins = parseInt(userStats.Wins, 10) || 0;
-                    const losses = parseInt(userStats.Losses, 10) || 0;
-                    const matches = parseInt(userStats.Total, 10) || 0;
-
-                    document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
-                    document.getElementById("statTotalKD").textContent = `${kills} / ${deaths}`;
-                    document.getElementById("statTotalWL").textContent = `${wins} / ${losses}`;
-                    document.getElementById("statWR").textContent = ((wins / matches) * 100).toFixed(1) + '%';
-                    document.getElementById("statKPR").textContent = (kills / matches).toFixed(1);
-                    document.getElementById("statMatches").textContent = matches;
-
-                } else {
-                    alert("User not found in leaderboard!");
-                    window.location.href = "index.html";
-                }
-            })
-            .catch(error => console.error("Error loading lboard.csv:", error));
-
-        // ELO 그래프와 티어 데이터를 aftercalc.csv에서 가져오기
-        fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.trim().split('\n');
-                const headers = rows[0].split(',').map(header => header.trim());
-                const aftercalc = rows.slice(1).map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                });
-
-                // 유저의 라운드별 ELO와 티어 필터링
-                const userRounds = aftercalc.filter(round => round.Nickname === nickname);
-                if (userRounds.length > 0) {
-                    eloHistory = userRounds.map(round => parseInt(round.ELO, 10));
-                    tierHistory = userRounds.map(round => round.Tier);
-                    renderELOTrend(eloHistory, tierHistory);
-                } else {
-                    console.warn("No round data found for user in aftercalc.csv.");
-                }
-            })
-            .catch(error => console.error("Error loading aftercalc.csv:", error));
-
-        function renderMapWinRate(nickname, matches) {
-            // 맵 이름 변환 함수
-            const mapNameTransform = (map) => {
-                const mapNames = {
-                    metro: "Metro",
-                    desert: "Desert Storm",
-                    elevation: "Elevation",
-                    warehouse: "Warehouse",
-                };
-                return mapNames[map.toLowerCase()] || map; // 변환 가능한 이름은 변환, 없으면 원래 이름 반환
-            };
-
-            // 맵별 데이터 초기화
-            const mapStats = {};
-
-            matches.forEach(match => {
-                if (match.Nickname !== nickname) return;
-
-                const mapName = mapNameTransform(match.Map || "Unknown");
-                if (mapName === "na") return; // "na" 맵은 건너뜀
-
-                const isWin = parseInt(match.Team, 10) === parseInt(match['Winning Team'], 10);
-
-                // 맵 데이터 초기화
-                if (!mapStats[mapName]) {
-                    mapStats[mapName] = { wins: 0, total: 0 };
-                }
-
-                // 승리 및 총 플레이 횟수 업데이트
-                if (isWin) mapStats[mapName].wins++;
-                mapStats[mapName].total++;
-            });
-
-            // 맵별 승률 테이블에 데이터 추가
-            const mapWinRateTable = document.getElementById("mapWinRate").querySelector("tbody");
-            mapWinRateTable.innerHTML = ""; // 기존 데이터 초기화
-
-            Object.entries(mapStats).forEach(([mapName, stats]) => {
-                const winRate = ((stats.wins / stats.total) * 100).toFixed(1); // 승률 계산
-
-                const row = document.createElement("tr");
-                row.innerHTML = `
-            <td>${mapName}</td>
-            <td>${stats.wins}</td>
-            <td>${stats.total}</td>
-            <td class="${winRate < 50 ? 'low-rate' : ''}">${winRate}%</td>
-        `;
-                mapWinRateTable.appendChild(row);
-            });
-        }
-        function processUserStats(nickname, matches) {
-            const userMatches = matches.filter(match => match.Nickname === nickname);
-
-            if (userMatches.length === 0) {
-                alert("No data found for user: " + nickname);
-                window.location.href = "index.html";
-                return;
-            }
-            renderMapWinRate(nickname, userMatches); // 맵별 승률 데이터 생성
-
-            // 맵 이름 변환 함수
-            const mapNameTransform = (map) => {
-                const mapNames = {
-                    metro: "Metro",
-                    warehouse: "Warehouse",
-                    desert: "Desert Storm",
-                    elevation: "Elevation"
-                };
-                return mapNames[map.toLowerCase()] || map; // 변환 가능한 이름은 변환하고, 그렇지 않으면 원래 값 반환
-            };
-
-            fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
-                .then(response => response.text())
-                .then(data => {
-                    const rows = data.trim().split('\n');
-                    const headers = rows[0].split(',').map(header => header.trim());
-                    const aftercalc = rows.slice(1).map(row => {
-                        const values = row.split(',').map(value => value.trim());
-                        return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                    });
-
-                    const userRounds = aftercalc.filter(round => round.Nickname === nickname);
-                    if (userRounds.length === 0) {
-                        console.warn("No round data found for user in aftercalc.csv.");
-                        return;
-                    }
-
-                    const matchHistoryTable = document.getElementById("matchHistory").querySelector("tbody");
-                    matchHistoryTable.innerHTML = ""; // 기존 데이터 초기화
-
-                    const kdrHistory = [];
-                    let totalKills = 0;
-                    let totalDeaths = 0;
-
-                    userMatches.forEach((match, index) => {
-                        const kills = parseInt(match.Kills, 10) || 0;
-                        const deaths = parseInt(match.Deaths, 10) || 0;
-
-                        // 누적 킬/데스 업데이트
-                        totalKills += kills;
-                        totalDeaths += deaths;
-
-                        // 해당 판 KDR
-                        const hkdr = (kills / Math.max(1, deaths)).toFixed(2);
-                        // 누적 KDR
-                        const cumulativeKDR = totalKills / Math.max(1, totalDeaths);
-
-                        // 그래프용 배열에는 누적 KDR만 저장
-                        kdrHistory.push(cumulativeKDR);
-
-                        // 매치 테이블 행 생성 시 hkdr 표시
-                        const roundNumber = match.Round || "Unknown";
-                        const map = mapNameTransform(match.Map || "Unknown");
-                        const currentELO = parseInt(userRounds[index]?.ELO, 10) || 1500;
-                        const previousELO = index > 0 ? parseInt(userRounds[index - 1]?.ELO, 10) || 1500 : 1500;
-                        const eloChange = currentELO - previousELO;
-                        const eloChangeText = eloChange > 0
-                            ? `<span style="color: #28a745; font-size: 0.9em;">+${eloChange}</span>`
-                            : `<span style="color: #dc3545; font-size: 0.9em;">${eloChange}</span>`;
-                        const resultText = `<span style="font-weight: bold; font-size: 1.2em;">${currentELO}</span> ${eloChangeText}`;
-
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-        <td>
-            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">${map}</small>
-            ${roundNumber}
-        </td>
-        <td>
-            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Kills</small>
-            ${kills}
-        </td>
-        <td>
-            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">Deaths</small>
-            ${deaths}
-        </td>
-        <td>
-            <small style="display: block; color: #9C9C9C; font-size: 0.8em;">KDR</small>
-            ${hkdr}
-        </td>
-        <td>${resultText}</td>
-    `;
-                        row.addEventListener("click", () => {
-                            displayMatchDetails(roundNumber, matches);
-                        });
-
-                        matchHistoryTable.appendChild(row);
-                    });
-
-                    // 이제 kdrHistory는 모든 매치에 대해 누적 KDR만 갖고 있으므로, 이 배열을 그대로 그래프에 사용
-                    renderKDRTrend(kdrHistory);
-                })
-                .catch(error => console.error("Error loading aftercalc.csv:", error));
-        }
-
-        function displayMatchDetails(round, matches) {
-            const matchDetailsBody = document.getElementById("matchDetails").querySelector("tbody");
-            matchDetailsBody.innerHTML = "";
-
-            // 모달의 제목에 라운드 정보 추가
-            const modalRoundTitle = document.getElementById("modalRoundTitle");
-            modalRoundTitle.textContent = `${round}라운드`;
-
-            // aftercalc.csv 데이터 가져오기
-            fetch('https://yusi0.github.io/KPFM/aftercalc.csv')
-                .then(response => response.text())
-                .then(data => {
-                    const rows = data.trim().split('\n');
-                    const headers = rows[0].split(',').map(header => header.trim());
-                    const aftercalc = rows.slice(1).map(row => {
-                        const values = row.split(',').map(value => value.trim());
-                        return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-                    });
-
-                    // 팀별로 데이터 분리
-                    const team1Players = matches.filter(player =>
-                        String(player.Round) === String(round) && String(player.Team) === "1"
-                    );
-                    const team2Players = matches.filter(player =>
-                        String(player.Round) === String(round) && String(player.Team) === "2"
-                    );
-
-                    // 두 팀 중 가장 많은 플레이어 수
-                    const maxPlayers = Math.max(team1Players.length, team2Players.length);
-
-                    // 테이블에 데이터 추가
-                    for (let i = 0; i < maxPlayers; i++) {
-                        const team1Player = team1Players[i] || {};
-                        const team2Player = team2Players[i] || {};
-
-                        const team1EloChange = calculateEloChange(team1Player, aftercalc);
-                        const team2EloChange = calculateEloChange(team2Player, aftercalc);
-
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                    <td class="team1-nickname">${team1Player.Nickname || ""}</td>
-                    <td class="team1">${team1Player.Kills || ""}</td>
-                    <td class="team1">${team1Player.Deaths || ""}</td>
-                    <td class="team1">${team1EloChange}</td>
-                    <td class="team2-nickname">${team2Player.Nickname || ""}</td>
-                    <td class="team2">${team2Player.Kills || ""}</td>
-                    <td class="team2">${team2Player.Deaths || ""}</td>
-                    <td class="team2">${team2EloChange}</td>
-                `;
-                        matchDetailsBody.appendChild(row);
-                    }
-
-                    // 모달 표시
-                    const matchModal = new bootstrap.Modal(document.getElementById("matchModal"));
-                    matchModal.show();
-                })
-                .catch(error => console.error("Error loading aftercalc.csv:", error));
-        }
-
-        function calculateEloChange(player, aftercalc) {
-            if (!player.Nickname) return ""; // 닉네임이 없는 경우 빈 문자열 반환
-
-            const playerRounds = aftercalc.filter(round => round.Nickname === player.Nickname);
-            const currentRound = playerRounds.find(round => String(round.Round) === String(player.Round));
-
-            if (!currentRound) return ""; // 현재 라운드 데이터가 없으면 빈 문자열 반환
-
-            const currentElo = parseInt(currentRound.ELO, 10) || 1500;
-            const previousElo = playerRounds
-                .filter(round => parseInt(round.Round, 10) < parseInt(player.Round, 10))
-                .map(round => parseInt(round.ELO, 10) || 1500)
-                .pop() || 1500;
-
-            const eloChange = currentElo - previousElo;
-
-            // ELO 증감 표시
-            if (eloChange > 0) {
-                return `<span style="color: #28a745;">+${eloChange}</span>`; // 초록색
-            } else if (eloChange < 0) {
-                return `<span style="color: #dc3545;">${eloChange}</span>`; // 빨간색
-            } else {
-                return `<span>${eloChange}</span>`; // 변화 없음
-            }
-        }
-
-        function renderELOTrend(eloHistory, tierHistory) {
-            const ctx = document.getElementById("eloTrend").getContext("2d");
-
-            // ELO 데이터를 라인 차트로 표시
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: eloHistory.map((_, i) => `${i + 1}`), // 라운드별 라벨
-                    datasets: [
-                        {
-                            label: 'ELO',
-                            data: eloHistory,
-                            borderColor: '#ff7896',
-                            backgroundColor: 'rgba(255, 120, 150, 0.2)',
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    interaction: {
-                        mode: 'index', // x축 기준으로 툴팁 표시
-                        axis: 'x', // x축과 동일하게
-                        intersect: false, // 커서가 데이터 점에 겹치지 않아도 툴팁 표시
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const elo = context.raw; // 현재 데이터 포인트의 ELO 값
-                                    const roundIndex = context.dataIndex; // 데이터 포인트의 인덱스
-                                    const tier = tierHistory[roundIndex] || 'N/A'; // 해당 라운드의 티어
-                                    return `ELO: ${elo}, Tier: ${tier}`;
-                                },
-                            },
-                        },
-                    },
-                },
-            });
-        }
-
-        function renderKDRTrend(kdrHistory) {
-            const ctx = document.getElementById("kdrTrend").getContext("2d");
-
-            let minY = 0;
-            let maxY = Math.max(...kdrHistory);
-
-            // 1라운드를 제외한 나머지 라운드의 최소/최댓값을 기준으로 범위 설정
-            if (kdrHistory.length > 1) {
-                const sliced = kdrHistory.slice(1);
-                const slicedMin = Math.min(...sliced);
-                const slicedMax = Math.max(...sliced);
-                minY = slicedMin - 0.05;
-                maxY = slicedMax + 0.05;
-            }
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: kdrHistory.map((_, i) => `${i + 1}`),
-                    datasets: [{
-                        label: 'KDR',
-                        data: kdrHistory,
-                        borderColor: '#fa2334',
-                        fill: false,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    interaction: {
-                        mode: 'index',
-                        axis: 'x',
-                        intersect: false,
-                    },
-                    scales: {
-                        y: {
-                            min: minY,
-                            max: maxY
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const kdr = context.raw.toFixed(2);
-                                    return `KDR: ${kdr}`;
-                                },
-                            },
-                        },
-                        zoom: {
-                            zoom: {
-                                wheel: {
-                                    enabled: true // 마우스 휠로 확대/축소
-                                },
-                                drag: {
-                                    enabled: true // 마우스 드래그로 확대 영역 설정
-                                },
-                                mode: 'xy', // x,y축 모두 확대/축소 가능
-                            },
-                            pan: {
-                                enabled: true,
-                                mode: 'xy'
-                            },
-                            limits: {
-                                y: { min: 0 }, // y축 최소값 제한
-                            }
-                        }
-                    }
-                },
-            });
-        }
-    </script>
 </body>
 
 </html>
