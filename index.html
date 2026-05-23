@@ -690,8 +690,8 @@
 
             const playerStats = {};
 
-            matches.forEach(match => {
-
+            matches.reverse().forEach((match, index) => {
+                
                 const nickname = match.Nickname;
 
                 if (!nickname) return;
