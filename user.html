@@ -1,760 +1,206 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Player Status</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-
-    <style>
-        :root {
-            --bg: #030712;
-            --panel: rgba(15, 23, 42, 0.72);
-            --panel-solid: #111827;
-
-            --border: rgba(255, 255, 255, 0.07);
-
-            --text: #f8fafc;
-            --muted: #94a3b8;
-
-            --accent: #8b5cf6;
-            --accent2: #6366f1;
-
-            --green: #22c55e;
-            --red: #ef4444;
-            --gold: #fbbf24;
-
-            --radius: 28px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            min-height: 100%;
-            font-family: 'Inter', sans-serif;
-
-            background:
-                radial-gradient(circle at top left,
-                    rgba(99, 102, 241, 0.2),
-                    transparent 25%),
-
-                radial-gradient(circle at top right,
-                    rgba(139, 92, 246, 0.15),
-                    transparent 30%),
-
-                linear-gradient(180deg,
-                    #020617,
-                    #0f172a);
-
-            color: var(--text);
-        }
-
-        body {
-            padding: 28px 14px;
-        }
-
-        .page {
-            max-width: 1320px;
-            margin: 0 auto;
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            margin-bottom: 28px;
-        }
-
-        .back-btn {
-            width: 52px;
-            height: 52px;
-
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-
-            background: rgba(255, 255, 255, 0.05);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            cursor: pointer;
-
-            transition: 0.2s ease;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-2px);
-
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .page-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.05em;
-        }
-
-        .gradient-text {
-            background:
-                linear-gradient(135deg,
-                    #c084fc,
-                    #8b5cf6,
-                    #6366f1);
-
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 24px;
-
-            margin-bottom: 24px;
-        }
-
-        .card {
-            background: var(--panel);
-
-            border: 1px solid var(--border);
-
-            border-radius: var(--radius);
-
-            backdrop-filter: blur(18px);
-
-            overflow: hidden;
-
-            box-shadow:
-                0 20px 50px rgba(0, 0, 0, 0.35);
-        }
-
-        .profile-card {
-            padding: 28px;
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-
-            margin-bottom: 26px;
-        }
-
-        .avatar {
-            width: 78px;
-            height: 78px;
-
-            border-radius: 24px;
-
-            background:
-                linear-gradient(135deg,
-                    #8b5cf6,
-                    #6366f1);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 2rem;
-            font-weight: 800;
-        }
-
-        .nickname-wrap h2 {
-            margin: 0;
-            font-size: 1.7rem;
-        }
-
-        .tier-label {
-            margin-top: 8px;
-            display: inline-flex;
-
-            padding: 8px 14px;
-
-            border-radius: 999px;
-
-            background: rgba(255, 255, 255, 0.05);
-
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-        }
-
-        .stat-box {
-            padding: 18px;
-
-            border-radius: 20px;
-
-            background:
-                linear-gradient(180deg,
-                    rgba(255, 255, 255, 0.04),
-                    rgba(255, 255, 255, 0.02));
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-title {
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 1.45rem;
-            font-weight: 800;
-        }
-
-        .charts-panel {
-            padding: 24px;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .chart-card {
-            background:
-                linear-gradient(180deg,
-                    rgba(255, 255, 255, 0.04),
-                    rgba(255, 255, 255, 0.02));
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
-
-            border-radius: 24px;
-
-            padding: 18px;
-        }
-
-        .chart-title {
-            font-size: 14px;
-            font-weight: 700;
-
-            margin-bottom: 18px;
-
-            color: #c4b5fd;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            width: 100%;
-            height: 320px;
-        }
-
-        .section {
-            margin-top: 24px;
-        }
-
-        .section-card {
-            padding: 24px;
-        }
-
-        .section-title {
-            margin-bottom: 20px;
-
-            font-size: 1.4rem;
-            font-weight: 800;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            text-align: left;
-
-            padding: 16px;
-
-            font-size: 12px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-
-            color: #c4b5fd;
-
-            border-bottom: 1px solid var(--border);
-        }
-
-        tbody td {
-            padding: 18px 16px;
-
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        tbody tr {
-            transition: 0.2s ease;
-        }
-
-        tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .positive {
-            color: var(--green);
-            font-weight: 700;
-        }
-
-        .negative {
-            color: var(--red);
-            font-weight: 700;
-        }
-
-        .tier-copper {
-            color: #c08457;
-        }
-
-        .tier-bronze {
-            color: #cd7f32;
-        }
-
-        .tier-silver {
-            color: #d1d5db;
-        }
-
-        .tier-gold {
-            color: #facc15;
-        }
-
-        .tier-platinum {
-            color: #38bdf8;
-        }
-
-        .tier-diamond {
-            color: #c084fc;
-        }
-
-        .tier-champion {
-            color: #f43f5e;
-        }
-
-        .tier-unranked {
-            color: #94a3b8;
-        }
-
-        .match-pill {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            padding: 8px 12px;
-
-            border-radius: 12px;
-
-            background: rgba(255, 255, 255, 0.04);
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-
-            background: rgba(0, 0, 0, 0.65);
-
-            display: none;
-            align-items: center;
-            justify-content: center;
-
-            z-index: 100;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            width: 95%;
-            max-width: 1100px;
-
-            background: #111827;
-
-            border-radius: 28px;
-
-            border: 1px solid rgba(255, 255, 255, 0.06);
-
-            overflow: hidden;
-        }
-
-        .modal-header {
-            padding: 22px 28px;
-
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .close-btn {
-            background: rgba(255, 255, 255, 0.06);
-
-            border: none;
-
-            width: 40px;
-            height: 40px;
-
-            border-radius: 14px;
-
-            color: white;
-
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 24px;
-            overflow-x: auto;
-        }
-
-        @media (max-width: 1100px) {
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
-        }
-
-        @media (max-width: 768px) {
-
-            .page-title {
-                font-size: 1.8rem;
-            }
-
-            .profile-card {
-                padding: 20px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .section-card {
-                padding: 16px;
-            }
-
-            table {
-                font-size: 13px;
-            }
-
-            thead th,
-            tbody td {
-                padding: 12px 10px;
-            }
-
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KPFM Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body {
+    margin:0;
+    background:#020617;
+    color:white;
+    font-family:'Inter',sans-serif;
+}
+.container {
+    max-width:1200px;
+    margin:auto;
+    padding:24px;
+}
+input {
+    width:100%;
+    padding:16px;
+    border-radius:16px;
+    border:none;
+    background:#111827;
+    color:white;
+    margin-bottom:12px;
+}
+#autocompleteList {
+    background:#111827;
+    border-radius:16px;
+    overflow:hidden;
+    margin-bottom:16px;
+}
+#autocompleteList div {
+    padding:12px;
+    cursor:pointer;
+}
+#autocompleteList div:hover {
+    background:#1e293b;
+}
+.tag-container {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+.tag {
+    background:#312e81;
+    padding:8px 14px;
+    border-radius:999px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+.tag button {
+    border:none;
+    background:none;
+    color:white;
+    cursor:pointer;
+}
+.table-wrap {
+    overflow:auto;
+}
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+th,td {
+    padding:16px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+tr:hover {
+    background:#111827;
+}
+.rank {
+    color:#fbbf24;
+    font-weight:700;
+}
+.positive {
+    color:#22c55e;
+}
+.negative {
+    color:#ef4444;
+}
+.match-pill {
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    background:#1e293b;
+}
+.modal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+.modal.show {
+    display:flex;
+}
+.modal-content {
+    width:95%;
+    max-width:1000px;
+    background:#0f172a;
+    border-radius:24px;
+    padding:24px;
+}
+.close-btn {
+    float:right;
+    cursor:pointer;
+}
+</style>
 </head>
-
 <body>
+<div class="container">
+<h1>KPFM Leaderboard</h1>
+
+<input type="text" id="searchBox" placeholder="Search player...">
+<div id="autocompleteList"></div>
+
+<div id="filterTags" class="tag-container"></div>
+
+<div class="table-wrap">
+<table id="leaderboard">
+<thead>
+<tr>
+<th>Rank</th>
+<th>Player</th>
+<th>KDR</th>
+<th>WR</th>
+<th>KPR</th>
+<th>Matches</th>
+<th>ELO</th>
+<th>Tier</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div class="modal" id="matchModal">
+<div class="modal-content">
+<div class="close-btn" id="closeModal">✕</div>
+<h2 id="modalRoundTitle"></h2>
+<table id="matchDetails">
+<thead>
+<tr>
+<th>Phantom</th>
+<th>K</th>
+<th>D</th>
+<th>ELO</th>
+<th>Ghost</th>
+<th>K</th>
+<th>D</th>
+<th>ELO</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
 
-    <div class="page">
-
-        <div class="topbar">
-
-            <button id="backButton" class="back-btn">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    fill="currentColor"
-                    viewBox="0 0 16 16">
-
-                    <path fill-rule="evenodd"
-                        d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708.708L2.707 7.5H14.5a.5.5 0 0 1 .5.5z" />
-
-                </svg>
-
-            </button>
-
-            <div class="page-title">
-                <span class="gradient-text">Player</span> Status
-            </div>
-
-            <div style="width:52px;"></div>
-
-        </div>
-
-        <div class="hero-grid">
-
-            <div class="card profile-card">
-
-                <div class="profile-header">
-
-                    <div class="avatar" id="avatarLetter">
-                        A
-                    </div>
-
-                    <div class="nickname-wrap">
-
-                        <h2 id="statNickname">
-                            Nickname
-                        </h2>
-
-                        <div class="tier-label" id="statTier">
-                            Unranked
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div class="stats-grid">
-
-                    <div class="stat-box">
-                        <div class="stat-title">Rank</div>
-                        <div class="stat-value" id="statRank">#0</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">ELO</div>
-                        <div class="stat-value" id="statELO">1500</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">KDR</div>
-                        <div class="stat-value" id="statKDR">0</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">KPR</div>
-                        <div class="stat-value" id="statKPR">0</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">Wins / Losses</div>
-                        <div class="stat-value" id="statTotalWL">0 / 0</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">Win Rate</div>
-                        <div class="stat-value" id="statWR">0%</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">Kills / Deaths</div>
-                        <div class="stat-value" id="statTotalKD">0 / 0</div>
-                    </div>
-
-                    <div class="stat-box">
-                        <div class="stat-title">Matches</div>
-                        <div class="stat-value" id="statMatches">0</div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="card charts-panel">
-
-                <div class="charts-grid">
-
-                    <div class="chart-card">
-
-                        <div class="chart-title">
-                            ELO Trend
-                        </div>
-                        
-                        <div class="chart-wrapper">
-                            <canvas id="eloTrend"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-
-                        <div class="chart-title">
-                            KDR Trend
-                        </div>
-
-                        <div class="chart-wrapper">
-                            <canvas id="kdrTrend"></canvas>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="section">
-
-            <div class="card section-card">
-
-                <div class="section-title">
-                    Map Statistics
-                </div>
-
-                <table id="mapWinRate">
-
-                    <thead>
-                        <tr>
-                            <th>Map</th>
-                            <th>Wins</th>
-                            <th>Total</th>
-                            <th>Win Rate</th>
-                        </tr>
-                    </thead>
-
-                    <tbody></tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-        <div class="section">
-
-            <div class="card section-card">
-
-                <div class="section-title">
-                    Match History
-                </div>
-
-                <table id="matchHistory">
-
-                    <thead>
-                        <tr>
-                            <th>Round</th>
-                            <th>Kills</th>
-                            <th>Deaths</th>
-                            <th>KDR</th>
-                            <th>ELO</th>
-                        </tr>
-                    </thead>
-
-                    <tbody></tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="modal" id="matchModal">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-
-                <h2 id="modalRoundTitle">
-                    Match Details
-                </h2>
-
-                <button class="close-btn" id="closeModal">
-                    ✕
-                </button>
-
-            </div>
-
-            <div class="modal-body">
-
-                <table id="matchDetails">
-
-                    <thead>
-
-                        <tr>
-                            <th>Phantom</th>
-                            <th>K</th>
-                            <th>D</th>
-                            <th>ELO</th>
-                            <th>Ghost</th>
-                            <th>K</th>
-                            <th>D</th>
-                            <th>ELO</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody></tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
 <script>
 
-const params = new URLSearchParams(window.location.search);
-const nickname = params.get("nickname");
-
-if (!nickname) {
-    alert("No user specified!");
-    window.location.href = "index.html";
-}
-
-const avatarLetter = document.getElementById("avatarLetter");
-const statNickname = document.getElementById("statNickname");
-
-statNickname.textContent = nickname;
-avatarLetter.textContent = nickname[0]?.toUpperCase() || "P";
-
-document.title = `${nickname} - KPFM`;
-
-document.getElementById("backButton")
-    .addEventListener("click", () => {
-        window.location.href = "index.html";
-    });
-
+let leaderboardData = [];
+let selectedUsers = new Set();
 let allMatches = [];
-let eloHistory = [];
-let tierHistory = [];
+let aftercalcData = [];
 
-Promise.all([
-    fetch(`https://yusi0.github.io/KPFM/match.csv?timestamp=${Date.now()}`)
-        .then(r => r.text()),
+const timestamp = `?timestamp=${Date.now()}`;
 
-    fetch(`https://yusi0.github.io/KPFM/lboard.csv?timestamp=${Date.now()}`)
-        .then(r => r.text()),
+async function loadData() {
 
-    fetch(`https://yusi0.github.io/KPFM/aftercalc.csv?timestamp=${Date.now()}`)
-        .then(r => r.text())
-])
-.then(([matchText, leaderboardText, aftercalcText]) => {
+    const [matchRes, lboardRes, aftercalcRes] = await Promise.all([
+        fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`),
+        fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`),
+        fetch(`https://yusi0.github.io/KPFM/aftercalc.csv${timestamp}`)
+    ]);
+
+    const [matchText, lboardText, aftercalcText] = await Promise.all([
+        matchRes.text(),
+        lboardRes.text(),
+        aftercalcRes.text()
+    ]);
 
     const matches = csvToJson(matchText);
-    const leaderboard = csvToJson(leaderboardText);
-    const aftercalc = csvToJson(aftercalcText);
+    const leaderboard = csvToJson(lboardText);
+
+    aftercalcData = csvToJson(aftercalcText);
 
     allMatches = matches;
 
-    processLeaderboard(leaderboard);
-    processUserStats(matches, aftercalc);
-
-})
-.catch(err => {
-    console.error(err);
-    alert("데이터 로딩 실패");
-});
+    processMatches(matches);
+    updateLeaderboardWithEloAndTier(leaderboard);
+}
 
 function csvToJson(text) {
 
-    const rows = text.trim().split('\n');
+    const rows = text.trim().split('
+');
 
     const headers = rows[0]
         .split(',')
@@ -769,422 +215,229 @@ function csvToJson(text) {
         return Object.fromEntries(
             headers.map((h, i) => [h, values[i]])
         );
-
     });
 }
 
-function processLeaderboard(leaderboard) {
+function processMatches(matches) {
 
-    leaderboard.sort((a, b) =>
-        parseInt(b.ELO || 0) - parseInt(a.ELO || 0)
-    );
+    const playerStats = {};
 
-    leaderboard.forEach((player, index) => {
-        player.rank = index + 1;
-    });
-    
-    const user = leaderboard.find(
-        p =>
-            p.Nickname?.trim().toLowerCase()
-            ===
-            nickname.trim().toLowerCase()
-    );
+    matches.reverse().forEach(match => {
 
-    if (!user) {
-        alert("유저를 찾을 수 없습니다.");
-        return;
-    }
+        const nickname = match.Nickname;
 
-    const kills = parseInt(user.Kills || 0);
-    const deaths = parseInt(user.Deaths || 0);
-    const wins = parseInt(user.Wins || 0);
-    const losses = parseInt(user.Losses || 0);
-    const matches = parseInt(user.Total || 0);
+        if (!nickname) return;
 
-    document.getElementById("statELO").textContent =
-        user.ELO || 1500;
+        if (!playerStats[nickname]) {
 
-    document.getElementById("statRank").textContent =
-        `#${user.rank}`;
-
-    document.getElementById("statTier").textContent =
-        user.Tier || "Unranked";
-
-    document.getElementById("statKDR").textContent =
-        (kills / Math.max(1, deaths)).toFixed(2);
-
-    document.getElementById("statKPR").textContent =
-        (kills / Math.max(1, matches)).toFixed(1);
-
-    document.getElementById("statWR").textContent =
-        ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
-
-    document.getElementById("statTotalKD").textContent =
-        `${kills} / ${deaths}`;
-
-    document.getElementById("statTotalWL").textContent =
-        `${wins} / ${losses}`;
-
-    document.getElementById("statMatches").textContent =
-        matches;
-
-    applyTierColor(user.Tier || "Unranked");
-}
-
-function applyTierColor(tier) {
-
-    const el = document.getElementById("statTier");
-
-    const tierName = tier
-        .split(' ')[0]
-        .toLowerCase();
-
-    el.className = `tier-label tier-${tierName}`;
-}
-
-function processUserStats(matches, aftercalc) {
-
-    const userMatches = matches.filter(
-    m =>
-        m.Nickname?.trim().toLowerCase()
-        ===
-        nickname.trim().toLowerCase()
-    );
-
-    const userRounds = aftercalc.filter(
-    r =>
-        r.Nickname?.trim().toLowerCase()
-        ===
-        nickname.trim().toLowerCase()
-    );
-
-    renderMapStats(userMatches);
-    renderMatchHistory(userMatches, userRounds);
-
-    eloHistory = userRounds.map(r =>
-        parseInt(r.ELO || 1500)
-    );
-
-    tierHistory = userRounds.map(r =>
-        r.Tier || 'Unranked'
-    );
-
-    renderELOTrend();
-    renderKDRTrend(userMatches);
-}
-
-function renderMapStats(matches) {
-
-    const tbody = document.querySelector(
-        '#mapWinRate tbody'
-    );
-
-    tbody.innerHTML = '';
-
-    const stats = {};
-
-    matches.forEach(match => {
-
-        const rawMap = (match.Map || 'Unknown').toLowerCase();
-
-        const mapNames = {
-            metro: "Metro",
-            warehouse: "Warehouse",
-            desert: "Desert Storm",
-            elevation: "Elevation"
-        };
-
-        const map = mapNames[rawMap] || rawMap;
-
-        if (!stats[map]) {
-            stats[map] = {
-                wins: 0,
-                total: 0
+            playerStats[nickname] = {
+                nickname,
+                matches:0,
+                kills:0,
+                deaths:0,
+                wins:0,
+                losses:0
             };
         }
 
-        stats[map].total++;
+        const p = playerStats[nickname];
 
-        if (match.Team === match['Winning Team']) {
-            stats[map].wins++;
+        p.matches++;
+        p.kills += parseInt(match.Kills || 0);
+        p.deaths += parseInt(match.Deaths || 0);
+
+        if (parseInt(match.Team) === parseInt(match['Winning Team'])) {
+            p.wins++;
+        } else {
+            p.losses++;
         }
     });
 
-    Object.entries(stats).forEach(([map, data]) => {
+    leaderboardData = Object.values(playerStats);
+}
 
-        const rate = (
-            (data.wins / data.total) * 100
+function updateLeaderboardWithEloAndTier(leaderboard) {
+
+    leaderboard.forEach(rankEntry => {
+
+        const player = leaderboardData.find(
+            p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase()
+        );
+
+        if (player) {
+            player.elo = parseInt(rankEntry.ELO || 0);
+            player.tier = rankEntry.Tier || 'Unranked';
+        }
+    });
+
+    leaderboardData.sort((a,b) => b.elo - a.elo);
+
+    leaderboardData.forEach((p,index) => {
+        p.rank = index + 1;
+    });
+
+    renderLeaderboard(leaderboardData);
+}
+
+function refreshLeaderboard() {
+
+    let filteredData;
+
+    if (selectedUsers.size > 0) {
+
+        filteredData = leaderboardData.filter(
+            p => selectedUsers.has(p.nickname)
+        );
+
+    } else {
+
+        filteredData = leaderboardData;
+    }
+
+    renderLeaderboard(filteredData);
+}
+
+function renderLeaderboard(data) {
+
+    const tbody = document.querySelector('#leaderboard tbody');
+
+    tbody.innerHTML = '';
+
+    data.forEach(player => {
+
+        const kdr = (
+            player.kills / Math.max(1, player.deaths)
+        ).toFixed(2);
+
+        const wr = (
+            (player.wins / Math.max(1, player.matches)) * 100
+        ).toFixed(1) + '%';
+
+        const kpr = (
+            player.kills / Math.max(1, player.matches)
         ).toFixed(1);
 
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td>${map}</td>
-            <td>${data.wins}</td>
-            <td>${data.total}</td>
-            <td class="${rate < 50 ? 'negative' : 'positive'}">
-                ${rate}%
-            </td>
+            <td class="rank">#${player.rank}</td>
+            <td>${player.nickname}</td>
+            <td>${kdr}</td>
+            <td>${wr}</td>
+            <td>${kpr}</td>
+            <td>${player.matches}</td>
+            <td>${player.elo || 0}</td>
+            <td>${player.tier || 'Unranked'}</td>
         `;
+
+        row.onclick = () => {
+            window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}`;
+        };
 
         tbody.appendChild(row);
     });
 }
 
-function renderMatchHistory(matches, userRounds) {
+const searchBox = document.getElementById('searchBox');
 
-    const tbody = document.querySelector(
-        '#matchHistory tbody'
-    );
+searchBox.addEventListener('input', function () {
 
-    tbody.innerHTML = '';
+    const input = this.value.trim().toLowerCase();
 
-    matches.forEach((match, index) => {
+    refreshLeaderboard();
 
-        const kills = parseInt(match.Kills || 0);
-        const deaths = parseInt(match.Deaths || 0);
+    const autocomplete = document.getElementById('autocompleteList');
 
-        const kdr = (
-            kills / Math.max(1, deaths)
-        ).toFixed(2);
+    autocomplete.innerHTML = '';
 
-        const currentELO = parseInt(
-            userRounds[index]?.ELO || 1500
+    if (input.length > 0) {
+
+        const players = leaderboardData.filter(p =>
+            p.nickname.toLowerCase().includes(input)
         );
 
-        const previousELO = index > 0
-            ? parseInt(userRounds[index - 1]?.ELO || 1500)
-            : 1500;
+        players.forEach(player => {
 
-        const diff = currentELO - previousELO;
+            const item = document.createElement('div');
 
-        const row = document.createElement('tr');
+            item.textContent = player.nickname;
 
-        row.innerHTML = `
-            <td>
-                <div class="match-pill">
-                    ${match.Round || '-'}
-                </div>
-            </td>
+            item.onclick = () => {
 
-            <td>${kills}</td>
+                addFilterTag(player.nickname);
 
-            <td>${deaths}</td>
+                autocomplete.style.display = 'none';
 
-            <td>${kdr}</td>
+                searchBox.value = '';
+            };
 
-            <td>
-                ${currentELO}
-                <span class="${diff >= 0 ? 'positive' : 'negative'}">
-                    (${diff >= 0 ? '+' : ''}${diff})
-                </span>
-            </td>
-        `;
-
-        row.addEventListener('click', () => {
-            displayMatchDetails(match.Round);
+            autocomplete.appendChild(item);
         });
 
-        tbody.appendChild(row);
-    });
-}
+        autocomplete.style.display = 'block';
 
-function displayMatchDetails(round) {
+    } else {
 
-    const modal = document.getElementById('matchModal');
-
-    const tbody = document.querySelector(
-        '#matchDetails tbody'
-    );
-
-    tbody.innerHTML = '';
-
-    document.getElementById(
-        'modalRoundTitle'
-    ).textContent = `${round} Round`;
-
-    const roundPlayers = allMatches.filter(
-        p => String(p.Round) === String(round)
-    );
-
-    const phantom = roundPlayers.filter(
-        p => p.Team === '1'
-    );
-
-    const ghost = roundPlayers.filter(
-        p => p.Team === '2'
-    );
-
-    const max = Math.max(
-        phantom.length,
-        ghost.length
-    );
-
-    for (let i = 0; i < max; i++) {
-
-        const p1 = phantom[i] || {};
-        const p2 = ghost[i] || {};
-
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-            <td>${p1.Nickname || ''}</td>
-            <td>${p1.Kills || ''}</td>
-            <td>${p1.Deaths || ''}</td>
-            <td>${p1.ELO || ''}</td>
-
-            <td>${p2.Nickname || ''}</td>
-            <td>${p2.Kills || ''}</td>
-            <td>${p2.Deaths || ''}</td>
-            <td>${p2.ELO || ''}</td>
-        `;
-
-        tbody.appendChild(row);
-    }
-
-    modal.classList.add('show');
-}
-
-function renderELOTrend() {
-
-    const ctx = document
-        .getElementById('eloTrend')
-        .getContext('2d');
-
-    new Chart(ctx, {
-
-        type: 'line',
-
-        data: {
-            labels: eloHistory.map((_, i) => i + 1),
-
-            datasets: [{
-                label: 'ELO',
-
-                data: eloHistory,
-
-                borderColor: '#8b5cf6',
-
-                backgroundColor:
-                    'rgba(139,92,246,0.15)',
-
-                tension: 0.3,
-
-                fill: true
-            }]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-
-                            const tier =
-                                tierHistory[
-                                    context.dataIndex
-                                ] || 'Unranked';
-
-                            return `ELO: ${context.raw} (${tier})`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderKDRTrend(matches) {
-
-    const ctx = document
-        .getElementById('kdrTrend')
-        .getContext('2d');
-
-    let totalKills = 0;
-    let totalDeaths = 0;
-
-    const kdrHistory = matches.map(match => {
-
-        totalKills += parseInt(match.Kills || 0);
-
-        totalDeaths += parseInt(match.Deaths || 0);
-
-        return (
-            totalKills / Math.max(1, totalDeaths)
-        ).toFixed(2);
-    });
-
-    new Chart(ctx, {
-
-        type: 'line',
-
-        data: {
-
-            labels: kdrHistory.map((_, i) => i + 1),
-
-            datasets: [{
-
-                label: 'KDR',
-
-                data: kdrHistory,
-
-                borderColor: '#ec4899',
-
-                backgroundColor:
-                    'rgba(236,72,153,0.12)',
-
-                tension: 0.3,
-
-                fill: true
-            }]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
-}
-
-document.getElementById('closeModal')
-    .addEventListener('click', () => {
-
-        document.getElementById('matchModal')
-            .classList.remove('show');
-
-    });
-
-window.addEventListener('click', e => {
-
-    const modal =
-        document.getElementById('matchModal');
-
-    if (e.target === modal) {
-        modal.classList.remove('show');
+        autocomplete.style.display = 'none';
     }
 });
 
+function addFilterTag(nickname) {
+
+    if (selectedUsers.has(nickname)) return;
+
+    selectedUsers.add(nickname);
+
+    updateFilterTags();
+
+    refreshLeaderboard();
+}
+
+function updateFilterTags() {
+
+    const container = document.getElementById('filterTags');
+
+    container.innerHTML = '';
+
+    selectedUsers.forEach(nickname => {
+
+        const tag = document.createElement('div');
+
+        tag.className = 'tag';
+
+        tag.innerHTML = `
+            ${nickname}
+            <button>&times;</button>
+        `;
+
+        tag.querySelector('button').onclick = () => {
+
+            selectedUsers.delete(nickname);
+
+            updateFilterTags();
+
+            refreshLeaderboard();
+        };
+
+        container.appendChild(tag);
+    });
+}
+
+document.addEventListener('click', (e) => {
+
+    const autocomplete =
+        document.getElementById('autocompleteList');
+
+    const searchWrapper =
+        document.querySelector('.container');
+
+    if (!searchWrapper.contains(e.target)) {
+        autocomplete.style.display = 'none';
+    }
+});
+
+loadData();
+
 </script>
-
 </body>
-
 </html>
