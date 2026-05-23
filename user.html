@@ -779,9 +779,12 @@ function processLeaderboard(leaderboard) {
     leaderboard.forEach((player, index) => {
         player.rank = index + 1;
     });
-
+    
     const user = leaderboard.find(
-        p => p.Nickname === nickname
+        p =>
+            p.Nickname?.trim().toLowerCase()
+            ===
+            nickname.trim().toLowerCase()
     );
 
     if (!user) {
@@ -839,11 +842,17 @@ function applyTierColor(tier) {
 function processUserStats(matches, aftercalc) {
 
     const userMatches = matches.filter(
-        m => m.Nickname === nickname
+    m =>
+        m.Nickname?.trim().toLowerCase()
+        ===
+        nickname.trim().toLowerCase()
     );
 
     const userRounds = aftercalc.filter(
-        r => r.Nickname === nickname
+    r =>
+        r.Nickname?.trim().toLowerCase()
+        ===
+        nickname.trim().toLowerCase()
     );
 
     renderMapStats(userMatches);
