@@ -1,310 +1,329 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>Player Status</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    <!-- Plus Jakarta Sans Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <style>
+        /* CSS variables aligned with PFAttach aesthetics */
         :root {
-            --bg: #030712;
-            --panel: rgba(15, 23, 42, 0.72);
-            --panel-solid: #111827;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-glass: rgba(255, 255, 255, 0.4);
+            --border-glass: rgba(255, 255, 255, 0.3);
+            --shadow-glass: rgba(31, 38, 135, 0.08);
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --accent-color: #5c6bc0;
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --card-title: #1a252f;
+            --table-header: rgba(255, 255, 255, 0.5);
+            --filter-active-bg: rgba(92, 107, 192, 0.18);
+            --chip-bg: rgba(255, 255, 255, 0.34);
+            --green: #27ae60;
+            --red: #c0392b;
+            --gold: #f59e0b;
+        }
 
-            --border: rgba(255, 255, 255, 0.07);
-
-            --text: #f8fafc;
-            --muted: #94a3b8;
-
-            --accent: #8b5cf6;
-            --accent2: #6366f1;
-
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --bg-glass: rgba(15, 23, 42, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --shadow-glass: rgba(0, 0, 0, 0.3);
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-color: #818cf8;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --card-title: #f8fafc;
+            --table-header: rgba(15, 23, 42, 0.5);
+            --filter-active-bg: rgba(129, 140, 248, 0.18);
+            --chip-bg: rgba(255, 255, 255, 0.08);
             --green: #22c55e;
             --red: #ef4444;
             --gold: #fbbf24;
-
-            --radius: 28px;
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html,
         body {
-            margin: 0;
-            min-height: 100%;
-            font-family: 'Inter', sans-serif;
-
-            background:
-                radial-gradient(circle at top left,
-                    rgba(99, 102, 241, 0.2),
-                    transparent 25%),
-
-                radial-gradient(circle at top right,
-                    rgba(139, 92, 246, 0.15),
-                    transparent 30%),
-
-                linear-gradient(180deg,
-                    #020617,
-                    #0f172a);
-
-            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         body {
-            padding: 28px 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
 
-        .page {
-            max-width: 1320px;
-            margin: 0 auto;
+        /* Glassmorphism Background Blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.55;
+            transition: all 0.5s ease;
         }
 
+        .blob-1 {
+            width: 320px;
+            height: 320px;
+            background: #a78bfa;
+            top: 10%;
+            left: calc(50% - 300px);
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #60a5fa;
+            bottom: 15%;
+            right: calc(50% - 280px);
+        }
+
+        /* Mobile-First App Container (centered, matching PFAttach) */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: calc(100vh - 32px);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 1;
+        }
+
+        /* Glass Frame styling */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px 0 var(--shadow-glass);
+            border-radius: 20px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        /* Topbar header styling */
         .topbar {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+        }
 
-            margin-bottom: 28px;
+        .topbar h1 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--card-title);
+            letter-spacing: -0.5px;
         }
 
         .back-btn {
-            width: 52px;
-            height: 52px;
-
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-
-            background: rgba(255, 255, 255, 0.05);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-glass);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             cursor: pointer;
-
-            transition: 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            transition: background 0.3s, transform 0.2s;
+            outline: none;
         }
 
-        .back-btn:hover {
-            transform: translateY(-2px);
-
-            background: rgba(255, 255, 255, 0.08);
+        .back-btn:active {
+            transform: scale(0.95);
         }
 
-        .page-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.05em;
+        .theme-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-glass);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            transition: background 0.3s, transform 0.2s;
+            outline: none;
         }
 
-        .gradient-text {
-            background:
-                linear-gradient(135deg,
-                    #c084fc,
-                    #8b5cf6,
-                    #6366f1);
-
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .theme-btn:active {
+            transform: scale(0.95);
         }
 
-        .hero-grid {
-            display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 24px;
-
-            margin-bottom: 24px;
-        }
-
-        .card {
-            background: var(--panel);
-
-            border: 1px solid var(--border);
-
-            border-radius: var(--radius);
-
-            backdrop-filter: blur(18px);
-
-            overflow: hidden;
-
-            box-shadow:
-                0 20px 50px rgba(0, 0, 0, 0.35);
-        }
-
-        .profile-card {
-            padding: 28px;
-        }
-
+        /* Profile card details */
         .profile-header {
             display: flex;
             align-items: center;
-            gap: 18px;
-
-            margin-bottom: 26px;
+            gap: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px dashed var(--border-glass);
+            padding-bottom: 12px;
         }
 
         .avatar {
-            width: 78px;
-            height: 78px;
-
-            border-radius: 24px;
-
-            background:
-                linear-gradient(135deg,
-                    #8b5cf6,
-                    #6366f1);
-
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--filter-active-bg);
+            color: var(--card-title);
             display: flex;
             align-items: center;
             justify-content: center;
-
-            font-size: 2rem;
+            font-size: 1.25rem;
             font-weight: 800;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 2px 8px var(--shadow-glass);
         }
 
         .nickname-wrap h2 {
-            margin: 0;
-            font-size: 1.7rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--card-title);
         }
 
         .tier-label {
-            margin-top: 8px;
+            margin-top: 3px;
             display: inline-flex;
-
-            padding: 8px 14px;
-
-            border-radius: 999px;
-
-            background: rgba(255, 255, 255, 0.05);
-
-            font-size: 13px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
             font-weight: 700;
+            border: 1px solid currentColor;
+            background: transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
+        /* Stat chip grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            gap: 8px;
         }
 
         .stat-box {
-            padding: 18px;
-
-            border-radius: 20px;
-
-            background:
-                linear-gradient(180deg,
-                    rgba(255, 255, 255, 0.04),
-                    rgba(255, 255, 255, 0.02));
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
         }
 
         .stat-title {
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            margin-bottom: 2px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .stat-value {
-            font-size: 1.45rem;
-            font-weight: 800;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--card-title);
         }
 
-        .charts-panel {
-            padding: 24px;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
+        /* Charts styling */
         .chart-card {
-            background:
-                linear-gradient(180deg,
-                    rgba(255, 255, 255, 0.04),
-                    rgba(255, 255, 255, 0.02));
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
-
-            border-radius: 24px;
-
-            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .chart-title {
-            font-size: 14px;
-            font-weight: 700;
-
-            margin-bottom: 18px;
-
-            color: #c4b5fd;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px dashed var(--border-glass);
+            padding-bottom: 4px;
         }
 
         .chart-wrapper {
             position: relative;
             width: 100%;
-            height: 320px;
+            height: 180px;
         }
 
-        .section {
-            margin-top: 24px;
-        }
-
-        .section-card {
-            padding: 24px;
-        }
-
+        /* Section table containers */
         .section-title {
-            margin-bottom: 20px;
-
-            font-size: 1.4rem;
+            font-size: 0.82rem;
             font-weight: 800;
+            color: var(--card-title);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-glass);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
         }
 
+        /* Table design */
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.8rem;
         }
 
         thead th {
             text-align: left;
-
-            padding: 16px;
-
-            font-size: 12px;
-            letter-spacing: 0.08em;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
-
-            color: #c4b5fd;
-
-            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            background: var(--table-header);
+            border-bottom: 1px solid var(--border-glass);
+            font-weight: 800;
         }
 
         tbody td {
-            padding: 18px 16px;
-
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-glass);
+            color: var(--text-color);
+            font-weight: 600;
         }
 
         tbody tr {
-            transition: 0.2s ease;
+            transition: background 0.15s ease;
+        }
+
+        #matchHistory tbody tr {
+            cursor: pointer;
         }
 
         tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--chip-bg);
         }
 
         .positive {
@@ -317,6 +336,7 @@
             font-weight: 700;
         }
 
+        /* Tier labels color styling */
         .tier-copper {
             color: #c08457;
         }
@@ -326,287 +346,309 @@
         }
 
         .tier-silver {
-            color: #d1d5db;
+            color: #7f8c8d;
+        }
+
+        [data-theme="dark"] .tier-silver {
+            color: #94a3b8;
         }
 
         .tier-gold {
-            color: #facc15;
+            color: #f59e0b;
         }
 
         .tier-platinum {
+            color: #0284c7;
+        }
+
+        [data-theme="dark"] .tier-platinum {
             color: #38bdf8;
         }
 
         .tier-diamond {
+            color: #7c3aed;
+        }
+
+        [data-theme="dark"] .tier-diamond {
             color: #c084fc;
         }
 
         .tier-champion {
-            color: #f43f5e;
+            color: #e11d48;
         }
 
         .tier-unranked {
-            color: #94a3b8;
+            color: var(--text-muted);
         }
 
         .match-pill {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
-            padding: 8px 12px;
-
-            border-radius: 12px;
-
-            background: rgba(255, 255, 255, 0.04);
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
+            color: var(--text-color);
+            font-weight: 700;
+            font-size: 0.72rem;
         }
 
+        /* Modal popups */
         .modal {
             position: fixed;
             inset: 0;
-
-            background: rgba(0, 0, 0, 0.65);
-
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
-
             z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+            padding: 32px;
         }
 
-        .modal.show {
+        .modal.active {
             display: flex;
+            opacity: 1;
         }
 
         .modal-content {
-            width: 95%;
-            max-width: 1100px;
-
-            background: #111827;
-
-            border-radius: 28px;
-
-            border: 1px solid rgba(255, 255, 255, 0.06);
-
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            box-shadow: 0 12px 40px var(--shadow-glass);
+            transform: scale(0.92) translateY(8px);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1) translateY(0);
         }
 
         .modal-header {
-            padding: 22px 28px;
-
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-glass);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        .modal-header h2 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--card-title);
+        }
+
         .close-btn {
-            background: rgba(255, 255, 255, 0.06);
-
+            background: transparent;
             border: none;
-
-            width: 40px;
-            height: 40px;
-
-            border-radius: 14px;
-
-            color: white;
-
+            font-size: 1.4rem;
+            color: var(--text-color);
             cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            outline: none;
+        }
+
+        .close-btn:hover {
+            background: var(--chip-bg);
+        }
+
+        .scroll-content {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 8px;
+        }
+
+        .scroll-content::-webkit-scrollbar {
+            display: none;
         }
 
         .modal-body {
-            padding: 24px;
-            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 320px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 12px 24px 24px 24px;
         }
 
-        @media (max-width: 1100px) {
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
+        .modal-body::-webkit-scrollbar {
+            display: none;
         }
 
-        @media (max-width: 768px) {
+        .team-mvp {
+            font-weight: 800 !important;
+            color: var(--gold) !important;
+        }
 
-            .page-title {
-                font-size: 1.8rem;
-            }
+        #matchModal .modal-content {
+            max-width: 600px;
+        }
 
-            .profile-card {
-                padding: 20px;
-            }
+        #matchDetails {
+            font-size: 0.78rem;
+            table-layout: fixed;
+            width: 100%;
+        }
 
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        #matchDetails th,
+        #matchDetails td {
+            padding: 8px 4px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
-            .section-card {
-                padding: 16px;
-            }
+        #matchDetails th:nth-child(1),
+        #matchDetails td:nth-child(1) {
+            width: 22%;
+            /* Phantom Nickname */
+            text-align: left;
+        }
 
-            table {
-                font-size: 13px;
-            }
+        #matchDetails th:nth-child(2),
+        #matchDetails td:nth-child(2),
+        #matchDetails th:nth-child(3),
+        #matchDetails td:nth-child(3) {
+            width: 6%;
+            /* K, D */
+        }
 
-            thead th,
-            tbody td {
-                padding: 12px 10px;
-            }
+        #matchDetails th:nth-child(4),
+        #matchDetails td:nth-child(4) {
+            width: 16%;
+            /* ELO */
+        }
 
+        #matchDetails th:nth-child(5),
+        #matchDetails td:nth-child(5) {
+            width: 22%;
+            /* Ghost Nickname */
+            text-align: left;
+        }
+
+        #matchDetails th:nth-child(6),
+        #matchDetails td:nth-child(6),
+        #matchDetails th:nth-child(7),
+        #matchDetails td:nth-child(7) {
+            width: 6%;
+            /* K, D */
+        }
+
+        #matchDetails th:nth-child(8),
+        #matchDetails td:nth-child(8) {
+            width: 16%;
+            /* ELO */
         }
     </style>
 </head>
 
 <body>
 
-    <div class="page">
+    <!-- Glowing Fixed Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
 
-        <div class="topbar">
+    <div class="app-container">
 
-            <button id="backButton" class="back-btn">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    fill="currentColor"
-                    viewBox="0 0 16 16">
-
+        <!-- Topbar navigation header -->
+        <div class="glass-panel topbar">
+            <button id="backButton" class="back-btn" title="뒤로 가기">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
                         d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708.708L2.707 7.5H14.5a.5.5 0 0 1 .5.5z" />
-
                 </svg>
-
             </button>
-
-            <div class="page-title">
-                <span class="gradient-text">Player</span> Status
-            </div>
-
-            <div style="width:52px;"></div>
-
+            <h1>PLAYER STATUS</h1>
+            <button class="theme-btn" id="themeToggleBtn" title="화면 테마 변경">☀️</button>
         </div>
 
-        <div class="hero-grid">
+        <div class="scroll-content">
 
-            <div class="card profile-card">
-
+            <!-- Profile Card -->
+            <div class="glass-panel">
                 <div class="profile-header">
-
-                    <div class="avatar" id="avatarLetter">
-                        A
-                    </div>
-
+                    <div class="avatar" id="avatarLetter">P</div>
                     <div class="nickname-wrap">
-
-                        <h2 id="statNickname">
-                            Nickname
-                        </h2>
-
-                        <div class="tier-label" id="statTier">
-                            Unranked
-                        </div>
-
+                        <h2 id="statNickname">Nickname</h2>
+                        <div class="tier-label" id="statTier">Unranked</div>
                     </div>
-
                 </div>
 
                 <div class="stats-grid">
-
                     <div class="stat-box">
                         <div class="stat-title">Rank</div>
                         <div class="stat-value" id="statRank">#0</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">ELO</div>
                         <div class="stat-value" id="statELO">1500</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">KDR</div>
-                        <div class="stat-value" id="statKDR">0</div>
+                        <div class="stat-value" id="statKDR">0.00</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">KPR</div>
-                        <div class="stat-value" id="statKPR">0</div>
+                        <div class="stat-value" id="statKPR">0.0</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">Wins / Losses</div>
                         <div class="stat-value" id="statTotalWL">0 / 0</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">Win Rate</div>
                         <div class="stat-value" id="statWR">0%</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">Kills / Deaths</div>
                         <div class="stat-value" id="statTotalKD">0 / 0</div>
                     </div>
-
                     <div class="stat-box">
                         <div class="stat-title">Matches</div>
                         <div class="stat-value" id="statMatches">0</div>
                     </div>
-
                 </div>
-
             </div>
 
-            <div class="card charts-panel">
-
-                <div class="charts-grid">
-
-                    <div class="chart-card">
-
-                        <div class="chart-title">
-                            ELO Trend
-                        </div>
-                        
-                        <div class="chart-wrapper">
-                            <canvas id="eloTrend"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-
-                        <div class="chart-title">
-                            KDR Trend
-                        </div>
-
-                        <div class="chart-wrapper">
-                            <canvas id="kdrTrend"></canvas>
-                        </div>
-                    </div>
-
+            <!-- Charts Trends Panels (Stacked vertically) -->
+            <div class="glass-panel chart-card">
+                <div class="chart-title">ELO Trend</div>
+                <div class="chart-wrapper">
+                    <canvas id="eloTrend"></canvas>
                 </div>
-
             </div>
 
-        </div>
-
-        <div class="section">
-
-            <div class="card section-card">
-
-                <div class="section-title">
-                    Map Statistics
+            <div class="glass-panel chart-card">
+                <div class="chart-title">KDR Trend</div>
+                <div class="chart-wrapper">
+                    <canvas id="kdrTrend"></canvas>
                 </div>
+            </div>
 
+            <!-- Map Win Rate Section -->
+            <div class="glass-panel" style="padding: 12px 14px;">
+                <div class="section-title">Map Statistics</div>
                 <table id="mapWinRate">
-
                     <thead>
                         <tr>
                             <th>Map</th>
@@ -615,25 +657,14 @@
                             <th>Win Rate</th>
                         </tr>
                     </thead>
-
                     <tbody></tbody>
-
                 </table>
-
             </div>
 
-        </div>
-
-        <div class="section">
-
-            <div class="card section-card">
-
-                <div class="section-title">
-                    Match History
-                </div>
-
+            <!-- Match History Section -->
+            <div class="glass-panel" style="padding: 12px 14px;">
+                <div class="section-title">Match History</div>
                 <table id="matchHistory">
-
                     <thead>
                         <tr>
                             <th>Round</th>
@@ -643,39 +674,24 @@
                             <th>ELO</th>
                         </tr>
                     </thead>
-
                     <tbody></tbody>
-
                 </table>
-
             </div>
 
         </div>
 
     </div>
 
+    <!-- Match Details Popup Modal (PFAttach composition style) -->
     <div class="modal" id="matchModal">
-
         <div class="modal-content">
-
             <div class="modal-header">
-
-                <h2 id="modalRoundTitle">
-                    Match Details
-                </h2>
-
-                <button class="close-btn" id="closeModal">
-                    ✕
-                </button>
-
+                <h2 id="modalRoundTitle">Match Details</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
             </div>
-
             <div class="modal-body">
-
                 <table id="matchDetails">
-
                     <thead>
-
                         <tr>
                             <th>Phantom</th>
                             <th>K</th>
@@ -686,504 +702,474 @@
                             <th>D</th>
                             <th>ELO</th>
                         </tr>
-
                     </thead>
-
                     <tbody></tbody>
-
                 </table>
-
             </div>
-
         </div>
-
     </div>
-<script>
 
-const params = new URLSearchParams(window.location.search);
-const nickname = params.get("nickname");
-
-if (!nickname) {
-    alert("No user specified!");
-    window.location.href = "index.html";
-}
-
-const avatarLetter = document.getElementById("avatarLetter");
-const statNickname = document.getElementById("statNickname");
-
-statNickname.textContent = nickname;
-avatarLetter.textContent = nickname[0]?.toUpperCase() || "P";
-
-document.title = `${nickname} - KPFM`;
-
-document.getElementById("backButton")
-    .addEventListener("click", () => {
-        window.location.href = "index.html";
-    });
-
-let allMatches = [];
-let eloHistory = [];
-let tierHistory = [];
-
-Promise.all([
-    fetch(`https://yusi0.github.io/KPFM/match.csv?timestamp=${Date.now()}`)
-        .then(r => r.text()),
-
-    fetch(`https://yusi0.github.io/KPFM/lboard.csv?timestamp=${Date.now()}`)
-        .then(r => r.text()),
-
-    fetch(`https://yusi0.github.io/KPFM/aftercalc.csv?timestamp=${Date.now()}`)
-        .then(r => r.text())
-])
-.then(([matchText, leaderboardText, aftercalcText]) => {
-
-    const matches = csvToJson(matchText);
-    const leaderboard = csvToJson(leaderboardText);
-    const aftercalc = csvToJson(aftercalcText);
-
-    allMatches = matches;
-
-    processLeaderboard(leaderboard);
-    processUserStats(matches, aftercalc);
-
-})
-.catch(err => {
-    console.error(err);
-    alert("데이터 로딩 실패");
-});
-
-function csvToJson(text) {
-
-    const rows = text.trim().split('\n');
-
-    const headers = rows[0]
-        .split(',')
-        .map(h => h.trim());
-
-    return rows.slice(1).map(row => {
-
-        const values = row
-            .split(',')
-            .map(v => v.trim());
-
-        return Object.fromEntries(
-            headers.map((h, i) => [h, values[i]])
-        );
-
-    });
-}
-
-function processLeaderboard(leaderboard) {
-
-    leaderboard.sort((a, b) =>
-        parseInt(b.ELO || 0) - parseInt(a.ELO || 0)
-    );
-
-    leaderboard.forEach((player, index) => {
-        player.rank = index + 1;
-    });
-    
-    const user = leaderboard.find(
-        p =>
-            p.Nickname?.trim().toLowerCase()
-            ===
-            nickname.trim().toLowerCase()
-    );
-
-    if (!user) {
-        alert("유저를 찾을 수 없습니다.");
-        return;
-    }
-
-    const kills = parseInt(user.Kills || 0);
-    const deaths = parseInt(user.Deaths || 0);
-    const wins = parseInt(user.Wins || 0);
-    const losses = parseInt(user.Losses || 0);
-    const matches = parseInt(user.Total || 0);
-
-    document.getElementById("statELO").textContent =
-        user.ELO || 1500;
-
-    document.getElementById("statRank").textContent =
-        `#${user.rank}`;
-
-    document.getElementById("statTier").textContent =
-        user.Tier || "Unranked";
-
-    document.getElementById("statKDR").textContent =
-        (kills / Math.max(1, deaths)).toFixed(2);
-
-    document.getElementById("statKPR").textContent =
-        (kills / Math.max(1, matches)).toFixed(1);
-
-    document.getElementById("statWR").textContent =
-        ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
-
-    document.getElementById("statTotalKD").textContent =
-        `${kills} / ${deaths}`;
-
-    document.getElementById("statTotalWL").textContent =
-        `${wins} / ${losses}`;
-
-    document.getElementById("statMatches").textContent =
-        matches;
-
-    applyTierColor(user.Tier || "Unranked");
-}
-
-function applyTierColor(tier) {
-
-    const el = document.getElementById("statTier");
-
-    const tierName = tier
-        .split(' ')[0]
-        .toLowerCase();
-
-    el.className = `tier-label tier-${tierName}`;
-}
-
-function processUserStats(matches, aftercalc) {
-
-    const userMatches = matches.filter(
-    m =>
-        m.Nickname?.trim().toLowerCase()
-        ===
-        nickname.trim().toLowerCase()
-    );
-
-    const userRounds = aftercalc.filter(
-    r =>
-        r.Nickname?.trim().toLowerCase()
-        ===
-        nickname.trim().toLowerCase()
-    );
-
-    renderMapStats(userMatches);
-    renderMatchHistory(userMatches, userRounds);
-
-    eloHistory = userRounds.map(r =>
-        parseInt(r.ELO || 1500)
-    );
-
-    tierHistory = userRounds.map(r =>
-        r.Tier || 'Unranked'
-    );
-
-    renderELOTrend();
-    renderKDRTrend(userMatches);
-}
-
-function renderMapStats(matches) {
-
-    const tbody = document.querySelector(
-        '#mapWinRate tbody'
-    );
-
-    tbody.innerHTML = '';
-
-    const stats = {};
-
-    matches.forEach(match => {
-
-        const rawMap = (match.Map || 'Unknown').toLowerCase();
-
-        const mapNames = {
-            metro: "Metro",
-            warehouse: "Warehouse",
-            desert: "Desert Storm",
-            elevation: "Elevation"
-        };
-
-        const map = mapNames[rawMap] || rawMap;
-
-        if (!stats[map]) {
-            stats[map] = {
-                wins: 0,
-                total: 0
-            };
-        }
-
-        stats[map].total++;
-
-        if (match.Team === match['Winning Team']) {
-            stats[map].wins++;
-        }
-    });
-
-    Object.entries(stats).forEach(([map, data]) => {
-
-        const rate = (
-            (data.wins / data.total) * 100
-        ).toFixed(1);
-
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-            <td>${map}</td>
-            <td>${data.wins}</td>
-            <td>${data.total}</td>
-            <td class="${rate < 50 ? 'negative' : 'positive'}">
-                ${rate}%
-            </td>
-        `;
-
-        tbody.appendChild(row);
-    });
-}
-
-function renderMatchHistory(matches, userRounds) {
-
-    const tbody = document.querySelector(
-        '#matchHistory tbody'
-    );
-
-    tbody.innerHTML = '';
-
-    matches.forEach((match, index) => {
-
-        const kills = parseInt(match.Kills || 0);
-        const deaths = parseInt(match.Deaths || 0);
-
-        const kdr = (
-            kills / Math.max(1, deaths)
-        ).toFixed(2);
-
-        const currentELO = parseInt(
-            userRounds[index]?.ELO || 1500
-        );
-
-        const previousELO = index > 0
-            ? parseInt(userRounds[index - 1]?.ELO || 1500)
-            : 1500;
-
-        const diff = currentELO - previousELO;
-
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-            <td>
-                <div class="match-pill">
-                    ${match.Round || '-'}
-                </div>
-            </td>
-
-            <td>${kills}</td>
-
-            <td>${deaths}</td>
-
-            <td>${kdr}</td>
-
-            <td>
-                ${currentELO}
-                <span class="${diff >= 0 ? 'positive' : 'negative'}">
-                    (${diff >= 0 ? '+' : ''}${diff})
-                </span>
-            </td>
-        `;
-
-        row.addEventListener('click', () => {
-            displayMatchDetails(match.Round);
+    <script>
+        // Load page theme
+        let currentTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) {
+                themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
+                themeBtn.addEventListener('click', () => {
+                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', currentTheme);
+                    themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
+                    localStorage.setItem('theme', currentTheme);
+
+                    // Trigger Chart theme rendering updates
+                    if (eloChartInstance) eloChartInstance.update();
+                    if (kdrChartInstance) kdrChartInstance.update();
+                });
+            }
         });
 
-        tbody.appendChild(row);
-    });
-}
+        let eloChartInstance = null;
+        let kdrChartInstance = null;
 
-function displayMatchDetails(round) {
+        const params = new URLSearchParams(window.location.search);
+        const nickname = params.get("nickname");
 
-    const modal = document.getElementById('matchModal');
+        if (!nickname) {
+            alert("No user specified!");
+            window.location.href = "index.html";
+        }
 
-    const tbody = document.querySelector(
-        '#matchDetails tbody'
-    );
+        const avatarLetter = document.getElementById("avatarLetter");
+        const statNickname = document.getElementById("statNickname");
 
-    tbody.innerHTML = '';
+        statNickname.textContent = nickname;
+        avatarLetter.textContent = nickname[0]?.toUpperCase() || "P";
 
-    document.getElementById(
-        'modalRoundTitle'
-    ).textContent = `${round} Round`;
+        document.title = `${nickname} - KPFM`;
 
-    const roundPlayers = allMatches.filter(
-        p => String(p.Round) === String(round)
-    );
+        document.getElementById("backButton").addEventListener("click", () => {
+            window.location.href = `index.html?t=${Date.now()}`;
+        });
 
-    const phantom = roundPlayers.filter(
-        p => p.Team === '1'
-    );
+        let allMatches = [];
+        let allAftercalc = [];
+        let eloHistory = [];
+        let tierHistory = [];
 
-    const ghost = roundPlayers.filter(
-        p => p.Team === '2'
-    );
+        Promise.all([
+            fetch(`match.csv?timestamp=${Date.now()}`).then(r => r.text()),
+            fetch(`lboard.csv?timestamp=${Date.now()}`).then(r => r.text()),
+            fetch(`aftercalc.csv?timestamp=${Date.now()}`).then(r => r.text())
+        ])
+            .then(([matchText, leaderboardText, aftercalcText]) => {
+                const matches = csvToJson(matchText);
+                const leaderboard = csvToJson(leaderboardText);
+                const aftercalc = csvToJson(aftercalcText);
 
-    const max = Math.max(
-        phantom.length,
-        ghost.length
-    );
+                allMatches = matches;
+                allAftercalc = aftercalc;
 
-    for (let i = 0; i < max; i++) {
+                processLeaderboard(leaderboard);
+                processUserStats(matches, aftercalc);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("데이터 로딩 실패");
+            });
 
-        const p1 = phantom[i] || {};
-        const p2 = ghost[i] || {};
+        function csvToJson(text) {
+            const rows = text.trim().split('\n');
+            const headers = rows[0].split(',').map(h => h.trim());
 
-        const row = document.createElement('tr');
+            return rows.slice(1).map(row => {
+                const values = row.split(',').map(v => v.trim());
+                return Object.fromEntries(
+                    headers.map((h, i) => [h, values[i]])
+                );
+            });
+        }
 
-        row.innerHTML = `
-            <td>${p1.Nickname || ''}</td>
-            <td>${p1.Kills || ''}</td>
-            <td>${p1.Deaths || ''}</td>
-            <td>${p1.ELO || ''}</td>
+        function processLeaderboard(leaderboard) {
+            leaderboard.sort((a, b) =>
+                parseInt(b.ELO || 0) - parseInt(a.ELO || 0)
+            );
 
-            <td>${p2.Nickname || ''}</td>
-            <td>${p2.Kills || ''}</td>
-            <td>${p2.Deaths || ''}</td>
-            <td>${p2.ELO || ''}</td>
-        `;
+            leaderboard.forEach((player, index) => {
+                player.rank = index + 1;
+            });
 
-        tbody.appendChild(row);
-    }
+            const user = leaderboard.find(
+                p => p.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+            );
 
-    modal.classList.add('show');
-}
+            if (!user) {
+                alert("유저를 찾을 수 없습니다.");
+                return;
+            }
 
-function renderELOTrend() {
+            const kills = parseInt(user.Kills || 0);
+            const deaths = parseInt(user.Deaths || 0);
+            const wins = parseInt(user.Wins || 0);
+            const losses = parseInt(user.Losses || 0);
+            const matches = parseInt(user.Total || 0);
 
-    const ctx = document
-        .getElementById('eloTrend')
-        .getContext('2d');
+            document.getElementById("statELO").textContent = user.ELO || 1500;
+            document.getElementById("statRank").textContent = `#${user.rank}`;
 
-    new Chart(ctx, {
+            const formattedTier = (user.Tier || "Unranked").replace('Platinum', 'Plat');
+            document.getElementById("statTier").textContent = formattedTier;
 
-        type: 'line',
+            document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
+            document.getElementById("statKPR").textContent = (kills / Math.max(1, matches)).toFixed(1);
+            document.getElementById("statWR").textContent = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
+            document.getElementById("statTotalKD").textContent = `${kills} / ${deaths}`;
+            document.getElementById("statTotalWL").textContent = `${wins} / ${losses}`;
+            document.getElementById("statMatches").textContent = matches;
 
-        data: {
-            labels: eloHistory.map((_, i) => i + 1),
+            applyTierColor(user.Tier || "Unranked");
+        }
 
-            datasets: [{
-                label: 'ELO',
+        function applyTierColor(tier) {
+            const el = document.getElementById("statTier");
+            const tierName = tier.split(' ')[0].toLowerCase();
+            el.className = `tier-label tier-${tierName}`;
+        }
 
-                data: eloHistory,
+        function processUserStats(matches, aftercalc) {
+            const userMatches = matches.filter(
+                m => m.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+            );
 
-                borderColor: '#8b5cf6',
+            const userRounds = aftercalc.filter(
+                r => r.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+            );
 
-                backgroundColor:
-                    'rgba(139,92,246,0.15)',
+            renderMapStats(userMatches);
+            renderMatchHistory(userMatches, userRounds);
 
-                tension: 0.3,
+            eloHistory = userRounds.map(r => parseInt(r.ELO || 1500));
+            tierHistory = userRounds.map(r => r.Tier || 'Unranked');
 
-                fill: true
-            }]
-        },
+            renderELOTrend();
+            renderKDRTrend(userMatches);
+        }
 
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: false
+        function renderMapStats(matches) {
+            const tbody = document.querySelector('#mapWinRate tbody');
+            tbody.innerHTML = '';
+            const stats = {};
+
+            matches.forEach(match => {
+                const rawMap = (match.Map || 'Unknown').toLowerCase();
+                const mapNames = {
+                    metro: "Metro",
+                    warehouse: "Warehouse",
+                    desert: "Desert Storm",
+                    elevation: "Elevation"
+                };
+                const map = mapNames[rawMap] || rawMap;
+
+                if (!stats[map]) {
+                    stats[map] = { wins: 0, total: 0 };
+                }
+                stats[map].total++;
+                if (match.Team === match['Winning Team']) {
+                    stats[map].wins++;
+                }
+            });
+
+            Object.entries(stats).forEach(([map, data]) => {
+                const rate = ((data.wins / data.total) * 100).toFixed(1);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${map}</td>
+                    <td>${data.wins}</td>
+                    <td>${data.total}</td>
+                    <td class="${rate < 50 ? 'negative' : 'positive'}">${rate}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderMatchHistory(matches, userRounds) {
+            const tbody = document.querySelector('#matchHistory tbody');
+            tbody.innerHTML = '';
+
+            matches.forEach((match, index) => {
+                const kills = parseInt(match.Kills || 0);
+                const deaths = parseInt(match.Deaths || 0);
+                const kdr = (kills / Math.max(1, deaths)).toFixed(2);
+
+                const currentELO = parseInt(userRounds[index]?.ELO || 1500);
+                const previousELO = index > 0
+                    ? parseInt(userRounds[index - 1]?.ELO || 1500)
+                    : 1500;
+
+                const diff = currentELO - previousELO;
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>
+                        <div class="match-pill">${match.Round || '-'}</div>
+                    </td>
+                    <td>${kills}</td>
+                    <td>${deaths}</td>
+                    <td>${kdr}</td>
+                    <td>
+                        ${currentELO}
+                        <span class="${diff >= 0 ? 'positive' : 'negative'}">
+                            (${diff >= 0 ? '+' : ''}${diff})
+                        </span>
+                    </td>
+                `;
+
+                row.addEventListener('click', () => {
+                    displayMatchDetails(match.Round);
+                });
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function displayMatchDetails(round) {
+            const modal = document.getElementById('matchModal');
+            const tbody = document.querySelector('#matchDetails tbody');
+            tbody.innerHTML = '';
+
+            document.getElementById('modalRoundTitle').textContent = `${round} Round Details`;
+
+            const roundPlayers = allMatches.filter(
+                p => String(p.Round) === String(round)
+            );
+
+            // Helper to get ELO and ELO change for a nickname in a given round
+            function getEloStats(nickname, roundNum) {
+                if (!nickname) return { text: '', diff: -9999, current: 0 };
+                const rNum = parseInt(roundNum);
+
+                // Find current round's ELO
+                const currentEntry = allAftercalc.find(
+                    e => parseInt(e.Round) === rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+                );
+
+                if (!currentEntry) {
+                    return { text: '1500 (+0)', diff: 0, current: 1500, nickname: nickname };
+                }
+
+                const currentElo = parseInt(currentEntry.ELO || 1500);
+
+                // Find previous round's ELO (most recent round < rNum)
+                const prevEntries = allAftercalc.filter(
+                    e => parseInt(e.Round) < rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+                );
+
+                let prevElo = 1500;
+                if (prevEntries.length > 0) {
+                    prevEntries.sort((a, b) => parseInt(b.Round) - parseInt(a.Round));
+                    prevElo = parseInt(prevEntries[0].ELO || 1500);
+                }
+
+                const diff = currentElo - prevElo;
+                const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+                const diffClass = diff >= 0 ? 'positive' : 'negative';
+
+                return {
+                    text: `${currentElo} <span class="${diffClass}">(${diffStr})</span>`,
+                    diff: diff,
+                    current: currentElo,
+                    nickname: nickname
+                };
+            }
+
+            const phantom = roundPlayers.filter(p => p.Team === '1');
+            const ghost = roundPlayers.filter(p => p.Team === '2');
+
+            // Determine MVP for Phantom Team
+            let phantomMvpNickname = "";
+            let maxPhantomDiff = -9999;
+            const phantomStats = phantom.map(p => {
+                const stats = getEloStats(p.Nickname, round);
+                if (p.Nickname && stats.diff > maxPhantomDiff) {
+                    maxPhantomDiff = stats.diff;
+                    phantomMvpNickname = p.Nickname;
+                }
+                return stats;
+            });
+
+            // Determine MVP for Ghost Team
+            let ghostMvpNickname = "";
+            let maxGhostDiff = -9999;
+            const ghostStats = ghost.map(p => {
+                const stats = getEloStats(p.Nickname, round);
+                if (p.Nickname && stats.diff > maxGhostDiff) {
+                    maxGhostDiff = stats.diff;
+                    ghostMvpNickname = p.Nickname;
+                }
+                return stats;
+            });
+
+            const max = Math.max(phantom.length, ghost.length);
+
+            for (let i = 0; i < max; i++) {
+                const p1 = phantom[i] || {};
+                const p2 = ghost[i] || {};
+
+                const p1Stats = phantomStats[i] || { text: '', diff: -9999, current: 0 };
+                const p2Stats = ghostStats[i] || { text: '', diff: -9999, current: 0 };
+
+                const isP1Mvp = p1.Nickname && p1.Nickname === phantomMvpNickname;
+                const isP2Mvp = p2.Nickname && p2.Nickname === ghostMvpNickname;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="${isP1Mvp ? 'team-mvp' : ''}">
+                        ${p1.Nickname || ''}
+                    </td>
+                    <td>${p1.Nickname ? (p1.Kills || '0') : ''}</td>
+                    <td>${p1.Nickname ? (p1.Deaths || '0') : ''}</td>
+                    <td>${p1Stats.text}</td>
+                    <td class="${isP2Mvp ? 'team-mvp' : ''}">
+                        ${p2.Nickname || ''}
+                    </td>
+                    <td>${p2.Nickname ? (p2.Kills || '0') : ''}</td>
+                    <td>${p2.Nickname ? (p2.Deaths || '0') : ''}</td>
+                    <td>${p2Stats.text}</td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            modal.classList.add('active');
+        }
+
+        function renderELOTrend() {
+            const ctx = document.getElementById('eloTrend').getContext('2d');
+            eloChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: eloHistory.map((_, i) => i + 1),
+                    datasets: [{
+                        label: 'ELO',
+                        data: eloHistory,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139,92,246,0.15)',
+                        tension: 0.3,
+                        fill: true
+                    }]
                 },
-
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-
-                            const tier =
-                                tierHistory[
-                                    context.dataIndex
-                                ] || 'Unranked';
-
-                            return `ELO: ${context.raw} (${tier})`;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
+                            },
+                            ticks: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
+                                font: { family: 'Plus Jakarta Sans' }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
+                            },
+                            ticks: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
+                                font: { family: 'Plus Jakarta Sans' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const tier = tierHistory[context.dataIndex] || 'Unranked';
+                                    return `ELO: ${context.raw} (${tier})`;
+                                }
+                            }
                         }
                     }
                 }
-            }
+            });
         }
-    });
-}
 
-function renderKDRTrend(matches) {
+        function renderKDRTrend(matches) {
+            const ctx = document.getElementById('kdrTrend').getContext('2d');
+            let totalKills = 0;
+            let totalDeaths = 0;
 
-    const ctx = document
-        .getElementById('kdrTrend')
-        .getContext('2d');
+            const kdrHistory = matches.map(match => {
+                totalKills += parseInt(match.Kills || 0);
+                totalDeaths += parseInt(match.Deaths || 0);
+                return (totalKills / Math.max(1, totalDeaths)).toFixed(2);
+            });
 
-    let totalKills = 0;
-    let totalDeaths = 0;
-
-    const kdrHistory = matches.map(match => {
-
-        totalKills += parseInt(match.Kills || 0);
-
-        totalDeaths += parseInt(match.Deaths || 0);
-
-        return (
-            totalKills / Math.max(1, totalDeaths)
-        ).toFixed(2);
-    });
-
-    new Chart(ctx, {
-
-        type: 'line',
-
-        data: {
-
-            labels: kdrHistory.map((_, i) => i + 1),
-
-            datasets: [{
-
-                label: 'KDR',
-
-                data: kdrHistory,
-
-                borderColor: '#ec4899',
-
-                backgroundColor:
-                    'rgba(236,72,153,0.12)',
-
-                tension: 0.3,
-
-                fill: true
-            }]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: false
+            kdrChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: kdrHistory.map((_, i) => i + 1),
+                    datasets: [{
+                        label: 'KDR',
+                        data: kdrHistory,
+                        borderColor: '#ec4899',
+                        backgroundColor: 'rgba(236,72,153,0.12)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
+                            },
+                            ticks: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
+                                font: { family: 'Plus Jakarta Sans' }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
+                            },
+                            ticks: {
+                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
+                                font: { family: 'Plus Jakarta Sans' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
                 }
-            }
+            });
         }
-    });
-}
 
-document.getElementById('closeModal')
-    .addEventListener('click', () => {
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('matchModal').classList.remove('active');
+        });
 
-        document.getElementById('matchModal')
-            .classList.remove('show');
-
-    });
-
-window.addEventListener('click', e => {
-
-    const modal =
-        document.getElementById('matchModal');
-
-    if (e.target === modal) {
-        modal.classList.remove('show');
-    }
-});
-
-</script>
+        window.addEventListener('click', e => {
+            const modal = document.getElementById('matchModal');
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    </script>
 
 </body>
 

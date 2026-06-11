@@ -1,536 +1,551 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KPFM Leaderboard</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- Plus Jakarta Sans Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        /* CSS variables aligned with PFAttach aesthetics */
         :root {
-            --bg: #070b14;
-            --bg2: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-glass: rgba(255, 255, 255, 0.4);
+            --border-glass: rgba(255, 255, 255, 0.3);
+            --shadow-glass: rgba(31, 38, 135, 0.08);
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --accent-color: #5c6bc0;
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --card-title: #1a252f;
+            --table-header: rgba(255, 255, 255, 0.5);
+            --filter-active-bg: rgba(92, 107, 192, 0.18);
+            --chip-bg: rgba(255, 255, 255, 0.34);
+            --gold: #f59e0b;
+        }
 
-            --panel: rgba(15, 23, 42, 0.72);
-            --panel-solid: #111827;
-
-            --border: rgba(255, 255, 255, 0.08);
-
-            --text: #f8fafc;
-            --muted: #94a3b8;
-
-            --accent: #8b5cf6;
-            --accent2: #6366f1;
-
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --bg-glass: rgba(15, 23, 42, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --shadow-glass: rgba(0, 0, 0, 0.3);
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-color: #818cf8;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --card-title: #f8fafc;
+            --table-header: rgba(15, 23, 42, 0.5);
+            --filter-active-bg: rgba(129, 140, 248, 0.18);
+            --chip-bg: rgba(255, 255, 255, 0.08);
             --gold: #fbbf24;
-
-            --shadow:
-                0 10px 30px rgba(0, 0, 0, 0.35);
-
-            --radius: 24px;
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html,
         body {
-            margin: 0;
-            min-height: 100%;
-            font-family: 'Inter', sans-serif;
-            background:
-                radial-gradient(circle at top left,
-                    rgba(99, 102, 241, 0.18),
-                    transparent 30%),
-                radial-gradient(circle at top right,
-                    rgba(139, 92, 246, 0.14),
-                    transparent 25%),
-                linear-gradient(180deg, #020617, #0f172a);
-            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         body {
-            padding: 32px 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
 
-        .container {
+        /* Glassmorphism Background Blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.55;
+            transition: all 0.5s ease;
+        }
+
+        .blob-1 {
+            width: 320px;
+            height: 320px;
+            background: #a78bfa;
+            top: 10%;
+            left: calc(50% - 300px);
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #60a5fa;
+            bottom: 15%;
+            right: calc(50% - 280px);
+        }
+
+        /* Mobile-First App Container (centered, PFAttach composition) */
+        .app-container {
             width: 100%;
-            max-width: 1280px;
-            margin: 0 auto;
-
-            background: var(--panel);
-            backdrop-filter: blur(20px);
-
-            border: 1px solid var(--border);
-            border-radius: 32px;
-
-            overflow: hidden;
-
-            box-shadow:
-                0 25px 80px rgba(0, 0, 0, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            max-width: 480px;
+            height: calc(100vh - 32px);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 1;
         }
 
-        .hero {
-            position: relative;
-            padding: 42px 42px 28px;
-            border-bottom: 1px solid var(--border);
-            overflow: hidden;
+        /* Glass Frame styling */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px 0 var(--shadow-glass);
+            border-radius: 20px;
+            padding: 16px;
+            transition: all 0.3s ease;
         }
 
-        .hero::before {
-            content: "";
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            top: -250px;
-            right: -100px;
-            background: radial-gradient(circle,
-                    rgba(139, 92, 246, 0.25),
-                    transparent 70%);
-            pointer-events: none;
-        }
-
-        .title-row {
+        /* Header styling */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 24px;
-            flex-wrap: wrap;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 3rem;
+        .header h1 {
+            font-size: 1.25rem;
             font-weight: 800;
-            letter-spacing: -0.05em;
-            line-height: 1;
+            letter-spacing: -0.5px;
+            color: var(--card-title);
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg,
-                    #c084fc,
-                    #8b5cf6,
-                    #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-sub {
-            margin-top: 14px;
-            color: var(--muted);
-            font-size: 15px;
-        }
-
-        .top-stat-boxes {
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-
-        .top-stat {
-            min-width: 120px;
-
-            background: rgba(255, 255, 255, 0.04);
-
-            border: 1px solid rgba(255, 255, 255, 0.06);
-
-            border-radius: 20px;
-
-            padding: 16px 18px;
-        }
-
-        .top-stat-label {
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-
-        .top-stat-value {
-            font-size: 1.3rem;
-            font-weight: 800;
-        }
-
-        .controls {
-            display: flex;
-            gap: 14px;
-            padding: 28px 42px;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-        }
-
-        .search-wrapper {
-            position: relative;
-            flex: 1;
-            min-width: 260px;
-        }
-
-        input {
-            width: 100%;
-            height: 60px;
-
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-
-            background: rgba(255, 255, 255, 0.04);
-
-            color: white;
-            font-size: 15px;
-
-            padding: 0 20px;
-
-            outline: none;
-
-            transition: 0.25s ease;
-        }
-
-        input:focus {
-            border-color: rgba(139, 92, 246, 0.7);
-
-            box-shadow:
-                0 0 0 5px rgba(139, 92, 246, 0.12);
-        }
-
-        button {
-            border: none;
-            border-radius: 20px;
-
-            padding: 0 26px;
-
-            height: 60px;
-
-            background: linear-gradient(135deg,
-                    #8b5cf6,
-                    #6366f1);
-
-            color: white;
-            font-weight: 700;
-
+        .theme-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-glass);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             cursor: pointer;
-
-            transition: 0.22s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            transition: background 0.3s, transform 0.2s;
+            outline: none;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 14px 25px rgba(99, 102, 241, 0.28);
+        .theme-btn:active {
+            transform: scale(0.95);
         }
 
-        button:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        /* Sticky Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            position: sticky;
+            top: 10px;
+            z-index: 80;
+            box-shadow: 0 4px 20px var(--shadow-glass);
+            position: relative;
         }
 
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-color);
+            width: 100%;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Autocomplete dropdown styling matching PFAttach select */
         #autocompleteList {
             position: absolute;
             width: 100%;
-            top: calc(100% + 8px);
+            top: calc(100% + 6px);
+            left: 0;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            box-shadow: 0 10px 24px var(--shadow-glass);
+            z-index: 100;
+            display: none;
+            max-height: 250px;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
 
-            background: #111827;
-
-            border: 1px solid rgba(255, 255, 255, 0.08);
-
-            border-radius: 18px;
-
-            overflow: hidden;
-            z-index: 50;
-
+        #autocompleteList::-webkit-scrollbar {
             display: none;
         }
 
+        [data-theme="dark"] #autocompleteList {
+            background: rgba(15, 23, 42, 0.9);
+        }
+
         #autocompleteList div {
-            padding: 14px 18px;
+            padding: 10px 14px;
             cursor: pointer;
-            transition: 0.15s ease;
+            color: var(--text-color);
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
         }
 
         #autocompleteList div:hover {
-            background: rgba(139, 92, 246, 0.15);
+            background: rgba(92, 107, 192, 0.15);
         }
 
-        .tag-container {
+        /* Team Making Lobby styling */
+        .lobby-panel {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
-
-            padding: 0 42px 26px;
         }
 
-        .tag {
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            border: 1px solid var(--border-glass);
+            background: var(--chip-bg);
+            color: var(--text-color);
+            border-radius: 12px;
+            padding: 6px 12px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .filter-chip button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
-
-            padding: 10px 16px;
-
-            border-radius: 999px;
-
-            background: rgba(139, 92, 246, 0.12);
-
-            border: 1px solid rgba(139, 92, 246, 0.22);
-
-            font-size: 14px;
+            justify-content: center;
+            outline: none;
         }
 
-        .tag button {
-            height: auto;
-            width: auto;
-            padding: 0;
-            background: transparent;
-            font-size: 18px;
+        .filter-chip button:hover {
+            color: var(--text-color);
         }
 
-        .leaderboard-wrap {
-            padding: 0 24px 24px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            overflow: hidden;
-        }
-
-        thead th {
-            position: sticky;
-            top: 0;
-
-            background: rgba(255, 255, 255, 0.03);
-
-            backdrop-filter: blur(12px);
-
-            color: #c4b5fd;
-
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-
-            font-size: 12px;
-            font-weight: 700;
-
-            padding: 20px 18px;
-            text-align: left;
-
-            border-bottom: 1px solid var(--border);
-        }
-
-        tbody tr {
-            transition: 0.2s ease;
+        .control-btn {
+            border: none;
+            border-radius: 12px;
+            height: 42px;
+            background: var(--accent-color);
+            color: white;
+            font-weight: 800;
+            font-size: 0.85rem;
             cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(92, 107, 192, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
-        tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
+        [data-theme="dark"] .control-btn {
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.35);
         }
 
-        td {
-            padding: 22px 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        .control-btn:hover:not(:disabled) {
+            opacity: 0.95;
+            transform: translateY(-1px);
         }
 
-        .rank {
+        .control-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Card list layout */
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .card-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 14px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .item-card:hover {
+            border-color: rgba(92, 107, 192, 0.35);
+            box-shadow: 0 8px 24px var(--shadow-glass);
+        }
+
+        .item-card:active {
+            transform: scale(0.98);
+        }
+
+        .item-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-card-rank {
+            font-size: 0.9rem;
             font-weight: 800;
             color: var(--gold);
         }
 
-        .nickname {
-            display: flex;
-            align-items: center;
-            gap: 14px;
+        .item-card-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--card-title);
         }
 
-        .avatar {
-            width: 42px;
-            height: 42px;
+        .item-card-lobby-toggle {
+            border: 1px solid var(--border-glass);
+            background: var(--chip-bg);
+            color: var(--text-color);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
 
-            border-radius: 14px;
+        .item-card-lobby-toggle:hover {
+            border-color: var(--accent-color);
+        }
 
-            background:
-                linear-gradient(135deg,
-                    rgba(139, 92, 246, 0.8),
-                    rgba(99, 102, 241, 0.8));
+        .item-card-lobby-toggle.in-lobby {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 2px 6px rgba(92, 107, 192, 0.2);
+        }
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Stat chip grid inside cards */
+        .stat-chip-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
 
+        .stat-chip {
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 8px 6px;
+            text-align: center;
+        }
+
+        .stat-chip-label {
+            display: block;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-weight: 800;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-chip-value {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-color);
             font-weight: 700;
         }
 
-        .nickname-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .nickname-main {
-            font-weight: 700;
-        }
-
-        .nickname-sub {
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .stat-pill {
+        /* Tier Badges (Clean and without emojis) */
+        .tier-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
-            min-width: 70px;
-
-            padding: 8px 12px;
-
-            border-radius: 12px;
-
-            background: rgba(255, 255, 255, 0.04);
-
-            border: 1px solid rgba(255, 255, 255, 0.05);
-
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
             font-weight: 700;
+            border: 1px solid currentColor;
+            background: transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .tier-copper {
-            color: #c08457;
-        }
+        .tier-copper { color: #c08457; }
+        .tier-bronze { color: #cd7f32; }
+        .tier-silver { color: #7f8c8d; }
+        [data-theme="dark"] .tier-silver { color: #94a3b8; }
+        .tier-gold { color: #f59e0b; }
+        .tier-platinum { color: #0284c7; }
+        [data-theme="dark"] .tier-platinum { color: #38bdf8; }
+        .tier-diamond { color: #7c3aed; }
+        [data-theme="dark"] .tier-diamond { color: #c084fc; }
+        .tier-champion { color: #e11d48; }
+        .tier-unranked { color: var(--text-muted); }
 
-        .tier-bronze {
-            color: #cd7f32;
-        }
-
-        .tier-silver {
-            color: #d1d5db;
-        }
-
-        .tier-gold {
-            color: #facc15;
-        }
-
-        .tier-platinum {
-            color: #38bdf8;
-        }
-
-        .tier-diamond {
-            color: #c084fc;
-        }
-
-        .tier-champion {
-            color: #f43f5e;
-        }
-
-        .tier-unranked {
-            color: #94a3b8;
-        }
-
-        #mobileCards {
+        /* General Modal Styling matching PFAttach */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+            padding: 16px;
         }
 
-        .mobile-card {
-            background:
-                linear-gradient(180deg,
-                    rgba(255, 255, 255, 0.05),
-                    rgba(255, 255, 255, 0.02));
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
 
-            border: 1px solid rgba(255, 255, 255, 0.06);
-
+        .modal-content {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
             border-radius: 24px;
-
-            padding: 20px;
-
-            margin-bottom: 16px;
+            box-shadow: 0 12px 40px var(--shadow-glass);
+            transform: scale(0.92) translateY(8px);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-top {
+        .modal.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-glass);
             display: flex;
             justify-content: space-between;
             align-items: center;
-
-            margin-bottom: 18px;
         }
 
-        .mobile-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+        .modal-header h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--card-title);
         }
 
-        .mobile-stat {
-            background: rgba(255, 255, 255, 0.04);
-
-            border-radius: 16px;
-
-            padding: 14px;
-        }
-
-        .mobile-stat-label {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .mobile-stat-value {
-            font-weight: 700;
-            font-size: 1.05rem;
-        }
-
-        #loading {
-            position: fixed;
-            inset: 0;
-
+        .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-color);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-
-            font-size: 18px;
-            font-weight: 600;
-
-            background: #020617;
-            z-index: 999;
+            transition: background 0.2s;
+            outline: none;
         }
 
-        @media (max-width: 900px) {
-            body {
-                padding: 10px;
-            }
+        .close-btn:hover {
+            background: var(--chip-bg);
+        }
 
-            .hero {
-                padding: 28px 20px 22px;
-            }
+        .modal-body {
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
 
-            .controls {
-                padding: 20px;
-            }
+        .modal-body::-webkit-scrollbar {
+            display: none;
+        }
 
-            .tag-container {
-                padding: 0 20px 20px;
-            }
-
-            .leaderboard-wrap {
-                padding: 0 14px 14px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            table {
-                display: none;
-            }
-
-            #mobileCards {
-                display: block;
-            }
-
-            button {
-                width: 100%;
-            }
+        /* Loading Screen styling */
+        #loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            z-index: 999;
         }
     </style>
 </head>
@@ -541,100 +556,119 @@
         데이터 불러오는 중...
     </div>
 
-    <div class="container" style="display:none;">
+    <!-- Glowing Fixed Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
 
-        <section class="hero">
+    <div class="app-container" style="display:none;">
 
-            <div class="title-row">
+        <!-- Header Panel -->
+        <header class="glass-panel header">
+            <h1>KPFM <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-left: 4px; vertical-align: middle;">Leaderboard</span></h1>
+            <button class="theme-btn" id="themeToggleBtn" title="화면 테마 변경">☀️</button>
+        </header>
 
-                <div>
-                    <h1>
-                        <span class="gradient-text">KPFM</span>
-                        Leaderboard
-                    </h1>
-
-                    <div class="hero-sub">
-                        Competitive ranking dashboard
-                    </div>
-                </div>
-
-                <div class="top-stat-boxes">
-                    <div class="top-stat">
-                        <div class="top-stat-label">PLAYERS</div>
-                        <div class="top-stat-value" id="playerCount">0</div>
-                    </div>
-
-                    <div class="top-stat">
-                        <div class="top-stat-label">RANKED</div>
-                        <div class="top-stat-value" id="rankedCount">0</div>
-                    </div>
-                </div>
-
+        <!-- Stats Overview Panel -->
+        <div class="glass-panel" style="display: flex; justify-content: space-between; padding: 12px 20px;">
+            <div style="flex: 1; text-align: center;">
+                <span style="display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;">Total Players</span>
+                <span id="playerCount" style="font-size: 1.15rem; font-weight: 800; color: var(--card-title);">0</span>
             </div>
-
-        </section>
-
-        <section class="controls">
-
-            <div class="search-wrapper">
-                <input type="text"
-                    id="searchBox"
-                    placeholder="Search player..."
-                    autocomplete="off">
-
-                <div id="autocompleteList"></div>
+            <div style="width: 1px; background: var(--border-glass);"></div>
+            <div style="flex: 1; text-align: center;">
+                <span style="display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;">Ranked Players</span>
+                <span id="rankedCount" style="font-size: 1.15rem; font-weight: 800; color: var(--card-title);">0</span>
             </div>
+        </div>
 
-            <button id="teamBalanceButton" disabled>
-                Team Making
+        <!-- Sticky Search panel -->
+        <div class="glass-panel search-bar">
+            <input type="text" id="searchBox" placeholder="Search player..." autocomplete="off">
+            <div id="autocompleteList"></div>
+        </div>
+
+        <!-- Team Making Lobby Panel -->
+        <div class="glass-panel lobby-panel" id="lobbyPanel">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px;">
+                <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px;">TEAM MAKING LOBBY</span>
+                <span id="lobbyCount" style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">0 selected</span>
+            </div>
+            <div class="filter-row" id="filterTags" style="min-height: 28px; padding-top: 4px;"></div>
+            <button id="teamBalanceButton" class="control-btn" style="width: 100%; margin-top: 4px;" disabled>
+                Balance Teams
             </button>
+        </div>
 
-        </section>
-
-        <div id="filterTags" class="tag-container"></div>
-
-        <section class="leaderboard-wrap">
-
-            <table id="leaderboard">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Player</th>
-                        <th>KDR</th>
-                        <th>Win Rate</th>
-                        <th>KPR</th>
-                        <th>Matches</th>
-                        <th>ELO</th>
-                        <th>Tier</th>
-                    </tr>
-                </thead>
-
-                <tbody></tbody>
-            </table>
-
-            <div id="mobileCards"></div>
-
-        </section>
+        <!-- Leaderboard List -->
+        <main class="card-list" id="leaderboardListContainer"></main>
 
     </div>
 
+    <!-- Team Balancing Results Glass Modal -->
+    <div class="modal" id="lobbyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Balanced Squads</h2>
+                <button class="close-btn" id="closeLobbyModal">&times;</button>
+            </div>
+            <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <!-- Team 1 (Phantom) -->
+                    <div class="glass-panel" style="padding: 12px; background: rgba(92, 107, 192, 0.05); border-radius: 14px;">
+                        <h3 style="font-size: 0.8rem; font-weight: 800; color: var(--accent-color); margin-bottom: 8px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">Phantom</h3>
+                        <div id="team1List" style="display: flex; flex-direction: column; gap: 6px; min-height: 40px;"></div>
+                        <div style="margin-top: 10px; padding-top: 6px; border-top: 1px dashed var(--border-glass); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); display: flex; justify-content: space-between;">
+                            <span>AVG ELO</span>
+                            <span id="team1Avg" style="color: var(--text-color);">0</span>
+                        </div>
+                    </div>
+                    <!-- Team 2 (Ghost) -->
+                    <div class="glass-panel" style="padding: 12px; background: rgba(239, 68, 68, 0.05); border-radius: 14px;">
+                        <h3 style="font-size: 0.8rem; font-weight: 800; color: #ef4444; margin-bottom: 8px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">Ghost</h3>
+                        <div id="team2List" style="display: flex; flex-direction: column; gap: 6px; min-height: 40px;"></div>
+                        <div style="margin-top: 10px; padding-top: 6px; border-top: 1px dashed var(--border-glass); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); display: flex; justify-content: space-between;">
+                            <span>AVG ELO</span>
+                            <span id="team2Avg" style="color: var(--text-color);">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); border-top: 1px dashed var(--border-glass); padding-top: 10px;">
+                    ELO Difference: <span id="eloDiff" style="color: var(--card-title); font-size: 0.85rem;">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Set page theme from localStorage
+        let currentTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) {
+                themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
+                themeBtn.addEventListener('click', () => {
+                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', currentTheme);
+                    themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
+                    localStorage.setItem('theme', currentTheme);
+                });
+            }
+        });
 
         let leaderboardData = [];
         let selectedUsers = new Set();
-
         const timestamp = `?timestamp=${Date.now()}`;
 
         async function loadAndProcessData() {
-
             const loading = document.getElementById('loading');
-            const container = document.querySelector('.container');
+            const container = document.querySelector('.app-container');
 
             try {
-
                 const [matchResponse, lboardResponse] = await Promise.all([
-                    fetch(`https://yusi0.github.io/KPFM/match.csv${timestamp}`),
-                    fetch(`https://yusi0.github.io/KPFM/lboard.csv${timestamp}`)
+                    fetch(`match.csv${timestamp}`),
+                    fetch(`lboard.csv${timestamp}`)
                 ]);
 
                 const [matchText, lboardText] = await Promise.all([
@@ -671,33 +705,24 @@
                 updateLeaderboardWithEloAndTier(leaderboard);
 
             } catch (err) {
-
                 console.error(err);
                 loading.innerText = '데이터 로딩 실패';
-
             } finally {
-
                 loading.style.display = 'none';
-                container.style.display = 'block';
-
+                container.style.display = 'flex';
             }
-
         }
 
         document.addEventListener('DOMContentLoaded', loadAndProcessData);
 
         function processMatches(matches) {
-
             const playerStats = {};
 
-            matches.reverse().forEach((match, index) => {
-                
+            matches.reverse().forEach((match) => {
                 const nickname = match.Nickname;
-
                 if (!nickname) return;
 
                 if (!playerStats[nickname]) {
-
                     playerStats[nickname] = {
                         nickname,
                         matches: 0,
@@ -706,11 +731,9 @@
                         wins: 0,
                         losses: 0
                     };
-
                 }
 
                 const p = playerStats[nickname];
-
                 p.matches++;
                 p.kills += parseInt(match.Kills, 10) || 0;
                 p.deaths += parseInt(match.Deaths, 10) || 0;
@@ -720,370 +743,262 @@
                 } else {
                     p.losses++;
                 }
-
             });
 
             leaderboardData = Object.values(playerStats);
-
         }
 
-        function refreshLeaderboard() {
+        let searchQuery = '';
 
-            let filteredData;
-        
-            if (selectedUsers.size > 0) {
-        
-                filteredData = leaderboardData.filter(
-                    p => selectedUsers.has(p.nickname)
+        function refreshLeaderboard() {
+            let filteredData = leaderboardData;
+            if (searchQuery) {
+                filteredData = leaderboardData.filter(p =>
+                    p.nickname.toLowerCase().includes(searchQuery)
                 );
-        
-            } else {
-        
-                filteredData = leaderboardData;
             }
-        
             renderLeaderboard(filteredData);
         }
                 
         function updateLeaderboardWithEloAndTier(leaderboard) {
-
             leaderboard.forEach(rankEntry => {
-
                 const player = leaderboardData.find(
                     p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase()
                 );
 
                 if (player) {
-
                     player.elo = parseInt(rankEntry.ELO) || 0;
                     player.tier = rankEntry.Tier || 'Unranked';
-
                 }
-
             });
 
             leaderboardData.sort((a, b) => b.elo - a.elo);
 
             let rankCounter = 1;
-
             leaderboardData.forEach(p => {
-
                 p.rank = (p.matches > 5 && p.elo > 0)
                     ? rankCounter++
                     : 'N/A';
-
             });
 
             renderLeaderboard(leaderboardData);
 
-            document.getElementById('playerCount').innerText =
-                leaderboardData.length;
-
+            document.getElementById('playerCount').innerText = leaderboardData.length;
             document.getElementById('rankedCount').innerText =
                 leaderboardData.filter(p => p.rank !== 'N/A').length;
-
         }
 
         function renderLeaderboard(data) {
-        
+            const formatTier = (tier) => {
+                if (!tier) return 'Unranked';
+                return tier.replace('Platinum', 'Plat');
+            };
+
             data.sort((a, b) => {
-        
                 const aSelected = selectedUsers.has(a.nickname);
                 const bSelected = selectedUsers.has(b.nickname);
-        
                 if (aSelected && !bSelected) return -1;
-        
                 if (!aSelected && bSelected) return 1;
-        
                 return (b.elo || 0) - (a.elo || 0);
             });
-        
-            const desktopTable =
-                document.querySelector("#leaderboard");
-                    
-            const tbody =
-                document.querySelector('#leaderboard tbody');
 
-            const mobile =
-                document.getElementById('mobileCards');
-
-            tbody.innerHTML = '';
-            mobile.innerHTML = '';
+            const container = document.getElementById('leaderboardListContainer');
+            container.innerHTML = '';
 
             data.forEach(player => {
-
-                const tierName =
-                    player.tier?.split(' ')[0] || 'Unranked';
-
-                const tierClass =
-                    `tier-${tierName.toLowerCase()}`;
-
-                const kdr =
-                    (player.kills / Math.max(1, player.deaths)).toFixed(2);
-
-                const winRate =
-                    player.matches > 0
-                        ? ((player.wins / player.matches) * 100).toFixed(1) + '%'
-                        : '0%';
-
-                const kpr =
-                    player.matches > 0
-                        ? (player.kills / player.matches).toFixed(1)
-                        : '0';
-
-                const goToProfile = () => {
-
-                    window.location.href =
-                        `user.html?nickname=${encodeURIComponent(player.nickname)}`;
-
-                };
-
-                const row = document.createElement('tr');
-
-                row.onclick = goToProfile;
-
-                row.innerHTML = `
-                    <td class="rank">#${player.rank}</td>
-
-                    <td>
-                        <div class="nickname">
-
-                            <div class="avatar">
-                                ${player.nickname[0].toUpperCase()}
-                            </div>
-
-                            <div class="nickname-meta">
-                                <div class="nickname-main">
-                                    ${player.nickname}
-                                </div>
-
-                                <div class="nickname-sub ${tierClass}">
-                                    ${player.tier || 'Unranked'}
-                                </div>
-                            </div>
-
-                        </div>
-                    </td>
-
-                    <td>
-                        <div class="stat-pill">${kdr}</div>
-                    </td>
-
-                    <td>
-                        <div class="stat-pill">${winRate}</div>
-                    </td>
-
-                    <td>
-                        <div class="stat-pill">${kpr}</div>
-                    </td>
-
-                    <td>${player.matches}</td>
-
-                    <td>
-                        <strong>${player.elo || 'N/A'}</strong>
-                    </td>
-
-                    <td class="${tierClass}">
-                        ${player.tier || 'Unranked'}
-                    </td>
-                `;
-
-                tbody.appendChild(row);
+                const tierName = player.tier?.split(' ')[0] || 'Unranked';
+                const tierClass = `tier-${tierName.toLowerCase()}`;
+                const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
+                const winRate = player.matches > 0
+                    ? ((player.wins / player.matches) * 100).toFixed(1) + '%'
+                    : '0%';
+                
+                const isInLobby = selectedUsers.has(player.nickname);
 
                 const card = document.createElement('div');
-
-                card.className = 'mobile-card';
-
-                card.onclick = goToProfile;
+                card.className = 'item-card';
+                card.onclick = () => {
+                    window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}&t=${Date.now()}`;
+                };
 
                 card.innerHTML = `
-                    <div class="mobile-top">
-
-                        <div class="nickname">
-
-                            <div class="avatar">
-                                ${player.nickname[0].toUpperCase()}
-                            </div>
-
-                            <div class="nickname-meta">
-                                <div class="nickname-main">
-                                    ${player.nickname}
-                                </div>
-
-                                <div class="nickname-sub ${tierClass}">
-                                    ${player.tier || 'Unranked'}
-                                </div>
-                            </div>
-
+                    <div class="item-card-header">
+                        <div class="item-card-title">
+                            <span class="item-card-rank">${player.rank === 'N/A' ? 'N/A' : '#' + player.rank}</span>
+                            <span class="item-card-name">${player.nickname}</span>
+                            <span class="tier-badge ${tierClass}">${formatTier(player.tier)}</span>
                         </div>
-
-                        <div class="rank">
-                            #${player.rank}
-                        </div>
-
+                        <button class="item-card-lobby-toggle ${isInLobby ? 'in-lobby' : ''}" onclick="event.stopPropagation(); toggleLobbyPlayer('${player.nickname.replace(/'/g, "\\'")}')">
+                            ${isInLobby ? 'Remove' : '+ Lobby'}
+                        </button>
                     </div>
-
-                    <div class="mobile-grid">
-
-                        <div class="mobile-stat">
-                            <div class="mobile-stat-label">ELO</div>
-                            <div class="mobile-stat-value">
-                                ${player.elo || 'N/A'}
-                            </div>
+                    <div class="stat-chip-grid">
+                        <div class="stat-chip">
+                            <span class="stat-chip-label">ELO</span>
+                            <span class="stat-chip-value">${player.elo || 'N/A'}</span>
                         </div>
-
-                        <div class="mobile-stat">
-                            <div class="mobile-stat-label">KDR</div>
-                            <div class="mobile-stat-value">
-                                ${kdr}
-                            </div>
+                        <div class="stat-chip">
+                            <span class="stat-chip-label">KDR</span>
+                            <span class="stat-chip-value">${kdr}</span>
                         </div>
-
-                        <div class="mobile-stat">
-                            <div class="mobile-stat-label">WIN RATE</div>
-                            <div class="mobile-stat-value">
-                                ${winRate}
-                            </div>
+                        <div class="stat-chip">
+                            <span class="stat-chip-label">Win Rate</span>
+                            <span class="stat-chip-value">${winRate}</span>
                         </div>
-
-                        <div class="mobile-stat">
-                            <div class="mobile-stat-label">MATCHES</div>
-                            <div class="mobile-stat-value">
-                                ${player.matches}
-                            </div>
+                        <div class="stat-chip">
+                            <span class="stat-chip-label">Matches</span>
+                            <span class="stat-chip-value">${player.matches}</span>
                         </div>
-
                     </div>
                 `;
-
-                mobile.appendChild(card);
-
+                container.appendChild(card);
             });
-
         }
 
+        // Search Autocomplete Logic
         const searchBox = document.getElementById('searchBox');
-
-            searchBox.addEventListener('input', function () {
+        searchBox.addEventListener('input', function () {
+            searchQuery = this.value.trim().toLowerCase();
+            refreshLeaderboard();
             
-                const input =
-                    this.value.trim().toLowerCase();
+            const autocomplete = document.getElementById('autocompleteList');
+            autocomplete.innerHTML = '';
             
-                refreshLeaderboard();
-            
-                const autocomplete =
-                    document.getElementById('autocompleteList');
-            
-                autocomplete.innerHTML = '';
-            
-                if (input.length > 0) {
-            
-                    const players =
-                        leaderboardData.filter(p =>
-            
-                            p.nickname
-                                .toLowerCase()
-                                .includes(input)
-            
-                        );
-            
-                    if (players.length > 0) {
-            
-                        players.forEach(player => {
-            
-                            const item =
-                                document.createElement('div');
-            
-                            item.textContent =
-                                player.nickname;
-            
-                            item.onclick = () => {
-            
-                                addFilterTag(player.nickname);
-            
-                                autocomplete.style.display = 'none';
-            
-                                searchBox.value = '';
-            
-                            };
-            
-                            autocomplete.appendChild(item);
-            
-                        });
-            
-                        autocomplete.style.display = 'block';
-            
-                    }
-            
-                } else {
-            
-                    autocomplete.style.display = 'none';
-            
+            if (searchQuery.length > 0) {
+                const players = leaderboardData.filter(p =>
+                    p.nickname.toLowerCase().includes(searchQuery)
+                );
+                
+                if (players.length > 0) {
+                    players.forEach(player => {
+                        const item = document.createElement('div');
+                        item.textContent = player.nickname;
+                        item.onclick = () => {
+                            addFilterTag(player.nickname);
+                            autocomplete.style.display = 'none';
+                        };
+                        autocomplete.appendChild(item);
+                    });
+                    autocomplete.style.display = 'block';
                 }
-            
-            });
+            } else {
+                autocomplete.style.display = 'none';
+            }
+        });
 
         function addFilterTag(nickname) {
-
             if (selectedUsers.has(nickname)) return;
-        
             selectedUsers.add(nickname);
-        
             updateFilterTags();
-            updateTeamBalanceButtonState();
-        
-            // 추가 즉시 리더보드 갱신
+            
+            // Clear search when player is selected via search autocomplete
+            searchBox.value = '';
+            searchQuery = '';
+            refreshLeaderboard();
+        }
+
+        function toggleLobbyPlayer(nickname) {
+            if (selectedUsers.has(nickname)) {
+                selectedUsers.delete(nickname);
+            } else {
+                selectedUsers.add(nickname);
+            }
+            updateFilterTags();
             refreshLeaderboard();
         }
 
         function updateFilterTags() {
-
-            const container =
-                document.getElementById('filterTags');
-
+            const container = document.getElementById('filterTags');
             container.innerHTML = '';
-
+            
             selectedUsers.forEach(nickname => {
-
-                const tag =
-                    document.createElement('div');
-
-                tag.className = 'tag';
-
-                tag.innerHTML = `
-                    ${nickname}
-                    <button>&times;</button>
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.innerHTML = `
+                    <span>${nickname}</span>
+                    <button onclick="toggleLobbyPlayer('${nickname.replace(/'/g, "\\'")}')">&times;</button>
                 `;
-
-                tag.querySelector('button').onclick = () => {
-
-                    selectedUsers.delete(nickname);
-
-                    updateFilterTags();
-                    updateTeamBalanceButtonState();
-                    refreshLeaderboard();
-
-                };
-
-                container.appendChild(tag);
-
+                container.appendChild(chip);
             });
-
-            document.getElementById('teamBalanceButton').disabled =
-                selectedUsers.size < 2;
-
+            
+            document.getElementById('teamBalanceButton').disabled = selectedUsers.size < 2;
+            document.getElementById('lobbyCount').innerText = `${selectedUsers.size} selected`;
         }
 
-        document.addEventListener('click', (e) => {
+        // Team Balance logic
+        function balanceTeams() {
+            const players = Array.from(selectedUsers).map(nickname => {
+                return leaderboardData.find(p => p.nickname === nickname) || { nickname, elo: 1000 };
+            });
 
-            const autocomplete =
-                document.getElementById('autocompleteList');
-        
-            const searchWrapper =
-                document.querySelector('.search-wrapper');
-        
-            if (!searchWrapper.contains(e.target)) {
-        
+            // Sort by ELO descending
+            players.sort((a, b) => (b.elo || 0) - (a.elo || 0));
+
+            const team1 = [];
+            const team2 = [];
+            let sum1 = 0;
+            let sum2 = 0;
+
+            players.forEach(p => {
+                const elo = p.elo || 1000;
+                if (sum1 <= sum2) {
+                    team1.push(p);
+                    sum1 += elo;
+                } else {
+                    team2.push(p);
+                    sum2 += elo;
+                }
+            });
+
+            // Render Team 1
+            const t1Container = document.getElementById('team1List');
+            t1Container.innerHTML = '';
+            team1.forEach(p => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.justify = 'space-between';
+                div.style.fontSize = '0.8rem';
+                div.style.fontWeight = '700';
+                div.innerHTML = `<span>${p.nickname}</span><span style="color: var(--text-muted);">${p.elo || 'N/A'}</span>`;
+                t1Container.appendChild(div);
+            });
+            document.getElementById('team1Avg').innerText = team1.length > 0 ? Math.round(sum1 / team1.length) : 0;
+
+            // Render Team 2
+            const t2Container = document.getElementById('team2List');
+            t2Container.innerHTML = '';
+            team2.forEach(p => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.justify = 'space-between';
+                div.style.fontSize = '0.8rem';
+                div.style.fontWeight = '700';
+                div.innerHTML = `<span>${p.nickname}</span><span style="color: var(--text-muted);">${p.elo || 'N/A'}</span>`;
+                t2Container.appendChild(div);
+            });
+            document.getElementById('team2Avg').innerText = team2.length > 0 ? Math.round(sum2 / team2.length) : 0;
+
+            document.getElementById('eloDiff').innerText = Math.abs(sum1 - sum2);
+
+            // Open Modal
+            const modal = document.getElementById('lobbyModal');
+            modal.classList.add('active');
+        }
+
+        document.getElementById('closeLobbyModal').onclick = () => {
+            document.getElementById('lobbyModal').classList.remove('active');
+        };
+        document.getElementById('lobbyModal').onclick = (e) => {
+            if (e.target === document.getElementById('lobbyModal')) {
+                document.getElementById('lobbyModal').classList.remove('active');
+            }
+        };
+        document.getElementById('teamBalanceButton').onclick = balanceTeams;
+
+        document.addEventListener('click', (e) => {
+            const autocomplete = document.getElementById('autocompleteList');
+            const searchWrapper = document.querySelector('.search-bar');
+            if (searchWrapper && !searchWrapper.contains(e.target)) {
                 autocomplete.style.display = 'none';
             }
         });
