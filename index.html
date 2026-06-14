@@ -526,6 +526,7 @@
 
         .modal-body {
             overflow-y: auto;
+            overflow-x: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
@@ -766,6 +767,7 @@
             font-size: 0.78rem;
             table-layout: fixed;
             width: 100%;
+            min-width: 420px;
         }
 
         #matchDetails th,
@@ -996,12 +998,12 @@
 
     <!-- Match Details Popup Modal (Shared globally) -->
     <div class="modal" id="matchModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 600px; width: 95vw;">
             <div class="modal-header">
                 <h2 id="modalRoundTitle">Match Details</h2>
                 <button class="close-btn" id="closeMatchModal">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 12px 24px 24px 24px;">
+            <div class="modal-body" style="padding: 12px 16px 20px 16px;">
                 <table id="matchDetails">
                     <thead>
                         <tr>
