@@ -1037,7 +1037,7 @@
 
         let globalRoundsData = [];
         let currentRoundPage = 1;
-        const roundsPerPage = 10;
+        let roundsPerPage = 10;
 
         window.addEventListener('DOMContentLoaded', () => {
             const themeBtn = document.getElementById('themeToggleBtn');
@@ -1143,7 +1143,10 @@
                 });
             }
 
-            window.addEventListener('resize', updateLayout);
+            window.addEventListener('resize', () => {
+                updateLayout();
+                recalcAndRender();
+            });
         });
 
         async function loadAndProcessData() {
@@ -1259,7 +1262,10 @@
             globalRoundsData = Object.values(roundsMap);
             globalRoundsData.sort((a, b) => b.round - a.round);
             currentRoundPage = 1;
-            renderGlobalRoundsPage();
+            // Use requestAnimationFrame so the container has its final layout height
+            requestAnimationFrame(() => {
+                recalcAndRender();
+            });
         }
 
         let searchQuery = '';
@@ -1732,6 +1738,28 @@
                     roundsPan.style.display = 'flex';
                 }
             }
+        }
+
+        function calcRoundsPerPage() {
+            const listEl = document.getElementById('globalRoundsList');
+            if (!listEl) return;
+            const availableH = listEl.clientHeight;
+            if (availableH <= 0) return;
+            // round-card: padding 10px top+bottom (20px) + ~20px content height + 8px gap between items
+            const CARD_H = 20 + 20 + 8; // 48px
+            const count = Math.max(1, Math.floor(availableH / CARD_H));
+            if (count !== roundsPerPage) {
+                roundsPerPage = count;
+            }
+        }
+
+        function recalcAndRender() {
+            if (globalRoundsData.length === 0) return;
+            calcRoundsPerPage();
+            // Clamp current page
+            const totalPages = Math.ceil(globalRoundsData.length / roundsPerPage) || 1;
+            if (currentRoundPage > totalPages) currentRoundPage = totalPages;
+            renderGlobalRoundsPage();
         }
     </script>
 
