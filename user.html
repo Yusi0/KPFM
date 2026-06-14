@@ -663,33 +663,21 @@
                 </div>
 
                 <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-title">Rank</div>
-                        <div class="stat-value" id="statRank">#0</div>
+                    <div class="stat-box" style="grid-column: span 2;">
+                        <div class="stat-title">Rank (ELO)</div>
+                        <div class="stat-value" id="statRankElo">#0 (1500)</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-title">ELO</div>
-                        <div class="stat-value" id="statELO">1500</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">KDR</div>
-                        <div class="stat-value" id="statKDR">0.00</div>
+                        <div class="stat-title">Kills / Deaths (KDR)</div>
+                        <div class="stat-value" id="statKD_KDR">0 / 0 (0.00)</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-title">KPR</div>
                         <div class="stat-value" id="statKPR">0.0</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-title">Wins / Losses</div>
-                        <div class="stat-value" id="statTotalWL">0 / 0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">Win Rate</div>
-                        <div class="stat-value" id="statWR">0%</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">Kills / Deaths</div>
-                        <div class="stat-value" id="statTotalKD">0 / 0</div>
+                        <div class="stat-title">Wins / Losses (Win Rate)</div>
+                        <div class="stat-value" id="statWL_WR">0 / 0 (0%)</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-title">Matches</div>
@@ -914,17 +902,21 @@
             const losses = parseInt(user.Losses || 0);
             const matches = parseInt(user.Total || 0);
 
-            document.getElementById("statELO").textContent = user.ELO || 1500;
-            document.getElementById("statRank").textContent = `#${user.rank}`;
+            const eloVal = user.ELO || 1500;
+            const rankVal = user.rank || 0;
+            document.getElementById("statRankElo").textContent = `#${rankVal} (${eloVal})`;
 
             const formattedTier = (user.Tier || "Unranked").replace('Platinum', 'Plat');
             document.getElementById("statTier").textContent = formattedTier;
 
-            document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
+            const kdrVal = (kills / Math.max(1, deaths)).toFixed(2);
+            document.getElementById("statKD_KDR").textContent = `${kills} / ${deaths} (${kdrVal})`;
+
             document.getElementById("statKPR").textContent = (kills / Math.max(1, matches)).toFixed(1);
-            document.getElementById("statWR").textContent = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
-            document.getElementById("statTotalKD").textContent = `${kills} / ${deaths}`;
-            document.getElementById("statTotalWL").textContent = `${wins} / ${losses}`;
+
+            const wrVal = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
+            document.getElementById("statWL_WR").textContent = `${wins} / ${losses} (${wrVal})`;
+
             document.getElementById("statMatches").textContent = matches;
 
             applyTierColor(user.Tier || "Unranked");

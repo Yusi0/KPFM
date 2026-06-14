@@ -1222,6 +1222,87 @@ def handle_data_menu():
     }
     execute_menu(sub_menu, "데이터 관리 메뉴")
 
+def sync_web_leaderboard():
+    """웹 리더보드 대시보드 동기화 (루트 폴더 CSV 업데이트 및 Git Push 선택)"""
+    print("\n🔄 웹 리더보드 동기화용 CSV 파일 생성 중...")
+
+    # 1. lboard.csv 생성
+    try:
+        cur.execute('SELECT nickname, kills, deaths, wins, losses, total, elo, tier FROM leaderboard ORDER BY elo DESC')
+        rows = cur.fetchall()
+        if not rows:
+            print("⚠ 리더보드 데이터가 없어 동기화할 수 없습니다.")
+            return
+
+        leaderboard_with_rank = [(rank + 1, *row) for rank, row in enumerate(rows)]
+
+        with open("lboard.csv", mode='w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            # 웹 전용 헤더: Total Games 대신 Total 사용
+            writer.writerow(["Rank", "Nickname", "Kills", "Deaths", "Wins", "Losses", "Total", "ELO", "Tier"])
+            writer.writerows(leaderboard_with_rank)
+        print("✅ lboard.csv 생성 완료")
+    except Exception as e:
+        print(f"⚠ lboard.csv 생성 중 오류 발생: {e}")
+        return
+
+    # 2. match.csv 생성
+    try:
+        cur.execute('SELECT round, nickname, team, kills, deaths, winning_team, map FROM matches ORDER BY round, team, nickname')
+        rows = cur.fetchall()
+        if not rows:
+            print("⚠ 매치 데이터가 없어 동기화할 수 없습니다.")
+            return
+
+        with open("match.csv", mode='w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Round", "Nickname", "Team", "Kills", "Deaths", "Winning Team", "Map"])
+            writer.writerows(rows)
+        print("✅ match.csv 생성 완료")
+    except Exception as e:
+        print(f"⚠ match.csv 생성 중 오류 발생: {e}")
+        return
+
+    # 3. aftercalc.csv 생성
+    try:
+        # 웹용 헤더 및 3개 열(Round, Nickname, ELO)만 추출
+        cur.execute("SELECT round, nickname, elo_after_round FROM aftercalc ORDER BY round, nickname")
+        rows = cur.fetchall()
+        if not rows:
+            print("⚠ aftercalc 데이터가 없어 동기화할 수 없습니다.")
+            return
+
+        with open("aftercalc.csv", mode='w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Round", "Nickname", "ELO"])
+            writer.writerows(rows)
+        print("✅ aftercalc.csv 생성 완료")
+    except Exception as e:
+        print(f"⚠ aftercalc.csv 생성 중 오류 발생: {e}")
+        return
+
+    print("🎉 웹용 CSV 파일(lboard.csv, match.csv, aftercalc.csv) 업데이트가 완료되었습니다.")
+
+    # 4. Git Push 여부 묻기
+    import subprocess
+    git_choice = input("\n>> 깃허브(GitHub Pages) 라이브 사이트에도 지금 바로 반영(Push)하시겠습니까? [y/n]: ").strip().lower()
+    if git_choice == 'y':
+        print("🔄 깃허브 업로드 진행 중...")
+        try:
+            subprocess.run(["git", "add", "lboard.csv", "match.csv", "aftercalc.csv"], check=True)
+            subprocess.run(["git", "commit", "-m", "data: 리더보드 전적 데이터 웹 동기화"], check=True)
+            
+            push_res = subprocess.run(["git", "push"], capture_output=True, text=True)
+            if push_res.returncode == 0:
+                print(Fore.GREEN + "✅ 깃허브 푸시 성공! 라이브 사이트에 수 분 내에 반영됩니다." + Style.RESET_ALL)
+            else:
+                print(Fore.RED + f"⚠ 깃허브 푸시 실패: {push_res.stderr}" + Style.RESET_ALL)
+        except subprocess.CalledProcessError as e:
+            print(Fore.RED + f"⚠ Git 명령어 실행 중 오류 발생: {e}" + Style.RESET_ALL)
+        except FileNotFoundError:
+            print(Fore.RED + "⚠ 시스템에서 'git' 명령어를 찾을 수 없습니다. Git이 설치되어 있는지 확인해주세요." + Style.RESET_ALL)
+
+
 def handle_load_export_menu():
     """로드/내보내기 메뉴 핸들링"""
     def import_csv_wrapper():
@@ -1246,6 +1327,7 @@ def handle_load_export_menu():
         '4': export_aftercalc_to_csv, # Just aftercalc history
         '5': export_leaderboard_to_spreadsheet, # Spreadsheet format
         '6': export_all_wrapper, # All of the above
+        '7': sync_web_leaderboard, # Web sync
     }
     execute_menu(sub_menu, "데이터 가져오기/내보내기 메뉴")
 
