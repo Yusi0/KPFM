@@ -948,6 +948,11 @@
                     <div id="globalRoundsList">
                         <!-- Loaded dynamically -->
                     </div>
+                    <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 4px; border-top: 1px dashed var(--border-glass); padding-top: 8px;">
+                        <button id="prevRoundPageBtn" class="page-btn" style="background: var(--chip-bg); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-color); cursor: pointer; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; outline: none;">&lt;</button>
+                        <span id="roundPageInfo" style="font-size: 0.75rem; font-weight: 700; color: var(--text-color);">1 / 1</span>
+                        <button id="nextRoundPageBtn" class="page-btn" style="background: var(--chip-bg); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-color); cursor: pointer; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; outline: none;">&gt;</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1030,6 +1035,10 @@
         let currentSort = 'elo';
         let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds'
 
+        let globalRoundsData = [];
+        let currentRoundPage = 1;
+        const roundsPerPage = 10;
+
         window.addEventListener('DOMContentLoaded', () => {
             const themeBtn = document.getElementById('themeToggleBtn');
             if (themeBtn) {
@@ -1111,6 +1120,28 @@
                     customWrapper.classList.remove('open');
                 }
             });
+
+            // Round list pagination buttons
+            const prevRoundBtn = document.getElementById('prevRoundPageBtn');
+            if (prevRoundBtn) {
+                prevRoundBtn.addEventListener('click', () => {
+                    if (currentRoundPage > 1) {
+                        currentRoundPage--;
+                        renderGlobalRoundsPage();
+                    }
+                });
+            }
+
+            const nextRoundBtn = document.getElementById('nextRoundPageBtn');
+            if (nextRoundBtn) {
+                nextRoundBtn.addEventListener('click', () => {
+                    const totalPages = Math.ceil(globalRoundsData.length / roundsPerPage) || 1;
+                    if (currentRoundPage < totalPages) {
+                        currentRoundPage++;
+                        renderGlobalRoundsPage();
+                    }
+                });
+            }
 
             window.addEventListener('resize', updateLayout);
         });
@@ -1225,7 +1256,10 @@
             });
 
             leaderboardData = Object.values(playerStats);
-            renderGlobalRounds(Object.values(roundsMap));
+            globalRoundsData = Object.values(roundsMap);
+            globalRoundsData.sort((a, b) => b.round - a.round);
+            currentRoundPage = 1;
+            renderGlobalRoundsPage();
         }
 
         let searchQuery = '';
@@ -1496,13 +1530,21 @@
             }
         });
 
-        function renderGlobalRounds(roundsList) {
-            roundsList.sort((a, b) => b.round - a.round);
-
+        function renderGlobalRoundsPage() {
             const container = document.getElementById('globalRoundsList');
             container.innerHTML = '';
 
-            roundsList.forEach(r => {
+            const totalItems = globalRoundsData.length;
+            const totalPages = Math.ceil(totalItems / roundsPerPage) || 1;
+
+            if (currentRoundPage > totalPages) currentRoundPage = totalPages;
+            if (currentRoundPage < 1) currentRoundPage = 1;
+
+            const startIndex = (currentRoundPage - 1) * roundsPerPage;
+            const endIndex = Math.min(startIndex + roundsPerPage, totalItems);
+            const pageItems = globalRoundsData.slice(startIndex, endIndex);
+
+            pageItems.forEach(r => {
                 const mapNames = {
                     metro: "Metro",
                     warehouse: "Warehouse",
@@ -1526,6 +1568,22 @@
                 `;
                 container.appendChild(card);
             });
+
+            // Update page controls
+            const pageInfo = document.getElementById('roundPageInfo');
+            if (pageInfo) {
+                pageInfo.textContent = `${currentRoundPage} / ${totalPages}`;
+            }
+
+            const prevBtn = document.getElementById('prevRoundPageBtn');
+            if (prevBtn) {
+                prevBtn.disabled = (currentRoundPage === 1);
+            }
+
+            const nextBtn = document.getElementById('nextRoundPageBtn');
+            if (nextBtn) {
+                nextBtn.disabled = (currentRoundPage === totalPages);
+            }
         }
 
         function displayMatchDetails(round) {
