@@ -547,6 +547,313 @@
             color: var(--text-color);
             z-index: 999;
         }
+
+        /* Custom Select component */
+        .custom-select-wrapper {
+            position: relative;
+            width: 180px;
+            z-index: 90;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .custom-select-trigger:hover {
+            border-color: var(--accent-color);
+        }
+
+        .custom-select-trigger .arrow-icon {
+            transition: transform 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-options {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px var(--shadow-glass);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        [data-theme="dark"] .custom-select-options {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .custom-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .custom-option:hover {
+            background: rgba(92, 107, 192, 0.15);
+        }
+
+        .custom-option.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .player-name-cell {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+
+        .player-name-cell:hover {
+            color: var(--accent-color) !important;
+            text-decoration: underline;
+        }
+
+        /* Responsive 2-column layout and tabs */
+        .tabs-bar {
+            display: flex;
+            padding: 4px;
+            gap: 4px;
+            border-radius: 14px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 8px 0;
+            transition: all 0.2s ease;
+            outline: none;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(92, 107, 192, 0.25);
+        }
+
+        .main-content-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+        }
+
+        .rounds-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            flex: 1;
+        }
+
+        #globalRoundsList {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        #globalRoundsList::-webkit-scrollbar {
+            display: none;
+        }
+
+        .round-card {
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .round-card:hover {
+            border-color: var(--accent-color);
+            background: var(--filter-active-bg);
+        }
+
+        .round-card:active {
+            transform: scale(0.98);
+        }
+
+        .round-card-id {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--text-color);
+        }
+
+        .round-card-map {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: capitalize;
+        }
+
+        .round-card-winner {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid currentColor;
+            text-transform: uppercase;
+        }
+
+        .winner-phantom {
+            color: var(--accent-color);
+            background: rgba(92, 107, 192, 0.08);
+            border-color: rgba(92, 107, 192, 0.2);
+        }
+
+        .winner-ghost {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .team-mvp {
+            font-weight: 800 !important;
+            color: var(--gold) !important;
+        }
+
+        #matchDetails {
+            font-size: 0.78rem;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        #matchDetails th,
+        #matchDetails td {
+            padding: 8px 4px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #matchDetails th:nth-child(1),
+        #matchDetails td:nth-child(1) {
+            width: 22%;
+            text-align: left;
+        }
+
+        #matchDetails th:nth-child(2),
+        #matchDetails td:nth-child(2),
+        #matchDetails th:nth-child(3),
+        #matchDetails td:nth-child(3) {
+            width: 6%;
+        }
+
+        #matchDetails th:nth-child(4),
+        #matchDetails td:nth-child(4) {
+            width: 16%;
+        }
+
+        #matchDetails th:nth-child(5),
+        #matchDetails td:nth-child(5) {
+            width: 22%;
+            text-align: left;
+        }
+
+        #matchDetails th:nth-child(6),
+        #matchDetails td:nth-child(6),
+        #matchDetails th:nth-child(7),
+        #matchDetails td:nth-child(7) {
+            width: 6%;
+        }
+
+        #matchDetails th:nth-child(8),
+        #matchDetails td:nth-child(8) {
+            width: 16%;
+        }
+
+        .positive {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .negative {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        @media (min-width: 800px) {
+            .app-container {
+                max-width: 900px !important;
+            }
+
+            .tabs-bar {
+                display: none !important;
+            }
+
+            .main-content-layout {
+                display: grid;
+                grid-template-columns: 1fr 340px;
+                gap: 16px;
+                flex: 1;
+                min-height: 0;
+            }
+
+            .left-column {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                min-height: 0;
+            }
+
+            .right-column {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                min-height: 0;
+            }
+        }
     </style>
 </head>
 
@@ -581,26 +888,69 @@
             </div>
         </div>
 
-        <!-- Sticky Search panel -->
-        <div class="glass-panel search-bar">
-            <input type="text" id="searchBox" placeholder="Search player..." autocomplete="off">
-            <div id="autocompleteList"></div>
+        <!-- Mobile Tab Switcher Bar -->
+        <div class="tabs-bar glass-panel">
+            <button id="tabLeaderboard" class="tab-btn active">Leaderboard</button>
+            <button id="tabLobby" class="tab-btn">Lobby</button>
+            <button id="tabRounds" class="tab-btn">Rounds</button>
         </div>
 
-        <!-- Team Making Lobby Panel -->
-        <div class="glass-panel lobby-panel" id="lobbyPanel">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px;">
-                <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px;">TEAM MAKING LOBBY</span>
-                <span id="lobbyCount" style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">0 selected</span>
+        <!-- Two-column responsive wrapper -->
+        <div class="main-content-layout">
+            <div class="left-column" id="leftColumn">
+                <!-- Sticky Search panel -->
+                <div class="glass-panel search-bar">
+                    <input type="text" id="searchBox" placeholder="Search player..." autocomplete="off">
+                    <div id="autocompleteList"></div>
+                </div>
+
+                <!-- Sort / Filter Panel -->
+                <div class="glass-panel" style="display: flex; gap: 10px; align-items: center; padding: 10px 16px; justify-content: space-between; overflow: visible;">
+                    <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Sort By</span>
+                    <div class="custom-select-wrapper" id="customSortWrapper">
+                        <button class="custom-select-trigger" id="customSortTrigger">
+                            <span>ELO (High &rarr; Low)</span>
+                            <svg class="arrow-icon" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="custom-select-options" id="customSortOptions">
+                            <div class="custom-option active" data-value="elo">ELO (High &rarr; Low)</div>
+                            <div class="custom-option" data-value="kdr">KDR (High &rarr; Low)</div>
+                            <div class="custom-option" data-value="winrate">Win Rate (High &rarr; Low)</div>
+                            <div class="custom-option" data-value="matches">Matches (High &rarr; Low)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard List -->
+                <main class="card-list" id="leaderboardListContainer"></main>
             </div>
-            <div class="filter-row" id="filterTags" style="min-height: 28px; padding-top: 4px;"></div>
-            <button id="teamBalanceButton" class="control-btn" style="width: 100%; margin-top: 4px;" disabled>
-                Balance Teams
-            </button>
-        </div>
 
-        <!-- Leaderboard List -->
-        <main class="card-list" id="leaderboardListContainer"></main>
+            <div class="right-column" id="rightColumn">
+                <!-- Team Making Lobby Panel -->
+                <div class="glass-panel lobby-panel" id="lobbyPanel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px;">TEAM MAKING LOBBY</span>
+                        <span id="lobbyCount" style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">0 selected</span>
+                    </div>
+                    <div class="filter-row" id="filterTags" style="min-height: 28px; padding-top: 4px;"></div>
+                    <button id="teamBalanceButton" class="control-btn" style="width: 100%; margin-top: 4px;" disabled>
+                        Balance Teams
+                    </button>
+                </div>
+
+                <!-- Global Rounds Panel -->
+                <div class="glass-panel rounds-panel" id="roundsPanel">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px; text-transform: uppercase;">
+                        Global Match History
+                    </div>
+                    <div id="globalRoundsList">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -639,11 +989,47 @@
         </div>
     </div>
 
+    <!-- Match Details Popup Modal (Shared globally) -->
+    <div class="modal" id="matchModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="modalRoundTitle">Match Details</h2>
+                <button class="close-btn" id="closeMatchModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 12px 24px 24px 24px;">
+                <table id="matchDetails">
+                    <thead>
+                        <tr>
+                            <th>Phantom</th>
+                            <th>K</th>
+                            <th>D</th>
+                            <th>ELO</th>
+                            <th>Ghost</th>
+                            <th>K</th>
+                            <th>D</th>
+                            <th>ELO</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Set page theme from localStorage
         let currentTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', currentTheme);
         
+        let leaderboardData = [];
+        let selectedUsers = new Set();
+        const timestamp = `?timestamp=${Date.now()}`;
+
+        let allMatches = [];
+        let allAftercalc = [];
+        let currentSort = 'elo';
+        let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds'
+
         window.addEventListener('DOMContentLoaded', () => {
             const themeBtn = document.getElementById('themeToggleBtn');
             if (themeBtn) {
@@ -655,31 +1041,101 @@
                     localStorage.setItem('theme', currentTheme);
                 });
             }
-        });
 
-        let leaderboardData = [];
-        let selectedUsers = new Set();
-        const timestamp = `?timestamp=${Date.now()}`;
+            // Tab Buttons logic
+            const tabs = ['Leaderboard', 'Lobby', 'Rounds'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab${t}`);
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        tabs.forEach(x => document.getElementById(`tab${x}`)?.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeTab = t.toLowerCase();
+                        updateLayout();
+                    });
+                }
+            });
+
+            // Custom Select logic
+            const customTrigger = document.getElementById('customSortTrigger');
+            const customOptions = document.getElementById('customSortOptions');
+            const optionsList = customOptions.querySelectorAll('.custom-option');
+
+            if (customTrigger && customOptions) {
+                customTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = customOptions.style.display === 'flex';
+                    customOptions.style.display = isOpen ? 'none' : 'flex';
+                    document.getElementById('customSortWrapper').classList.toggle('open', !isOpen);
+                });
+
+                optionsList.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.getAttribute('data-value');
+                        const text = opt.innerHTML;
+
+                        customTrigger.querySelector('span').innerHTML = text;
+
+                        optionsList.forEach(o => o.classList.remove('active'));
+                        opt.classList.add('active');
+
+                        customOptions.style.display = 'none';
+                        document.getElementById('customSortWrapper').classList.remove('open');
+
+                        currentSort = val;
+                        refreshLeaderboard();
+                    });
+                });
+            }
+
+            // Close Match Modal
+            const closeMatchBtn = document.getElementById('closeMatchModal');
+            if (closeMatchBtn) {
+                closeMatchBtn.addEventListener('click', () => {
+                    document.getElementById('matchModal').classList.remove('active');
+                });
+            }
+
+            window.addEventListener('click', e => {
+                const modal = document.getElementById('matchModal');
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+
+                // Close custom select dropdown if clicked outside
+                const customOptions = document.getElementById('customSortOptions');
+                const customWrapper = document.getElementById('customSortWrapper');
+                if (customOptions && customWrapper && !customWrapper.contains(e.target)) {
+                    customOptions.style.display = 'none';
+                    customWrapper.classList.remove('open');
+                }
+            });
+
+            window.addEventListener('resize', updateLayout);
+        });
 
         async function loadAndProcessData() {
             const loading = document.getElementById('loading');
             const container = document.querySelector('.app-container');
 
             try {
-                const [matchResponse, lboardResponse] = await Promise.all([
+                const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
                     fetch(`match.csv${timestamp}`),
-                    fetch(`lboard.csv${timestamp}`)
+                    fetch(`lboard.csv${timestamp}`),
+                    fetch(`aftercalc.csv${timestamp}`)
                 ]);
 
-                const [matchText, lboardText] = await Promise.all([
+                const [matchText, lboardText, aftercalcText] = await Promise.all([
                     matchResponse.text(),
-                    lboardResponse.text()
+                    lboardResponse.text(),
+                    aftercalcResponse.text()
                 ]);
 
                 const matchRows = matchText.trim().split('\n');
                 const matchHeaders = matchRows[0].split(',').map(h => h.trim());
 
-                const matches = matchRows.slice(1).map(row =>
+                allMatches = matchRows.slice(1).map(row =>
                     Object.fromEntries(
                         matchHeaders.map((h, i) => [
                             h,
@@ -687,8 +1143,6 @@
                         ])
                     )
                 );
-
-                processMatches(matches);
 
                 const lboardRows = lboardText.trim().split('\n');
                 const lboardHeaders = lboardRows[0].split(',').map(h => h.trim());
@@ -702,7 +1156,21 @@
                     )
                 );
 
+                const aftercalcRows = aftercalcText.trim().split('\n');
+                const aftercalcHeaders = aftercalcRows[0].split(',').map(h => h.trim());
+
+                allAftercalc = aftercalcRows.slice(1).map(row =>
+                    Object.fromEntries(
+                        aftercalcHeaders.map((h, i) => [
+                            h,
+                            row.split(',').map(v => v.trim())[i]
+                        ])
+                    )
+                );
+
+                processMatches(allMatches);
                 updateLeaderboardWithEloAndTier(leaderboard);
+                updateLayout();
 
             } catch (err) {
                 console.error(err);
@@ -717,6 +1185,7 @@
 
         function processMatches(matches) {
             const playerStats = {};
+            const roundsMap = {};
 
             matches.reverse().forEach((match) => {
                 const nickname = match.Nickname;
@@ -743,9 +1212,20 @@
                 } else {
                     p.losses++;
                 }
+
+                // Collect round details
+                const roundNum = parseInt(match.Round);
+                if (roundNum && !roundsMap[roundNum]) {
+                    roundsMap[roundNum] = {
+                        round: roundNum,
+                        map: match.Map || 'Unknown',
+                        winningTeam: parseInt(match['Winning Team'])
+                    };
+                }
             });
 
             leaderboardData = Object.values(playerStats);
+            renderGlobalRounds(Object.values(roundsMap));
         }
 
         let searchQuery = '';
@@ -799,7 +1279,20 @@
                 const bSelected = selectedUsers.has(b.nickname);
                 if (aSelected && !bSelected) return -1;
                 if (!aSelected && bSelected) return 1;
-                return (b.elo || 0) - (a.elo || 0);
+
+                if (currentSort === 'kdr') {
+                    const kdrA = (a.kills / Math.max(1, a.deaths));
+                    const kdrB = (b.kills / Math.max(1, b.deaths));
+                    return kdrB - kdrA;
+                } else if (currentSort === 'winrate') {
+                    const wrA = a.matches > 0 ? (a.wins / a.matches) : 0;
+                    const wrB = b.matches > 0 ? (b.wins / b.matches) : 0;
+                    return wrB - wrA;
+                } else if (currentSort === 'matches') {
+                    return (b.matches || 0) - (a.matches || 0);
+                } else {
+                    return (b.elo || 0) - (a.elo || 0);
+                }
             });
 
             const container = document.getElementById('leaderboardListContainer');
@@ -1002,6 +1495,186 @@
                 autocomplete.style.display = 'none';
             }
         });
+
+        function renderGlobalRounds(roundsList) {
+            roundsList.sort((a, b) => b.round - a.round);
+
+            const container = document.getElementById('globalRoundsList');
+            container.innerHTML = '';
+
+            roundsList.forEach(r => {
+                const mapNames = {
+                    metro: "Metro",
+                    warehouse: "Warehouse",
+                    desert: "Desert Storm",
+                    elevation: "Elevation"
+                };
+                const mapDisplay = mapNames[r.map.toLowerCase()] || r.map;
+                const winnerName = r.winningTeam === 1 ? 'Phantom' : 'Ghost';
+                const winnerClass = r.winningTeam === 1 ? 'winner-phantom' : 'winner-ghost';
+
+                const card = document.createElement('div');
+                card.className = 'round-card';
+                card.onclick = () => {
+                    displayMatchDetails(r.round);
+                };
+
+                card.innerHTML = `
+                    <span class="round-card-id">#${r.round}</span>
+                    <span class="round-card-map">${mapDisplay}</span>
+                    <span class="round-card-winner ${winnerClass}">${winnerName} Win</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function displayMatchDetails(round) {
+            const modal = document.getElementById('matchModal');
+            const tbody = document.querySelector('#matchDetails tbody');
+            tbody.innerHTML = '';
+
+            document.getElementById('modalRoundTitle').textContent = `${round} Round Details`;
+
+            const roundPlayers = allMatches.filter(
+                p => String(p.Round) === String(round)
+            );
+
+            function getEloStats(nickname, roundNum) {
+                if (!nickname) return { text: '', diff: -9999, current: 0 };
+                const rNum = parseInt(roundNum);
+
+                const currentEntry = allAftercalc.find(
+                    e => parseInt(e.Round) === rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+                );
+
+                if (!currentEntry) {
+                    return { text: '1500 (+0)', diff: 0, current: 1500, nickname: nickname };
+                }
+
+                const currentElo = parseInt(currentEntry.ELO || 1500);
+
+                const prevEntries = allAftercalc.filter(
+                    e => parseInt(e.Round) < rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
+                );
+
+                let prevElo = 1500;
+                if (prevEntries.length > 0) {
+                    prevEntries.sort((a, b) => parseInt(b.Round) - parseInt(a.Round));
+                    prevElo = parseInt(prevEntries[0].ELO || 1500);
+                }
+
+                const diff = currentElo - prevElo;
+                const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+                const diffClass = diff >= 0 ? 'positive' : 'negative';
+
+                return {
+                    text: `${currentElo} <span class="${diffClass}">(${diffStr})</span>`,
+                    diff: diff,
+                    current: currentElo,
+                    nickname: nickname
+                };
+            }
+
+            const phantom = roundPlayers.filter(p => p.Team === '1');
+            const ghost = roundPlayers.filter(p => p.Team === '2');
+
+            let phantomMvpNickname = "";
+            let maxPhantomDiff = -9999;
+            const phantomStats = phantom.map(p => {
+                const stats = getEloStats(p.Nickname, round);
+                if (p.Nickname && stats.diff > maxPhantomDiff) {
+                    maxPhantomDiff = stats.diff;
+                    phantomMvpNickname = p.Nickname;
+                }
+                return stats;
+            });
+
+            let ghostMvpNickname = "";
+            let maxGhostDiff = -9999;
+            const ghostStats = ghost.map(p => {
+                const stats = getEloStats(p.Nickname, round);
+                if (p.Nickname && stats.diff > maxGhostDiff) {
+                    maxGhostDiff = stats.diff;
+                    ghostMvpNickname = p.Nickname;
+                }
+                return stats;
+            });
+
+            const max = Math.max(phantom.length, ghost.length);
+
+            for (let i = 0; i < max; i++) {
+                const p1 = phantom[i] || {};
+                const p2 = ghost[i] || {};
+
+                const p1Stats = phantomStats[i] || { text: '', diff: -9999, current: 0 };
+                const p2Stats = ghostStats[i] || { text: '', diff: -9999, current: 0 };
+
+                const isP1Mvp = p1.Nickname && p1.Nickname === phantomMvpNickname;
+                const isP2Mvp = p2.Nickname && p2.Nickname === ghostMvpNickname;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="player-name-cell ${isP1Mvp ? 'team-mvp' : ''}" data-nickname="${p1.Nickname || ''}">
+                        ${p1.Nickname || ''}
+                    </td>
+                    <td>${p1.Nickname ? (p1.Kills || '0') : ''}</td>
+                    <td>${p1.Nickname ? (p1.Deaths || '0') : ''}</td>
+                    <td>${p1Stats.text}</td>
+                    <td class="player-name-cell ${isP2Mvp ? 'team-mvp' : ''}" data-nickname="${p2.Nickname || ''}">
+                        ${p2.Nickname || ''}
+                    </td>
+                    <td>${p2.Nickname ? (p2.Kills || '0') : ''}</td>
+                    <td>${p2.Nickname ? (p2.Deaths || '0') : ''}</td>
+                    <td>${p2Stats.text}</td>
+                `;
+
+                row.querySelectorAll('.player-name-cell').forEach(cell => {
+                    const nick = cell.getAttribute('data-nickname');
+                    if (nick) {
+                        cell.addEventListener('click', () => {
+                            window.location.href = `user.html?nickname=${encodeURIComponent(nick)}&t=${Date.now()}`;
+                        });
+                    }
+                });
+
+                tbody.appendChild(row);
+            }
+
+            modal.classList.add('active');
+        }
+
+        function updateLayout() {
+            const isDesktop = window.innerWidth >= 800;
+            const leftCol = document.getElementById('leftColumn');
+            const rightCol = document.getElementById('rightColumn');
+            const lobbyPan = document.getElementById('lobbyPanel');
+            const roundsPan = document.getElementById('roundsPanel');
+            const tabsBar = document.querySelector('.tabs-bar');
+
+            if (isDesktop) {
+                leftCol.style.display = 'flex';
+                rightCol.style.display = 'flex';
+                lobbyPan.style.display = 'flex';
+                roundsPan.style.display = 'flex';
+                tabsBar.style.display = 'none';
+            } else {
+                tabsBar.style.display = 'flex';
+                if (activeTab === 'leaderboard') {
+                    leftCol.style.display = 'flex';
+                    rightCol.style.display = 'none';
+                } else if (activeTab === 'lobby') {
+                    leftCol.style.display = 'none';
+                    rightCol.style.display = 'flex';
+                    lobbyPan.style.display = 'flex';
+                    roundsPan.style.display = 'none';
+                } else if (activeTab === 'rounds') {
+                    leftCol.style.display = 'none';
+                    rightCol.style.display = 'flex';
+                    lobbyPan.style.display = 'none';
+                    roundsPan.style.display = 'flex';
+                }
+            }
+        }
     </script>
 
 </body>

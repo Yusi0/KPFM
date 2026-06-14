@@ -275,6 +275,10 @@
             height: 180px;
         }
 
+        canvas {
+            cursor: crosshair;
+        }
+
         /* Section table containers */
         .section-title {
             font-size: 0.82rem;
@@ -559,6 +563,70 @@
             width: 16%;
             /* ELO */
         }
+
+        .page-btn {
+            background: var(--chip-bg);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 6px 12px;
+            transition: background 0.2s, transform 0.1s;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--filter-active-bg);
+        }
+
+        .page-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .result-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            border: 1px solid currentColor;
+            background: transparent;
+            text-transform: uppercase;
+        }
+
+        .result-win {
+            color: var(--green);
+            background: rgba(34, 197, 94, 0.08);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .result-lose {
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .player-name-cell {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+
+        .player-name-cell:hover {
+            color: var(--accent-color) !important;
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -667,15 +735,21 @@
                 <table id="matchHistory">
                     <thead>
                         <tr>
-                            <th>Round</th>
-                            <th>Kills</th>
-                            <th>Deaths</th>
-                            <th>KDR</th>
-                            <th>ELO</th>
+                            <th style="text-align: center; width: 12%;">#</th>
+                            <th style="width: 18%;">Result</th>
+                            <th style="width: 22%;">Map</th>
+                            <th style="width: 14%; text-align: center;">Round</th>
+                            <th style="width: 18%;">K/D (KDR)</th>
+                            <th style="width: 16%;">ELO</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+                <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 14px;">
+                    <button id="prevPageBtn" class="page-btn">&lt;</button>
+                    <span id="pageInfo" style="font-size: 0.8rem; font-weight: 700; color: var(--text-color);">1 / 1</span>
+                    <button id="nextPageBtn" class="page-btn">&gt;</button>
+                </div>
             </div>
 
         </div>
@@ -714,6 +788,12 @@
         let currentTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', currentTheme);
 
+        let eloChartInstance = null;
+        let kdrChartInstance = null;
+        let matchHistoryList = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
         window.addEventListener('DOMContentLoaded', () => {
             const themeBtn = document.getElementById('themeToggleBtn');
             if (themeBtn) {
@@ -729,10 +809,28 @@
                     if (kdrChartInstance) kdrChartInstance.update();
                 });
             }
-        });
 
-        let eloChartInstance = null;
-        let kdrChartInstance = null;
+            const prevBtn = document.getElementById('prevPageBtn');
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderMatchHistoryPage();
+                    }
+                });
+            }
+
+            const nextBtn = document.getElementById('nextPageBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    const totalPages = Math.ceil(matchHistoryList.length / itemsPerPage) || 1;
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderMatchHistoryPage();
+                    }
+                });
+            }
+        });
 
         const params = new URLSearchParams(window.location.search);
         const nickname = params.get("nickname");
@@ -895,10 +993,8 @@
         }
 
         function renderMatchHistory(matches, userRounds) {
-            const tbody = document.querySelector('#matchHistory tbody');
-            tbody.innerHTML = '';
-
-            matches.forEach((match, index) => {
+            // Pre-calculate match history data in chronological order (oldest to newest)
+            matchHistoryList = matches.map((match, index) => {
                 const kills = parseInt(match.Kills || 0);
                 const deaths = parseInt(match.Deaths || 0);
                 const kdr = (kills / Math.max(1, deaths)).toFixed(2);
@@ -909,29 +1005,102 @@
                     : 1500;
 
                 const diff = currentELO - previousELO;
+
+                const won = match.Team === match['Winning Team'];
+                const rawMap = (match.Map || 'Unknown').toLowerCase();
+                const mapNames = {
+                    metro: "Metro",
+                    warehouse: "Warehouse",
+                    desert: "Desert Storm",
+                    elevation: "Elevation"
+                };
+                const map = mapNames[rawMap] || rawMap;
+
+                return {
+                    playNumber: index + 1,
+                    round: match.Round || '-',
+                    kills: kills,
+                    deaths: deaths,
+                    kdr: kdr,
+                    currentELO: currentELO,
+                    diff: diff,
+                    won: won,
+                    map: map
+                };
+            });
+
+            // Display newest first
+            matchHistoryList.reverse();
+
+            currentPage = 1;
+            renderMatchHistoryPage();
+        }
+
+        function renderMatchHistoryPage() {
+            const tbody = document.querySelector('#matchHistory tbody');
+            tbody.innerHTML = '';
+
+            const totalItems = matchHistoryList.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const pageItems = matchHistoryList.slice(startIndex, endIndex);
+
+            pageItems.forEach((item) => {
                 const row = document.createElement('tr');
+                const resultClass = item.won ? 'result-win' : 'result-lose';
+                const resultText = item.won ? 'WIN' : 'LOSE';
 
                 row.innerHTML = `
-                    <td>
-                        <div class="match-pill">${match.Round || '-'}</div>
+                    <td style="text-align: center; color: var(--text-muted); font-weight: 700;">
+                        #${item.playNumber}
                     </td>
-                    <td>${kills}</td>
-                    <td>${deaths}</td>
-                    <td>${kdr}</td>
                     <td>
-                        ${currentELO}
-                        <span class="${diff >= 0 ? 'positive' : 'negative'}">
-                            (${diff >= 0 ? '+' : ''}${diff})
+                        <span class="result-badge ${resultClass}">${resultText}</span>
+                    </td>
+                    <td style="font-weight: 700; color: var(--card-title); text-transform: capitalize;">
+                        ${item.map}
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="match-pill">${item.round}</div>
+                    </td>
+                    <td style="font-weight: 700;">
+                        ${item.kdr} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">(${item.kills}/${item.deaths})</span>
+                    </td>
+                    <td>
+                        ${item.currentELO}
+                        <span class="${item.diff >= 0 ? 'positive' : 'negative'}" style="font-size: 0.75rem;">
+                            (${item.diff >= 0 ? '+' : ''}${item.diff})
                         </span>
                     </td>
                 `;
 
                 row.addEventListener('click', () => {
-                    displayMatchDetails(match.Round);
+                    displayMatchDetails(item.round);
                 });
 
                 tbody.appendChild(row);
             });
+
+            // Update page controls
+            const pageInfo = document.getElementById('pageInfo');
+            if (pageInfo) {
+                pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            }
+
+            const prevBtn = document.getElementById('prevPageBtn');
+            if (prevBtn) {
+                prevBtn.disabled = (currentPage === 1);
+            }
+
+            const nextBtn = document.getElementById('nextPageBtn');
+            if (nextBtn) {
+                nextBtn.disabled = (currentPage === totalPages);
+            }
         }
 
         function displayMatchDetails(round) {
@@ -1025,19 +1194,29 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="${isP1Mvp ? 'team-mvp' : ''}">
+                    <td class="player-name-cell ${isP1Mvp ? 'team-mvp' : ''}" data-nickname="${p1.Nickname || ''}">
                         ${p1.Nickname || ''}
                     </td>
                     <td>${p1.Nickname ? (p1.Kills || '0') : ''}</td>
                     <td>${p1.Nickname ? (p1.Deaths || '0') : ''}</td>
                     <td>${p1Stats.text}</td>
-                    <td class="${isP2Mvp ? 'team-mvp' : ''}">
+                    <td class="player-name-cell ${isP2Mvp ? 'team-mvp' : ''}" data-nickname="${p2.Nickname || ''}">
                         ${p2.Nickname || ''}
                     </td>
                     <td>${p2.Nickname ? (p2.Kills || '0') : ''}</td>
                     <td>${p2.Nickname ? (p2.Deaths || '0') : ''}</td>
                     <td>${p2Stats.text}</td>
                 `;
+
+                row.querySelectorAll('.player-name-cell').forEach(cell => {
+                    const nick = cell.getAttribute('data-nickname');
+                    if (nick) {
+                        cell.addEventListener('click', () => {
+                            window.location.href = `user.html?nickname=${encodeURIComponent(nick)}&t=${Date.now()}`;
+                        });
+                    }
+                });
+
                 tbody.appendChild(row);
             }
 
@@ -1095,9 +1274,24 @@
                                     return `ELO: ${context.raw} (${tier})`;
                                 }
                             }
+                        },
+                        zoom: {
+                            zoom: {
+                                drag: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(129, 140, 248, 0.25)',
+                                    borderColor: 'rgba(129, 140, 248, 0.65)',
+                                    borderWidth: 1.5
+                                },
+                                mode: 'x'
+                            }
                         }
                     }
                 }
+            });
+
+            ctx.canvas.addEventListener('dblclick', () => {
+                if (eloChartInstance) eloChartInstance.resetZoom();
             });
         }
 
@@ -1153,9 +1347,24 @@
                         }
                     },
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        zoom: {
+                            zoom: {
+                                drag: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                                    borderColor: 'rgba(236, 72, 153, 0.6)',
+                                    borderWidth: 1.5
+                                },
+                                mode: 'x'
+                            }
+                        }
                     }
                 }
+            });
+
+            ctx.canvas.addEventListener('dblclick', () => {
+                if (kdrChartInstance) kdrChartInstance.resetZoom();
             });
         }
 
