@@ -228,11 +228,13 @@
 
         .filter-row {
             display: flex;
+            flex-wrap: nowrap;
             gap: 8px;
             overflow-x: auto;
             padding-bottom: 4px;
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
+            align-items: center;
         }
 
         .filter-row::-webkit-scrollbar {
@@ -936,7 +938,7 @@
                         <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px;">TEAM MAKING LOBBY</span>
                         <span id="lobbyCount" style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">0 selected</span>
                     </div>
-                    <div class="filter-row" id="filterTags" style="min-height: 28px; padding-top: 4px;"></div>
+                    <div class="filter-row" id="filterTags" style="height: 36px; flex-shrink: 0;"></div>
                     <button id="teamBalanceButton" class="control-btn" style="width: 100%; margin-top: 4px;" disabled>
                         Balance Teams
                     </button>
