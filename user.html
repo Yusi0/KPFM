@@ -704,6 +704,7 @@
             <!-- Map Win Rate Section -->
             <div class="glass-panel" style="padding: 12px 14px;">
                 <div class="section-title">Map Statistics</div>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table id="mapWinRate">
                     <thead>
                         <tr>
@@ -715,24 +716,27 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Match History Section -->
             <div class="glass-panel" style="padding: 12px 14px;">
                 <div class="section-title">Match History</div>
-                <table id="matchHistory">
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                  <table id="matchHistory">
                     <thead>
                         <tr>
-                            <th style="text-align: center; width: 12%;">#</th>
-                            <th style="width: 18%;">Result</th>
-                            <th style="width: 22%;">Map</th>
-                            <th style="width: 14%; text-align: center;">Round</th>
-                            <th style="width: 18%;">K/D (KDR)</th>
-                            <th style="width: 16%;">ELO</th>
+                            <th style="text-align: center; width: 8%;">#</th>
+                            <th style="width: 16%;">Result</th>
+                            <th style="width: 20%;">Map</th>
+                            <th style="text-align: center; width: 12%;">Round</th>
+                            <th style="width: 22%;">K/D (KDR)</th>
+                            <th style="width: 18%;">ELO</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+                </div>
                 <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 14px;">
                     <button id="prevPageBtn" class="page-btn">&lt;</button>
                     <span id="pageInfo" style="font-size: 0.8rem; font-weight: 700; color: var(--text-color);">1 / 1</span>
