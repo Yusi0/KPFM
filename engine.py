@@ -5,6 +5,7 @@
 DB, 입력 메뉴, 파일 쓰기와는 무관하다 (그건 build.py).
 """
 import csv
+import difflib
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
@@ -34,9 +35,25 @@ def calculate_tier(elo):
     return TIER_NAMES[max(0, min(tier_index, len(TIER_NAMES) - 1))]
 
 
-def legacy_v1(player_elo, opponent_avg_elo, result, kills, deaths, player_total_matches,
+@dataclass
+class RoundContext:
+    """규칙 함수에 넘기는 라운드 정보. 팀 단위 기대승률이나 라운드 평균 보정이 필요한 규칙이 쓴다."""
+    round: int
+    own_avg: float     # 이 선수 팀의 라운드 시작 시점 평균 ELO
+    opp_avg: float     # 상대 팀의 라운드 시작 시점 평균 ELO
+    rows: list         # 이 라운드의 모든 행 (두 팀 전원)
+
+
+def k_factor(total_matches, k_normal=30, k_init=50, threshold=5):
+    """경기 수에 따른 K: 첫 5경기 50, 이후 30에서 점차 감소(하한 15)"""
+    if total_matches <= threshold:
+        return k_init
+    return max(k_normal / (1 + (total_matches - threshold) / 20), k_normal / 2)
+
+
+def legacy_v1(player_elo, opponent_avg_elo, result, kills, deaths, player_total_matches, ctx=None,
               k_normal=30, kill_weight=0.2, death_weight=0.07, initial_k_factor=50, initial_matches_threshold=5):
-    """기존 elo.py의 calculate_elo와 동일한 공식 (result: 1 승, 0 패). 1~현재 라운드의 기준 규칙."""
+    """기존 elo.py의 calculate_elo와 동일한 공식 (result: 1 승, 0 패). 1~98라운드의 규칙. ctx는 쓰지 않는다."""
     if player_total_matches <= initial_matches_threshold:
         base_k = initial_k_factor
     else:
@@ -55,9 +72,33 @@ def legacy_v1(player_elo, opponent_avg_elo, result, kills, deaths, player_total_
     return max(0, int(round(new_elo)))
 
 
+V2_K_MULTIPLIER = 1.5   # 기본 K 스케줄(첫 5경기 50, 이후 30에서 감소, 하한 15)에 곱함 → 75 / 45~22.5
+V2_PERF_WEIGHT = 2.0    # 성과항 배율
+
+
+def rule_v2(player_elo, opponent_avg_elo, result, kills, deaths, player_total_matches, ctx=None,
+            scale=400, perf_weight=V2_PERF_WEIGHT, kill_weight=0.2, death_weight=0.07, k_multiplier=V2_K_MULTIPLIER):
+    """현재 규칙 (전 구간에 적용). 분석 후보 M안에서 K를 1.5배, 성과를 2배로 한 것.
+
+    - 기대승률: 팀 평균 ELO 대 상대 팀 평균 ELO (E = 1/(1+10^((상대평균 - 우리평균)/400)))
+    - 결과항: K * (결과 - E)   (표준 ELO. 같은 팀은 같은 결과항, 약한 팀이 져도 덜 깎임)
+    - 성과항: ((0.2*킬 - 0.07*데스) - (그 라운드 전체 선수 평균)) * 2.  평균을 빼서 전체 합이 0에 가깝고 인플레이션이 없음
+    - 배치: 첫 5경기는 K가 커서(50*1.5=75) 빠르게 제자리를 찾는다. 표시상 배치중 처리는 보여주는 쪽의 몫이다
+    - 개인 점수/팀 점수/모드는 쓰지 않는다 (기록만)
+    """
+    if ctx is None:
+        raise ValueError("rule_v2는 팀 평균과 라운드 평균이 필요하므로 ctx(RoundContext)가 있어야 한다")
+    expected = 1 / (1 + 10 ** ((opponent_avg_elo - ctx.own_avg) / scale))
+    outcome = k_factor(player_total_matches) * k_multiplier * (result - expected)
+    round_mean = sum(r.kills * kill_weight - r.deaths * death_weight for r in ctx.rows) / len(ctx.rows)
+    performance = (kills * kill_weight - deaths * death_weight - round_mean) * perf_weight
+    return max(0, int(round(player_elo + outcome + performance)))
+
+
 # (적용 시작 라운드, 규칙 함수). 라운드가 커질수록 아래 항목이 위 항목을 대체한다.
-# 점수/모드 반영 규칙이 정해지면 여기에 (N, new_rule)만 추가하면 N라운드부터 적용된다.
-RULESET = [(1, legacy_v1)]
+# 규칙을 바꾸고 싶을 때 과거 ELO를 보존하려면 (N, 새규칙)을 추가해 N라운드부터 적용할 수 있다.
+# legacy_v1은 예전 시스템(elo.py)의 공식이며, 고정 기준값을 재현하는 테스트에서만 쓴다.
+RULESET = [(1, rule_v2)]
 
 
 def rule_for_round(round_num, ruleset=None):
@@ -213,6 +254,27 @@ def validate(rows):
         if abs(n1 - n2) > 1:
             issues.append(Issue("warning", f"팀 인원 차이가 큽니다 ({n1}v{n2})", rnd))
 
+    # 경고: 서로 다른 라운드에 거의 같은 기록 (같은 라운드를 번호만 바꿔 두 번 입력했을 가능성)
+    prints = {rnd: {(r.nickname, r.team, r.kills, r.deaths) for r in group}
+              for rnd, group in by_round.items() if len(group) >= 4}
+    ordered = sorted(prints)
+    for i, a in enumerate(ordered):
+        for b in ordered[i + 1:]:
+            same, size = len(prints[a] & prints[b]), min(len(prints[a]), len(prints[b]))
+            if same >= 0.8 * size:
+                issues.append(Issue("warning", f"라운드 {a}와 {b}의 기록이 거의 같습니다 ({same}/{size}행 동일). 같은 라운드를 두 번 입력했는지 확인하세요", b))
+
+    # 경고: 철자만 다른 같은 사람일 수 있는 닉네임 (아주 비슷한데 같은 라운드에 함께 나온 적이 없음)
+    nick_rounds = defaultdict(set)
+    for r in rows:
+        nick_rounds[r.nickname].add(r.round)
+    names = sorted(nick_rounds)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio() >= 0.85 and not (nick_rounds[a] & nick_rounds[b]):
+                issues.append(Issue("warning", f"닉네임이 아주 비슷하고 같은 라운드에 함께 나온 적이 없습니다 (같은 사람인지 확인): "
+                                               f"{a}({len(nick_rounds[a])}라운드) ~ {b}({len(nick_rounds[b])}라운드)"))
+
     # 경고: 헷갈리는 닉네임 (I/l/1, O/0) - 같은 사람이 철자만 다르게 들어간 경우를 잡는다
     seen = defaultdict(set)
     for r in rows:
@@ -283,7 +345,8 @@ def compute(rows, ruleset=None):
             for r in team[t]:
                 p = players[r.nickname]
                 outcome = 1 if winner == t else 0
-                p.elo = rule(pre[r.nickname], avg[3 - t], outcome, r.kills, r.deaths, p.total)
+                ctx = RoundContext(rnd, avg[t], avg[3 - t], group)
+                p.elo = rule(pre[r.nickname], avg[3 - t], outcome, r.kills, r.deaths, p.total, ctx=ctx)
                 p.kills += r.kills
                 p.deaths += r.deaths
                 p.wins += outcome

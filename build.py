@@ -3,12 +3,12 @@
     python build.py                 검증 후 out/ 폴더에 lboard.csv, match.csv, aftercalc.csv 생성 (웹에는 영향 없음)
     python build.py --check         검증만 한다 (파일을 만들지 않음)
     python build.py --publish       웹이 읽는 이 폴더의 lboard.csv, match.csv, aftercalc.csv를 갱신
-    python build.py --write-db X.db 기존 elo.py 분석 메뉴용 sqlite를 새로 만든다 (이미 있으면 --force 필요)
+    python build.py --push          --publish 후 변경 내용을 확인받고 git add/commit/push까지 한다
 """
 import argparse
 import csv
 import os
-import sqlite3
+import subprocess
 import sys
 
 import engine
@@ -82,41 +82,46 @@ def print_diff(previous, result, label):
     if removed: print("  사라진 선수:", ", ".join(removed[:20]))
 
 
-def write_db(path, rows, result):
-    """기존 elo.py 분석 메뉴(통계, 차트, 팀 밸런스 등)가 읽는 sqlite를 새로 만든다. 원본에서 언제든 재생성 가능한 산출물이다."""
-    con = sqlite3.connect(path)
-    cur = con.cursor()
-    cur.executescript('''
-    CREATE TABLE leaderboard (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, nickname TEXT UNIQUE, kills INTEGER DEFAULT 0, deaths INTEGER DEFAULT 0,
-        wins INTEGER DEFAULT 0, losses INTEGER DEFAULT 0, total INTEGER DEFAULT 0, elo INTEGER DEFAULT 1500, tier TEXT DEFAULT 'Unranked');
-    CREATE TABLE matches (
-        match_id INTEGER PRIMARY KEY AUTOINCREMENT, round INTEGER, nickname TEXT, team INTEGER, kills INTEGER, deaths INTEGER,
-        map TEXT DEFAULT NULL, winning_team INTEGER DEFAULT NULL, mode TEXT DEFAULT NULL, team1_score INTEGER DEFAULT NULL,
-        team2_score INTEGER DEFAULT NULL, player_score INTEGER DEFAULT NULL,
-        FOREIGN KEY(nickname) REFERENCES leaderboard(nickname) ON DELETE CASCADE ON UPDATE CASCADE, UNIQUE(round, nickname));
-    CREATE TABLE aftercalc (
-        ac_id INTEGER PRIMARY KEY AUTOINCREMENT, round INTEGER, nickname TEXT, total_kills_at_round INTEGER,
-        total_deaths_at_round INTEGER, kdr_at_round REAL, elo_after_round INTEGER,
-        FOREIGN KEY(nickname) REFERENCES leaderboard(nickname) ON DELETE CASCADE ON UPDATE CASCADE, UNIQUE (round, nickname));
-    ''')
-    first_seen = []
-    for r in sorted(rows, key=lambda r: (r.round, r.team, r.nickname)):
-        if r.nickname not in first_seen:
-            first_seen.append(r.nickname)
-    for n in first_seen:
-        p = result.players[n]
-        cur.execute("INSERT INTO leaderboard (nickname, kills, deaths, wins, losses, total, elo, tier) VALUES (?,?,?,?,?,?,?,?)",
-                    (n, p.kills, p.deaths, p.wins, p.losses, p.total, p.elo, p.tier))
-    for r in sorted(rows, key=lambda r: (r.round, r.team, r.nickname)):
-        cur.execute("INSERT INTO matches (round, nickname, team, kills, deaths, map, winning_team, mode, team1_score, team2_score, player_score)"
-                    " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (r.round, r.nickname, r.team, r.kills, r.deaths, r.map, r.winning_team, r.mode, r.team1_score, r.team2_score, r.player_score))
-    for h in sorted(result.history, key=lambda x: (x[0], x[1])):
-        cur.execute("INSERT INTO aftercalc (round, nickname, total_kills_at_round, total_deaths_at_round, kdr_at_round, elo_after_round)"
-                    " VALUES (?,?,?,?,?,?)", h)
-    con.commit()
-    con.close()
+GIT_PATHS = ["data/source/matches.csv", *WEB_FILES]
+
+
+def _git(*args):
+    return subprocess.run(["git", *args], cwd=HERE, capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+
+def git_publish(message, assume_yes):
+    """원본 + 웹용 CSV 3개만 커밋하고 푸시한다. 다른 파일은 건드리지 않는다. 반환: 종료 코드."""
+    try:
+        status = _git("status", "--porcelain", "--", *GIT_PATHS)
+    except FileNotFoundError:
+        print("⚠ 'git' 명령어를 찾을 수 없습니다. Git이 설치되어 있는지 확인해주세요.")
+        return 1
+    if status.returncode != 0:
+        print(f"⚠ git 상태를 확인하지 못했습니다: {status.stderr.strip()}")
+        return 1
+    changed = [line for line in status.stdout.splitlines() if line.strip()]
+    if not changed:
+        print("\nℹ️ 원본과 웹용 CSV에 변경이 없어 커밋할 내용이 없습니다. 푸시하지 않았습니다.")
+        return 0
+    print("\n변경된 파일:")
+    for line in changed:
+        print("  ", line)
+    if not assume_yes and input(f"\n>> 커밋 메시지 '{message}'로 커밋하고 푸시할까요? [y/n]: ").strip().lower() != "y":
+        print("⛔ 푸시하지 않았습니다. (CSV는 이미 갱신되어 있습니다)")
+        return 0
+
+    for step in (["add", "--", *GIT_PATHS], ["commit", "-m", message, "--", *GIT_PATHS]):
+        r = _git(*step)
+        if r.returncode != 0:
+            print(f"⚠ git {step[0]} 실패:\n{(r.stdout + r.stderr).strip()}")
+            return 1
+    print("✅ 커밋 완료")
+    r = _git("push")
+    if r.returncode != 0:
+        print(f"⚠ 푸시 실패 (커밋은 로컬에 남아 있습니다):\n{r.stderr.strip()}")
+        return 1
+    print("✅ 푸시 성공! 라이브 사이트에 수 분 내에 반영됩니다.")
+    return 0
 
 
 def main(argv=None):
@@ -125,10 +130,13 @@ def main(argv=None):
     ap.add_argument("--out", default=DEFAULT_OUT, help="결과 폴더 (기본: out/)")
     ap.add_argument("--check", action="store_true", help="검증만 하고 파일은 만들지 않음")
     ap.add_argument("--publish", action="store_true", help="웹이 읽는 이 폴더의 CSV 3개를 갱신")
+    ap.add_argument("--push", action="store_true", help="--publish 후 git add/commit/push (확인 후 진행)")
+    ap.add_argument("--yes", action="store_true", help="--push 확인 질문 없이 진행")
+    ap.add_argument("-m", "--message", help="--push 커밋 메시지 (기본: 자동 생성)")
     ap.add_argument("--strict", action="store_true", help="경고도 오류로 취급")
-    ap.add_argument("--write-db", metavar="PATH", help="elo.py 분석 메뉴용 sqlite 생성")
-    ap.add_argument("--force", action="store_true", help="--write-db 대상 파일이 있어도 덮어씀")
     args = ap.parse_args(argv)
+    if args.push:
+        args.publish = True
 
     rows, issues = engine.load_matches(args.source)
     if not any(i.level == "error" for i in issues):
@@ -151,21 +159,18 @@ def main(argv=None):
     if args.check:
         return 0
 
+    if args.push and os.path.abspath(args.source) != os.path.abspath(DEFAULT_SOURCE):
+        print("⚠ --push는 기본 원본(data/source/matches.csv)에서만 쓸 수 있습니다.")
+        return 1
     target_dir = HERE if args.publish else args.out
     print_diff(read_previous_elos(os.path.join(target_dir, "lboard.csv")), result,
                "현재 웹용 lboard.csv" if args.publish else "이전 결과")
     write_web_csvs(target_dir, rows, result)
     print(f"\n✅ {', '.join(WEB_FILES)} 생성: {target_dir}")
 
-    if args.write_db:
-        if os.path.exists(args.write_db) and not args.force:
-            print(f"⚠ {args.write_db}가 이미 있습니다. 덮어쓰려면 --force를 쓰세요.")
-            return 1
-        if os.path.exists(args.write_db):
-            os.remove(args.write_db)
-        os.makedirs(os.path.dirname(os.path.abspath(args.write_db)), exist_ok=True)
-        write_db(args.write_db, rows, result)
-        print(f"✅ sqlite 생성: {args.write_db}")
+    if args.push:
+        last_round = max(r.round for r in rows)
+        return git_publish(args.message or f"data: 리더보드 갱신 (라운드 {last_round}까지)", args.yes)
     return 0
 
 

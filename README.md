@@ -34,29 +34,73 @@ KPFM 클랜의 경기 기록을 관리하고 시각화해 주는 웹 기반 개�
 
 ## 📂 파일 구조 및 데이터 구성
 
-본 프로젝트는 데이터베이스가 필요 없는 **서버리스(Serverless)** 정적 파일 구조로 설계되었으며, `lboard.csv`, `match.csv`, `aftercalc.csv` 3개의 CSV 파일을 실시간 페치하여 구동됩니다.
+웹 페이지는 데이터베이스가 필요 없는 **서버리스(Serverless)** 정적 파일 구조이며, `lboard.csv`, `match.csv`, `aftercalc.csv` 3개의 CSV 파일을 페치하여 구동됩니다. 이 3개 파일은 직접 고치지 않고, **원본 `data/source/matches.csv` 하나에서 자동 생성**합니다.
 
 ```bash
 Leaderboard/
-├── index.html       # 메인 랭킹 및 팀 배정 대시보드
-├── user.html        # 유저 전적 상세 분석 및 차트
-├── lboard.csv       # 누적 플레이어 랭킹 요약 데이터
-├── match.csv        # 라운드별 모든 플레이어 개인 인게임 스탯 데이터
-└── aftercalc.csv    # 라운드 종료 직후 실시간 계산된 ELO 기록 데이터
+├── index.html           # 메인 랭킹 및 팀 배정 대시보드
+├── user.html            # 유저 전적 상세 분석 및 차트
+├── lboard.csv           # (생성물) 누적 플레이어 랭킹 요약
+├── match.csv            # (생성물) 라운드별 모든 플레이어 스탯 + 모드/점수
+├── aftercalc.csv        # (생성물) 라운드 종료 시점의 ELO 기록
+├── data/source/
+│   └── matches.csv      # ★ 원본: 이 파일만 편집합니다
+├── engine.py            # ELO 계산 엔진 (원본을 처음부터 순서대로 계산)
+├── build.py             # 검증 + 웹용 CSV 생성 + 깃 푸시
+├── stats.py             # 유저 통계 조회
+├── analysis/            # 공식·점수 근거 분석 스크립트 (데이터가 늘면 다시 실행)
+└── tests/               # 검증 (기존 시스템 결과를 그대로 재현하는지 등)
 ```
 
-### 📊 데이터 갱신 방법 (엑셀/구글 시트 연동)
-전적 기록을 새로 업데이트하고 싶다면 엑셀이나 구글 스프레드시트에서 데이터를 편집한 뒤, 해당 파일명 그대로 `.csv` 형식으로 프로젝트 루트 경로에 덮어씌우면 됩니다.
+### 📊 데이터 갱신 방법
 
-1. **`lboard.csv`**:
-   * 헤더: `Nickname,Kills,Deaths,Wins,Losses,Total,ELO,Tier`
-   * 모든 경기 통합 누적 통계값을 나타냅니다.
-2. **`match.csv`**:
-   * 헤더: `Round,Map,Nickname,Kills,Deaths,Team,Winning Team`
-   * 매 라운드당 각 플레이어의 활약상을 기록합니다. `Team`은 플레이어가 속했던 팀(1: Phantom, 2: Ghost)이며, `Winning Team`과 일치하면 승리로 집계됩니다.
-3. **`aftercalc.csv`**:
-   * 헤더: `Round,Nickname,ELO`
-   * 각 라운드 종료 시점에서의 ELO 레이팅 수치 변화를 역대 라운드 순서대로 누적 기록합니다. 프론트엔드는 이 데이터를 통해 `previous ELO`와 비교하여 한 경기에서의 ELO 상승/하락 폭을 산출합니다.
+1. `data/source/matches.csv`를 엑셀 등으로 열어 새 라운드의 행을 **맨 아래에 추가**하거나 기존 행을 수정합니다. (저장은 CSV UTF-8)
+2. 터미널에서 아래 명령을 실행합니다.
+   ```bash
+   python build.py --push
+   ```
+   원본을 검증하고, 웹용 CSV 3개를 갱신하고, 바뀐 선수의 ELO 변화를 보여준 뒤 `[y/n]`을 묻고 커밋/푸시합니다. 문제가 있으면 어느 라운드가 잘못됐는지 알려주고 아무 파일도 건드리지 않습니다.
+
+`matches.csv`는 한 줄이 한 선수의 한 라운드입니다.
+
+| 열 | 설명 |
+|---|---|
+| `Round`, `Nickname`, `Team`, `Kills`, `Deaths`, `Winning Team` | 필수. `Team`은 1 또는 2, `Winning Team`은 이긴 팀(무승부/취소는 0: 기록만 남고 ELO 등에는 미반영) |
+| `Map`, `Mode` | 선택. 모드는 `tdm`, `hp`, `koth` 등 소문자 (쉼표 금지) |
+| `Team1 Score`, `Team2 Score` | 선택. 라운드의 **아무 행 하나**에만 써도 같은 라운드 전체에 적용됩니다 (`Mode`도 동일) |
+| `Player Score` | 선택. 개인 점수 |
+
+### 🧮 ELO 공식 (`rule_v2`, 첫 라운드부터 적용)
+
+한 경기가 끝나면 각 선수의 ELO는 `새 ELO = 기존 ELO + 팀 승패 점수 + 보정된 개인 성과 점수`로 바뀝니다.
+
+| 항목 | 내용 |
+|---|---|
+| 기대승률 | 우리 팀 평균 ELO 대 상대 팀 평균 ELO (민감도 400). 개인 ELO는 쓰지 않음 |
+| 승패 점수 | `K × (결과 − 기대승률)` (표준 ELO). 같은 팀이면 같은 점수 |
+| K | 첫 5경기 `50 × 1.5 = 75`, 이후 30에서 점차 감소(하한 15) × 1.5 = 하한 22.5 |
+| 성과 점수 | `(0.2×킬 − 0.07×데스)`에서 그 라운드 전체 선수 평균을 뺀 값 × 2. 평균을 빼서 전체 합이 0에 가깝고 ELO가 계속 부풀지 않음 |
+| 무승부 | `Winning Team = 0`은 ELO, 승패, 킬/데스, 경기 수에 반영하지 않음 |
+| 기록만 하는 것 | 개인 점수, 팀 점수, 모드 (근거: `python analysis/score_signal.py`). 공식에는 쓰지 않음 |
+
+- **배치:** 5경기 이하는 배치중으로 봅니다. 계산은 정상으로 하되 K가 커서 빠르게 제자리를 찾고, 정식 티어/랭킹 표시는 6경기부터가 기준입니다 (표시는 웹 페이지의 몫).
+- **근거와 선택 과정:** `analysis/formula_analysis.py`(후보 비교), `analysis/k_sweep.py`(K와 성과 배율), `analysis/formula_change_report.py`(기존 공식 대비 변경표).
+- 규칙을 바꿀 때는 `engine.py`의 `RULESET`에 `(N, 새규칙)`을 추가하면 N라운드부터 적용되어 과거 ELO를 보존할 수 있습니다. 바꾼 뒤 `python analysis/formula_change_report.py`로 변화를 확인하세요.
+- 예전 시스템(`elo.py`)의 공식은 `legacy_v1`로 남겨 두었고, 테스트에서 기존 결과를 재현하는 기준으로만 씁니다.
+
+### 🛠 명령어 정리
+
+```bash
+python build.py --check              # 검증만 (파일을 만들지 않음)
+python build.py                      # out/ 폴더에 생성 (웹에 영향 없음, 미리보기용)
+python build.py --publish            # 이 폴더의 웹용 CSV 3개를 갱신 (푸시는 직접)
+python build.py --push               # 갱신 후 확인받고 add/commit/push까지
+python stats.py "닉네임1, 닉네임2"      # 유저 통계 (공백/쉼표 구분, all = 전체)
+python tests/test_engine.py          # 검증 테스트
+python tests/test_stats.py
+python analysis/formula_analysis.py  # ELO 공식 후보 비교 (예측력, 인플레이션, 순위 변화)
+python analysis/score_signal.py       # 개인/팀 점수가 담은 정보 분석
+```
 
 ---
 
