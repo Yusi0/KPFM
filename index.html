@@ -522,20 +522,23 @@
             display: none;
         }
 
-        [data-layout="wide"] .page-title {
+        [data-layout="wide"] .page-title,
+        [data-layout="compact"] .page-title {
             display: block;
             padding-top: 32px;
             padding-bottom: 0;
             flex: none;
         }
 
-        [data-layout="wide"] .page-title h2 {
+        [data-layout="wide"] .page-title h2,
+        [data-layout="compact"] .page-title h2 {
             font-size: 28px;
             line-height: 32px;
             font-weight: 500;
         }
 
-        [data-layout="wide"] .wordmark span {
+        [data-layout="wide"] .wordmark span,
+        [data-layout="compact"] .wordmark span {
             display: none;
         }
 
@@ -704,8 +707,47 @@
             text-align: left;
         }
 
+        /* Compact에서도 와이드와 같은 기조: 이름과 ELO가 먼저, 나머지는 조용하게 */
+        [data-layout="compact"] .c-name {
+            font-size: 18px;
+        }
+
+        [data-layout="compact"] .c-rank {
+            font-size: 12px;
+        }
+
+        [data-layout="compact"] .c-elo .num {
+            font-size: 16px;
+        }
+
+        [data-layout="compact"] .c-kdr,
+        [data-layout="compact"] .c-wr,
+        [data-layout="compact"] .c-matches {
+            color: var(--text-2);
+            font-size: 13px;
+        }
+
+        [data-layout="compact"] .lobby-toggle {
+            border-color: transparent;
+            color: var(--text-3);
+        }
+
+        [data-layout="compact"] .row:hover .lobby-toggle {
+            border-color: var(--hairline-strong);
+        }
+
+        [data-layout="compact"] .cell::before {
+            color: var(--text-3);
+            opacity: 0.85;
+        }
+
         /* 800px 미만: 한 열 + 탭 */
         @media (max-width: 799px) {
+            .page-title,
+            [data-layout="compact"] .page-title {
+                display: none;
+            }
+
             .tabs {
                 display: block;
             }
