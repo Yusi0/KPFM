@@ -162,7 +162,7 @@
 
         .custom-select-wrapper {
             position: relative;
-            width: 176px;
+            width: 128px;
             flex: none;
         }
 
@@ -707,6 +707,40 @@
             text-align: left;
         }
 
+        /* Compact: 정렬을 검색창 안쪽 오른쪽 끝에 겹쳐 두고, 목록과 같은 너비로 맞춘다 */
+        [data-layout="compact"] .toolbar {
+            position: relative;
+            flex-wrap: nowrap;
+            padding: 12px 0;
+        }
+
+        [data-layout="compact"] .search-bar input {
+            padding-right: 112px;
+        }
+
+        [data-layout="compact"] .custom-select-wrapper {
+            position: absolute;
+            right: 4px;
+            top: 16px;
+            width: auto;
+        }
+
+        [data-layout="compact"] .custom-select-trigger {
+            height: 24px;
+            padding: 0 6px 0 10px;
+            background: transparent;
+            border: none;
+            border-left: 1px solid var(--hairline-strong);
+            border-radius: 0;
+            color: var(--text-2);
+        }
+
+        [data-layout="compact"] .custom-select-options {
+            left: auto;
+            right: 0;
+            width: 200px;
+        }
+
         /* Compact에서도 와이드와 같은 기조: 이름과 ELO가 먼저, 나머지는 조용하게 */
         [data-layout="compact"] .c-name {
             font-size: 18px;
@@ -770,13 +804,7 @@
                 display: none;
             }
 
-            .toolbar {
-                flex-wrap: wrap;
-            }
 
-            .custom-select-wrapper {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -824,14 +852,14 @@
                     </div>
                     <div class="custom-select-wrapper" id="customSortWrapper">
                         <button type="button" class="custom-select-trigger" id="customSortTrigger" aria-label="Sort by">
-                            <span>ELO, high to low</span>
+                            <span>ELO</span>
                             <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                         <div class="custom-select-options" id="customSortOptions">
-                            <div class="custom-option active" data-value="elo">ELO, high to low</div>
-                            <div class="custom-option" data-value="kdr">KDR, high to low</div>
-                            <div class="custom-option" data-value="winrate">Win rate, high to low</div>
-                            <div class="custom-option" data-value="matches">Matches, high to low</div>
+                            <div class="custom-option active" data-value="elo" data-short="ELO">ELO, high to low</div>
+                            <div class="custom-option" data-value="kdr" data-short="KDR">KDR, high to low</div>
+                            <div class="custom-option" data-value="winrate" data-short="Win rate">Win rate, high to low</div>
+                            <div class="custom-option" data-value="matches" data-short="Matches">Matches, high to low</div>
                         </div>
                     </div>
                 </div>
@@ -986,7 +1014,7 @@
             optionsList.forEach(opt => {
                 opt.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    customTrigger.querySelector('span').innerHTML = opt.innerHTML;
+                    customTrigger.querySelector('span').textContent = opt.getAttribute('data-short');
                     optionsList.forEach(o => o.classList.remove('active'));
                     opt.classList.add('active');
                     customOptions.style.display = 'none';
