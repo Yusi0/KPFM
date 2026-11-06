@@ -7,9 +7,11 @@
 """
 import argparse
 import csv
+import io
 import os
 import subprocess
 import sys
+import time
 
 import engine
 
@@ -23,11 +25,61 @@ def _cell(v):
     return "" if v is None else v
 
 
-def _write_csv(path, header, rows):
+def _csv_text(header, rows):
+    buf = io.StringIO(newline="")
+    w = csv.writer(buf)
+    w.writerow(header)
+    w.writerows(rows)
+    return buf.getvalue()
+
+
+class FileLockedError(OSError):
+    """다른 프로그램(엑셀, OneDrive 동기화 등)이 파일을 잡고 있어 쓸 수 없을 때."""
+
+
+def _is_writable(path):
+    """이미 있는 파일을 쓸 수 있는지 (다른 프로그램이 잠그고 있으면 False). 내용은 바꾸지 않는다."""
+    try:
+        open(path, "ab").close()
+        return True
+    except PermissionError:
+        return False
+
+
+def _write_text(path, text):
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.writer(f)
-        w.writerow(header)
-        w.writerows(rows)
+        f.write(text)
+
+
+def write_all_or_nothing(items, retries=8, wait=0.5):
+    """{경로: 내용}을 전부 쓰거나, 하나라도 못 쓰면 아무것도 바꾸지 않는다.
+
+    OneDrive 동기화나 엑셀이 잠깐 잡고 있는 경우가 있어 몇 번 기다려 본다. 그래도 안 되면 FileLockedError.
+    쓰는 도중 실패하면 이미 쓴 파일은 원래 내용으로 되돌린다 (파일들이 서로 맞지 않는 상태를 남기지 않기 위해)."""
+    locked = []
+    for _ in range(retries):
+        locked = [p for p in items if os.path.exists(p) and not _is_writable(p)]
+        if not locked:
+            break
+        time.sleep(wait)
+    if locked:
+        raise FileLockedError("다른 프로그램이 사용 중이라 쓸 수 없습니다: " + ", ".join(os.path.basename(p) for p in locked))
+    originals = {p: (open(p, "rb").read() if os.path.exists(p) else None) for p in items}
+    try:
+        for path, text in items.items():
+            _write_text(path, text)
+    except Exception:
+        for path, data in originals.items():
+            try:
+                if data is None:
+                    if os.path.exists(path):
+                        os.remove(path)
+                else:
+                    with open(path, "wb") as f:
+                        f.write(data)
+            except OSError:
+                pass
+        raise
 
 
 def leaderboard_rows(result):
@@ -48,12 +100,14 @@ def aftercalc_rows(result):
 
 def write_web_csvs(directory, rows, result):
     os.makedirs(directory, exist_ok=True)
-    _write_csv(os.path.join(directory, "lboard.csv"),
-               ["Rank", "Nickname", "Kills", "Deaths", "Wins", "Losses", "Total", "ELO", "Tier"], leaderboard_rows(result))
-    _write_csv(os.path.join(directory, "match.csv"),
-               ["Round", "Nickname", "Team", "Kills", "Deaths", "Winning Team", "Map", "Mode",
-                "Team1 Score", "Team2 Score", "Player Score"], match_rows(rows))
-    _write_csv(os.path.join(directory, "aftercalc.csv"), ["Round", "Nickname", "ELO"], aftercalc_rows(result))
+    write_all_or_nothing({
+        os.path.join(directory, "lboard.csv"): _csv_text(
+            ["Rank", "Nickname", "Kills", "Deaths", "Wins", "Losses", "Total", "ELO", "Tier"], leaderboard_rows(result)),
+        os.path.join(directory, "match.csv"): _csv_text(
+            ["Round", "Nickname", "Team", "Kills", "Deaths", "Winning Team", "Map", "Mode",
+             "Team1 Score", "Team2 Score", "Player Score"], match_rows(rows)),
+        os.path.join(directory, "aftercalc.csv"): _csv_text(["Round", "Nickname", "ELO"], aftercalc_rows(result)),
+    })
 
 
 def read_previous_elos(path):
@@ -165,7 +219,12 @@ def main(argv=None):
     target_dir = HERE if args.publish else args.out
     print_diff(read_previous_elos(os.path.join(target_dir, "lboard.csv")), result,
                "현재 웹용 lboard.csv" if args.publish else "이전 결과")
-    write_web_csvs(target_dir, rows, result)
+    try:
+        write_web_csvs(target_dir, rows, result)
+    except FileLockedError as e:
+        print(f"\n⚠ {e}")
+        print("   엑셀 등에서 열려 있으면 닫고, OneDrive 동기화가 끝난 뒤 다시 실행하세요. 파일은 하나도 바꾸지 않았고 커밋/푸시도 하지 않았습니다.")
+        return 1
     print(f"\n✅ {', '.join(WEB_FILES)} 생성: {target_dir}")
 
     if args.push:
