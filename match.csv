@@ -165,9 +165,9 @@
 17,sy5254,2,47,29,2,desert,tdm,95,133,5562
 18,Axaeny,1,60,29,1,desert,tdm,185,129,8181
 18,Breadu_gold,1,31,32,1,desert,tdm,185,129,4525
-18,KD_Izuna,1,43,42,1,desert,tdm,185,129,5611
 18,box_0927,1,39,8,1,desert,tdm,185,129,5741
 18,gukbab2,1,49,25,1,desert,tdm,185,129,8081
+18,onxzor,1,43,42,1,desert,tdm,185,129,5611
 18,Goyu92,2,36,46,1,desert,tdm,185,129,4547
 18,LYCORlS_Takina,2,25,25,1,desert,tdm,185,129,3814
 18,pailoder,2,20,32,1,desert,tdm,185,129,3169
@@ -687,8 +687,8 @@
 77,Ts0_6,2,16,40,1,warehouse,,,,
 77,sy5254,2,42,34,1,warehouse,,,,
 78,Breadu_gold,1,40,38,2,warehouse,,,,
-78,KD_Izuna,1,37,49,2,warehouse,,,,
 78,Kapippalist,1,16,18,2,warehouse,,,,
+78,onxzor,1,37,49,2,warehouse,,,,
 78,sy5254,1,53,34,2,warehouse,,,,
 78,LYCORlS_Takina,2,47,30,2,warehouse,,,,
 78,Monday_0907,2,59,28,2,warehouse,,,,
@@ -698,14 +698,14 @@
 79,Monday_0907,1,43,35,2,desert,,,,
 79,TowerOfHell_3201,1,25,21,2,desert,,,,
 79,Ts0_6,1,20,33,2,desert,,,,
-79,KD_Izuna,2,35,49,2,desert,,,,
 79,Kapippalist,2,25,18,2,desert,,,,
 79,Toshi_Amemiya,2,29,14,2,desert,,,,
+79,onxzor,2,35,49,2,desert,,,,
 79,sy5254,2,45,29,2,desert,,,,
 80,Breadu_gold,1,36,30,2,metro,,,,
-80,KD_Izuna,1,30,39,2,metro,,,,
 80,Kapippalist,1,20,20,2,metro,,,,
 80,Toshi_Amemiya,1,29,27,2,metro,,,,
+80,onxzor,1,30,39,2,metro,,,,
 80,sy5254,1,33,33,2,metro,,,,
 80,LYCORlS_Takina,2,52,27,2,metro,,,,
 80,Monday_0907,2,52,31,2,metro,,,,
