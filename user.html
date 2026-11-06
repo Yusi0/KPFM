@@ -172,6 +172,14 @@
             font-size: 13px;
         }
 
+        .insight {
+            padding: 12px 16px 16px;
+            border-top: 1px solid var(--hairline);
+            font-size: 13px;
+            line-height: 20px;
+            color: var(--text-2);
+        }
+
         /* 차트 */
         .chart-wrap {
             position: relative;
@@ -321,7 +329,9 @@
                     <div><dt>Wins / losses</dt><dd id="statWL">0 / 0</dd></div>
                     <div><dt>Win rate</dt><dd id="statWR">0%</dd></div>
                     <div><dt>Matches</dt><dd id="statMatches">0</dd></div>
+                    <div><dt id="statAdjLabel">보정값</dt><dd id="statAdj">–</dd></div>
                 </dl>
+                <p class="insight" id="statInsight" hidden></p>
             </section>
 
             <section class="panel elo">
@@ -464,6 +474,20 @@
         let allAftercalc = [];
         let eloHistory = [];
         let tierHistory = [];
+
+        // 보정값과 한 줄 설명 (insight.csv가 없어도 나머지 화면은 정상 동작)
+        fetch(`insight.csv?timestamp=${Date.now()}`)
+            .then(r => (r.ok ? r.text() : ''))
+            .then(text => {
+                const ins = UI.parseInsights(text)[nickname.trim().toLowerCase()];
+                if (!ins) return;
+                document.getElementById('statAdjLabel').innerHTML = UI.adjHTML(ins.adj).replace('보정값 ' + ins.adj, '보정값');
+                document.getElementById('statAdj').textContent = ins.adj;
+                const note = document.getElementById('statInsight');
+                note.textContent = ins.text;
+                note.hidden = false;
+            })
+            .catch(() => { });
 
         Promise.all([
             fetch(`match.csv?timestamp=${Date.now()}`).then(r => r.text()),

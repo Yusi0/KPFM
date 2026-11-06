@@ -165,5 +165,70 @@
         }
     }
 
-    window.UI = { icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES };
+    // ---- 보정값: 상대·팀원 강도를 뺀 킬/데스 성적 (insight.csv). 점선 밑줄을 누르면 설명이 뜬다
+    function adjHTML(value) {
+        return `<button type="button" class="adj" data-adj="${esc(value)}" aria-haspopup="true">보정값 ${esc(value)}</button>`;
+    }
+
+    function adjExplain(value) {
+        const v = parseFloat(value);
+        const pct = Math.round(Math.abs(v - 1) * 100);
+        const meaning = pct === 0 ? '평균과 같다는 뜻입니다.'
+            : `비슷한 상대 기준 평균보다 킬/데스 비율이 약 ${pct}% ${v > 1 ? '높다' : '낮다'}는 뜻입니다.`;
+        return `<strong>보정값 ${esc(value)}</strong>
+            <p>상대와 팀원의 강도를 빼고 본 킬/데스 성적입니다. 1.00이 평균이고, ${meaning}</p>
+            <p>상대의 실력도 그 상대가 만난 상대로 다시 검증하는 방식으로 모든 선수를 한꺼번에 계산합니다. 승패와 ELO는 쓰지 않습니다.</p>
+            <p>경기 수가 적으면 1.00 쪽으로 당겨져 보이므로 5경기 이하는 참고만 하세요.</p>`;
+    }
+
+    let popover = null;
+    let popoverOwner = null;
+    function closePopover() {
+        if (popover) popover.remove();
+        popover = null;
+        popoverOwner = null;
+    }
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest ? e.target.closest('.adj') : null;
+        if (!target) {
+            if (popover && !popover.contains(e.target)) closePopover();
+            return;
+        }
+        e.stopPropagation(); // 행 클릭(선수 페이지 이동)으로 번지지 않게
+        const same = popoverOwner === target;
+        closePopover();
+        if (same) return;
+        popover = document.createElement('div');
+        popover.className = 'pop';
+        popover.setAttribute('role', 'tooltip');
+        popover.innerHTML = adjExplain(target.getAttribute('data-adj'));
+        document.body.appendChild(popover);
+        popoverOwner = target;
+        const r = target.getBoundingClientRect();
+        const w = popover.offsetWidth;
+        const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left));
+        const below = r.bottom + 8 + popover.offsetHeight < window.innerHeight || r.top < popover.offsetHeight + 16;
+        popover.style.left = `${left}px`;
+        popover.style.top = `${below ? r.bottom + 8 : r.top - popover.offsetHeight - 8}px`;
+    }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopover(); });
+    window.addEventListener('scroll', closePopover, true);
+    window.addEventListener('resize', closePopover);
+
+    // insight.csv -> { 소문자 닉네임: {adj, text, games} } (파일이 없거나 깨져도 화면은 정상 동작)
+    function parseInsights(text) {
+        const map = {};
+        try {
+            const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+            const headers = rows[0].split(',').map(h => h.trim());
+            rows.slice(1).forEach(line => {
+                const v = line.split(',').map(x => x.trim());
+                const o = Object.fromEntries(headers.map((h, i) => [h, v[i]]));
+                if (o.Nickname) map[o.Nickname.toLowerCase()] = { adj: o.Adj, text: o.Text || '', games: parseInt(o.Games, 10) || 0 };
+            });
+        } catch (e) { /* 무시 */ }
+        return map;
+    }
+
+    window.UI = { adjHTML, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES };
 })();

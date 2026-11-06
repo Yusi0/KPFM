@@ -14,11 +14,12 @@ import sys
 import time
 
 import engine
+import insight
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SOURCE = os.path.join(HERE, "data", "source", "matches.csv")
 DEFAULT_OUT = os.path.join(HERE, "out")
-WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv")
+WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv")
 
 
 def _cell(v):
@@ -107,6 +108,9 @@ def write_web_csvs(directory, rows, result):
             ["Round", "Nickname", "Team", "Kills", "Deaths", "Winning Team", "Map", "Mode",
              "Team1 Score", "Team2 Score", "Player Score"], match_rows(rows)),
         os.path.join(directory, "aftercalc.csv"): _csv_text(["Round", "Nickname", "ELO"], aftercalc_rows(result)),
+        os.path.join(directory, "insight.csv"): _csv_text(
+            ["Nickname", "Games", "Adj", "AdjRank", "OppAvg", "Text"],
+            insight.insight_rows(result, insight.compute_insights(rows, result))),
     })
 
 
