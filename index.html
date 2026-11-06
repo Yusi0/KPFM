@@ -162,36 +162,42 @@
 
         .custom-select-wrapper {
             position: relative;
-            width: 128px;
-            flex: none;
-        }
-
-        .custom-select-trigger {
-            width: 100%;
-            height: 32px;
-            padding: 0 10px 0 12px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            width: 128px;
+            height: 32px;
+            flex: none;
             background: var(--raised);
             border: 1px solid var(--hairline-strong);
             border-radius: 8px;
-            font-size: 13px;
             transition: border-color 150ms var(--ease);
         }
 
-        .custom-select-trigger:hover {
+        .custom-select-wrapper:hover {
             border-color: var(--text-3);
         }
 
-        .custom-select-trigger .icon {
-            color: var(--text-3);
-            transition: transform 150ms var(--ease);
+        .custom-select-trigger {
+            flex: 1;
+            height: 100%;
+            padding: 0 4px 0 12px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            text-align: left;
         }
 
-        .custom-select-wrapper.open .custom-select-trigger .icon {
-            transform: rotate(180deg);
+        .sort-dir {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 100%;
+            color: var(--text-2);
+            transition: color 150ms var(--ease);
+        }
+
+        .sort-dir:hover {
+            color: var(--accent-ink);
         }
 
         /* 목록: 한 줄 = 한 선수. 넓은 화면에서는 표, compact에서는 카드 */
@@ -723,16 +729,21 @@
             right: 4px;
             top: 16px;
             width: auto;
-        }
-
-        [data-layout="compact"] .custom-select-trigger {
             height: 24px;
-            padding: 0 6px 0 10px;
             background: transparent;
             border: none;
             border-left: 1px solid var(--hairline-strong);
             border-radius: 0;
+        }
+
+        [data-layout="compact"] .custom-select-trigger {
+            flex: none;
+            padding: 0 4px 0 10px;
             color: var(--text-2);
+        }
+
+        [data-layout="compact"] .sort-dir {
+            width: 28px;
         }
 
         [data-layout="compact"] .custom-select-options {
@@ -853,13 +864,13 @@
                     <div class="custom-select-wrapper" id="customSortWrapper">
                         <button type="button" class="custom-select-trigger" id="customSortTrigger" aria-label="Sort by">
                             <span>ELO</span>
-                            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
+                        <button type="button" class="sort-dir" id="sortDirBtn" aria-label="Sort descending" title="High to low"></button>
                         <div class="custom-select-options" id="customSortOptions">
-                            <div class="custom-option active" data-value="elo" data-short="ELO">ELO, high to low</div>
-                            <div class="custom-option" data-value="kdr" data-short="KDR">KDR, high to low</div>
-                            <div class="custom-option" data-value="winrate" data-short="Win rate">Win rate, high to low</div>
-                            <div class="custom-option" data-value="matches" data-short="Matches">Matches, high to low</div>
+                            <div class="custom-option active" data-value="elo" data-short="ELO">ELO</div>
+                            <div class="custom-option" data-value="kdr" data-short="KDR">KDR</div>
+                            <div class="custom-option" data-value="winrate" data-short="Win rate">Win rate</div>
+                            <div class="custom-option" data-value="matches" data-short="Matches">Matches</div>
                         </div>
                     </div>
                 </div>
@@ -971,6 +982,7 @@
         let allMatches = [];
         let allAftercalc = [];
         let currentSort = 'elo';
+        let sortDesc = true;
         let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds' (800px 미만)
 
         let globalRoundsData = [];
@@ -999,6 +1011,21 @@
                 });
             });
 
+            // 정렬 방향: 화살표를 누를 때마다 뒤집는다
+            const dirBtn = document.getElementById('sortDirBtn');
+            const paintDir = () => {
+                dirBtn.innerHTML = UI.icon(sortDesc ? 'arrowDown' : 'arrowUp');
+                dirBtn.title = sortDesc ? 'High to low' : 'Low to high';
+                dirBtn.setAttribute('aria-label', sortDesc ? 'Sort descending' : 'Sort ascending');
+            };
+            paintDir();
+            dirBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sortDesc = !sortDesc;
+                paintDir();
+                refreshLeaderboard();
+            });
+
             // 정렬 선택
             const customTrigger = document.getElementById('customSortTrigger');
             const customOptions = document.getElementById('customSortOptions');
@@ -1020,6 +1047,8 @@
                     customOptions.style.display = 'none';
                     document.getElementById('customSortWrapper').classList.remove('open');
                     currentSort = opt.getAttribute('data-value');
+                    sortDesc = true;
+                    paintDir();
                     refreshLeaderboard();
                 });
             });
@@ -1176,6 +1205,7 @@
         }
 
         function renderLeaderboard(data) {
+            const dir = sortDesc ? 1 : -1;
             data.sort((a, b) => {
                 const aSelected = selectedUsers.has(a.nickname);
                 const bSelected = selectedUsers.has(b.nickname);
@@ -1183,15 +1213,15 @@
                 if (!aSelected && bSelected) return 1;
 
                 if (currentSort === 'kdr') {
-                    return (b.kills / Math.max(1, b.deaths)) - (a.kills / Math.max(1, a.deaths));
+                    return dir * ((b.kills / Math.max(1, b.deaths)) - (a.kills / Math.max(1, a.deaths)));
                 } else if (currentSort === 'winrate') {
                     const wrA = a.matches > 0 ? (a.wins / a.matches) : 0;
                     const wrB = b.matches > 0 ? (b.wins / b.matches) : 0;
-                    return wrB - wrA;
+                    return dir * (wrB - wrA);
                 } else if (currentSort === 'matches') {
-                    return (b.matches || 0) - (a.matches || 0);
+                    return dir * ((b.matches || 0) - (a.matches || 0));
                 }
-                return (b.elo || 0) - (a.elo || 0);
+                return dir * ((b.elo || 0) - (a.elo || 0));
             });
 
             const container = document.getElementById('leaderboardListContainer');

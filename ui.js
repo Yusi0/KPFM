@@ -16,6 +16,8 @@
         right: '<path d="m9 18 6-6-6-6"/>',
         down: '<path d="m6 9 6 6 6-6"/>',
         x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+        arrowDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+        arrowUp: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
         search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     };
     function icon(name, size) {
