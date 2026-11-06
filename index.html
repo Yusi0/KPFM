@@ -517,6 +517,107 @@
             z-index: 999;
         }
 
+        /* ---- Wide: 상자 없이 한 장의 페이지처럼 ---- */
+        .page-title {
+            display: none;
+        }
+
+        [data-layout="wide"] .page-title {
+            display: block;
+            padding-top: 32px;
+            padding-bottom: 0;
+            flex: none;
+        }
+
+        [data-layout="wide"] .page-title h2 {
+            font-size: 28px;
+            line-height: 32px;
+            font-weight: 500;
+        }
+
+        [data-layout="wide"] .wordmark span {
+            display: none;
+        }
+
+        [data-layout="wide"] .content {
+            padding-top: 20px;
+            gap: 40px;
+        }
+
+        [data-layout="wide"] .panel {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+        }
+
+        [data-layout="wide"] .right-column {
+            gap: 32px;
+            padding-left: 40px;
+            border-left: 1px solid var(--hairline);
+        }
+
+        [data-layout="wide"] .panel-head,
+        [data-layout="wide"] .toolbar {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        [data-layout="wide"] .toolbar {
+            padding-top: 0;
+            border-bottom: none;
+        }
+
+        [data-layout="wide"] .lobby-body {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        [data-layout="wide"] .row,
+        [data-layout="wide"] .list-head {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        [data-layout="wide"] .round-row {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        /* 이름과 ELO가 먼저 보이고 나머지 열은 한 단계 조용하게 */
+        [data-layout="wide"] .row {
+            height: 52px;
+        }
+
+        [data-layout="wide"] .c-name {
+            font-size: 16px;
+        }
+
+        [data-layout="wide"] .c-elo .num {
+            font-size: 16px;
+            min-width: 44px;
+        }
+
+        [data-layout="wide"] .c-kdr,
+        [data-layout="wide"] .c-wr,
+        [data-layout="wide"] .c-matches {
+            color: var(--text-2);
+            font-size: 13px;
+        }
+
+        [data-layout="wide"] .c-rank {
+            font-size: 12px;
+        }
+
+        [data-layout="wide"] .lobby-toggle {
+            border-color: transparent;
+            color: var(--text-3);
+        }
+
+        [data-layout="wide"] .row:hover .lobby-toggle {
+            border-color: var(--hairline-strong);
+        }
+
+
         /* ---- Compact: 예전의 카드형 보기 (1024px 미만에서는 항상 이 보기) ---- */
         [data-layout="compact"] .board {
             background: transparent;
@@ -664,6 +765,10 @@
                 <button type="button" id="tabLobby" aria-pressed="false">Lobby</button>
                 <button type="button" id="tabRounds" aria-pressed="false">Rounds</button>
             </div>
+        </div>
+
+        <div class="page-title wrap">
+            <h2>Leaderboard</h2>
         </div>
 
         <div class="content main-content-layout" id="mainContent" data-tab="leaderboard">
