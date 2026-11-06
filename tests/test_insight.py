@@ -33,7 +33,7 @@ def test_placement_players_get_hold_back_sentence_only():
     _rows, _result, ins = _load()
     for name, d in ins.items():
         if d["games"] <= insight.CONFIG["placement_games"]:
-            assert d["text"].startswith(f"아직 {d['games']}경기라 평가하기엔 이릅니다."), (name, d["text"])
+            assert d["text"].startswith(f"아직 {d['games']}경기라 판단하기 어렵습니다."), (name, d["text"])
             assert d["elo_rank"] is None and d["gap"] is None
 
 
