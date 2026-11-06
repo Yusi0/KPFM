@@ -1,0 +1,602 @@
+/* KPFM 공용 스타일: 색 토큰, 기본 요소, 컨트롤, 표, 모달.
+   index.html과 user.html이 함께 쓴다. 색을 바꿀 때는 아래 토큰만 고친다.
+   방향: 정확하고 건조한 스코어보드. 표면은 따뜻한 그라파이트(다크)와 종이색(라이트)의 중립 단계 하나,
+   액센트는 주황 하나를 선택, 주요 행동, 핵심 수치에만 쓴다. */
+
+:root {
+    color-scheme: dark;
+
+    --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Dark: 따뜻한 그라파이트 */
+    --bg: #161513;
+    --deep: #12110f;
+    --surface: #1c1a18;
+    --raised: #262421;
+    --raised-hover: #2e2b27;
+    --text: #efe9de;
+    --text-2: #aaa398;
+    --text-3: #908a80;
+    --hairline: rgba(239, 233, 222, 0.08);
+    --hairline-strong: rgba(239, 233, 222, 0.16);
+
+    --accent: #f08a3c;
+    /* 채움, 선, 점 */
+    --accent-ink: #f08a3c;
+    /* 글자로 쓸 때 */
+    --on-accent: #1a1006;
+    /* 액센트 위의 글자 */
+    --pos: #4cc38a;
+    --neg: #f0686c;
+    --scrim: rgba(10, 9, 8, 0.62);
+    --shadow-pop: none;
+
+    /* 티어 색은 작은 점에만 쓴다 */
+    --t-copper: #c4785a;
+    --t-bronze: #b08a4e;
+    --t-silver: #a3a9b3;
+    --t-gold: #e2b43c;
+    --t-platinum: #5cb8b2;
+    --t-diamond: #7f9ef2;
+    --t-champion: #e5566e;
+}
+
+[data-theme="light"] {
+    color-scheme: light;
+
+    /* Light: 따뜻한 종이 */
+    --bg: #f7f4ee;
+    --deep: #f1ece3;
+    --surface: #fdfbf7;
+    --raised: #efe9df;
+    --raised-hover: #e7e0d4;
+    --text: #1f1b16;
+    --text-2: #5e554a;
+    --text-3: #6b6256;
+    --hairline: rgba(31, 27, 22, 0.10);
+    --hairline-strong: rgba(31, 27, 22, 0.18);
+
+    --accent: #e8651a;
+    --accent-ink: #a63f08;
+    --on-accent: #1f1206;
+    --pos: #15803d;
+    --neg: #c81e1e;
+    --scrim: rgba(31, 27, 22, 0.34);
+    --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+    --t-copper: #a3573a;
+    --t-bronze: #8c6a2e;
+    --t-silver: #7d848f;
+    --t-gold: #b8860b;
+    --t-platinum: #2f8f89;
+    --t-diamond: #4f6fd6;
+    --t-champion: #d1334f;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    background: var(--bg);
+    color: var(--text);
+    font: 400 14px/20px var(--font);
+    -webkit-font-smoothing: antialiased;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--hairline-strong) transparent;
+}
+
+.num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.muted {
+    color: var(--text-3);
+}
+
+.positive {
+    color: var(--pos);
+}
+
+.negative {
+    color: var(--neg);
+}
+
+.icon {
+    flex: none;
+}
+
+/* 앱 폭: wide는 1440까지, compact는 900까지 (기존 카드형 보기) */
+.wrap {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+[data-layout="compact"] .wrap {
+    max-width: 900px;
+}
+
+/* 상단 바 */
+.topbar {
+    background: var(--deep);
+    border-bottom: 1px solid var(--hairline);
+}
+
+.topbar-in {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.wordmark {
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 500;
+}
+
+.wordmark span {
+    font-weight: 400;
+    color: var(--text-3);
+    margin-left: 4px;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-3);
+}
+
+/* 버튼 */
+.btn,
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 8px;
+    background: var(--raised);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 150ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease), opacity 150ms var(--ease), transform 150ms var(--ease);
+}
+
+.btn {
+    padding: 0 12px;
+}
+
+.icon-btn {
+    width: 32px;
+    color: var(--text-2);
+}
+
+.btn:hover:not(:disabled),
+.icon-btn:hover:not(:disabled) {
+    background: var(--raised-hover);
+    color: var(--text);
+}
+
+.btn:active:not(:disabled),
+.icon-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    height: 36px;
+    background: var(--accent);
+    border-color: transparent;
+    color: var(--on-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--on-accent);
+    opacity: 0.92;
+}
+
+/* Wide / Compact 전환 */
+.seg {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 8px;
+}
+
+.seg button {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-3);
+    transition: color 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.seg button:hover {
+    color: var(--text);
+}
+
+.seg button[aria-pressed="true"] {
+    background: var(--raised);
+    color: var(--text);
+}
+
+@media (max-width: 1023px) {
+    .layout-toggle {
+        display: none;
+    }
+}
+
+/* 패널 */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+}
+
+/* 티어: 작은 점 + 글자. 티어 안의 위치는 눈금자로 보여 준다 */
+.tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-2);
+    white-space: nowrap;
+}
+
+.tier .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tier-color, var(--text-3));
+}
+
+.tier-copper {
+    --tier-color: var(--t-copper);
+}
+
+.tier-bronze {
+    --tier-color: var(--t-bronze);
+}
+
+.tier-silver {
+    --tier-color: var(--t-silver);
+}
+
+.tier-gold {
+    --tier-color: var(--t-gold);
+}
+
+.tier-platinum {
+    --tier-color: var(--t-platinum);
+}
+
+.tier-diamond {
+    --tier-color: var(--t-diamond);
+}
+
+.tier-champion {
+    --tier-color: var(--t-champion);
+}
+
+.tier.placement {
+    color: var(--text-3);
+}
+
+.tier.placement .dot {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--text-3);
+}
+
+/* 티어 눈금자: 현재 티어 구간(100점)에서 ELO가 어디쯤인지 */
+.ruler {
+    position: relative;
+    display: inline-block;
+    width: 56px;
+    height: 8px;
+    flex: none;
+    border-bottom: 1px solid var(--hairline-strong);
+}
+
+.ruler::before,
+.ruler::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    width: 1px;
+    height: 5px;
+    background: var(--hairline-strong);
+}
+
+.ruler::before {
+    left: 0;
+}
+
+.ruler::after {
+    right: 0;
+}
+
+.ruler i {
+    position: absolute;
+    bottom: -1px;
+    left: var(--pos, 0%);
+    width: 2px;
+    height: 8px;
+    margin-left: -1px;
+    background: var(--text-2);
+}
+
+.ruler-lg {
+    width: 100%;
+}
+
+/* 팀 표시: Phantom은 채운 네모, Ghost는 빈 네모 */
+.team-mark {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex: none;
+}
+
+.team-1 {
+    background: var(--text);
+}
+
+.team-2 {
+    box-shadow: inset 0 0 0 1.5px var(--text-2);
+}
+
+.team {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 표 */
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tbl th {
+    text-align: left;
+    padding: 0 12px;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--hairline);
+    white-space: nowrap;
+}
+
+.tbl td {
+    padding: 0 12px;
+    height: 36px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--hairline);
+    white-space: nowrap;
+}
+
+.tbl tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tbl .r {
+    text-align: right;
+}
+
+.tbl tbody tr {
+    transition: background-color 150ms var(--ease);
+}
+
+.tbl.rows-click tbody tr {
+    cursor: pointer;
+}
+
+.tbl tbody tr:hover {
+    background: var(--raised);
+}
+
+/* 페이지 이동 */
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+}
+
+.pager .meta {
+    min-width: 48px;
+    text-align: center;
+}
+
+.pager .icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* 모달 */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--scrim);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 16px;
+    box-shadow: var(--shadow-pop);
+}
+
+.modal.active .modal-content {
+    animation: rise 200ms var(--ease);
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px 12px 20px;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.modal-header h2 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+}
+
+.modal-body {
+    overflow: auto;
+    padding: 8px 12px 16px;
+}
+
+/* 경기 상세 표 (두 페이지 공용) */
+#matchDetails {
+    min-width: 480px;
+    table-layout: fixed;
+}
+
+#matchDetails th,
+#matchDetails td {
+    padding: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#matchDetails th:nth-child(4),
+#matchDetails td:nth-child(4),
+#matchDetails th:nth-child(8),
+#matchDetails td:nth-child(8) {
+    width: 18%;
+}
+
+#matchDetails th:nth-child(2),
+#matchDetails th:nth-child(3),
+#matchDetails th:nth-child(6),
+#matchDetails th:nth-child(7),
+#matchDetails td:nth-child(2),
+#matchDetails td:nth-child(3),
+#matchDetails td:nth-child(6),
+#matchDetails td:nth-child(7) {
+    width: 7%;
+    text-align: right;
+}
+
+#matchDetails th:nth-child(5),
+#matchDetails td:nth-child(5) {
+    border-left: 1px solid var(--hairline);
+    padding-left: 16px;
+}
+
+#matchDetails .name {
+    cursor: pointer;
+}
+
+#matchDetails .name:hover {
+    text-decoration: underline;
+}
+
+#matchDetails .mvp {
+    color: var(--accent-ink);
+    font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
+    }
+}

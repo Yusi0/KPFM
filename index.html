@@ -6,856 +6,627 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KPFM Leaderboard</title>
 
-    <!-- Plus Jakarta Sans Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="ui.css">
+    <script src="ui.js"></script>
 
     <style>
-        /* CSS variables aligned with PFAttach aesthetics */
-        :root {
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --bg-glass: rgba(255, 255, 255, 0.4);
-            --border-glass: rgba(255, 255, 255, 0.3);
-            --shadow-glass: rgba(31, 38, 135, 0.08);
-            --text-color: #2c3e50;
-            --text-muted: #7f8c8d;
-            --accent-color: #5c6bc0;
-            --card-bg: rgba(255, 255, 255, 0.45);
-            --card-title: #1a252f;
-            --table-header: rgba(255, 255, 255, 0.5);
-            --filter-active-bg: rgba(92, 107, 192, 0.18);
-            --chip-bg: rgba(255, 255, 255, 0.34);
-            --gold: #f59e0b;
-        }
-
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            --bg-glass: rgba(15, 23, 42, 0.6);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --shadow-glass: rgba(0, 0, 0, 0.3);
-            --text-color: #f1f5f9;
-            --text-muted: #94a3b8;
-            --accent-color: #818cf8;
-            --card-bg: rgba(15, 23, 42, 0.7);
-            --card-title: #f8fafc;
-            --table-header: rgba(15, 23, 42, 0.5);
-            --filter-active-bg: rgba(129, 140, 248, 0.18);
-            --chip-bg: rgba(255, 255, 255, 0.08);
-            --gold: #fbbf24;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
         html,
         body {
-            height: 100vh;
+            height: 100%;
             overflow: hidden;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-color);
-            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-
-        /* Glassmorphism Background Blobs */
-        .blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            opacity: 0.55;
-            transition: all 0.5s ease;
-        }
-
-        .blob-1 {
-            width: 320px;
-            height: 320px;
-            background: #a78bfa;
-            top: 10%;
-            left: calc(50% - 300px);
-        }
-
-        .blob-2 {
-            width: 300px;
-            height: 300px;
-            background: #60a5fa;
-            bottom: 15%;
-            right: calc(50% - 280px);
-        }
-
-        /* Mobile-First App Container (centered, PFAttach composition) */
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            height: calc(100vh - 32px);
+        .shell {
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            z-index: 1;
         }
 
-        /* Glass Frame styling */
-        .glass-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            box-shadow: 0 8px 32px 0 var(--shadow-glass);
-            border-radius: 20px;
-            padding: 16px;
-            transition: all 0.3s ease;
+        .content {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 24px;
         }
 
-        /* Header styling */
-        .header {
+        [data-layout="compact"] .content {
+            max-width: 900px;
+            padding: 16px 24px;
+            gap: 16px;
+        }
+
+        .right-column {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
         }
 
-        .header h1 {
-            font-size: 1.25rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: var(--card-title);
+        /* 모바일 탭 (800px 미만) */
+        .tabs {
+            display: none;
+            padding: 12px 16px 0;
         }
 
-        .theme-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid var(--border-glass);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
+        .tabs .seg {
             display: flex;
-            justify-content: center;
+            width: 100%;
+        }
+
+        .tabs .seg button {
+            flex: 1;
+        }
+
+        /* 랭킹 패널 */
+        .board {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            display: flex;
             align-items: center;
-            font-size: 1.1rem;
-            color: var(--text-color);
-            transition: background 0.3s, transform 0.2s;
-            outline: none;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--hairline);
         }
 
-        .theme-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Sticky Search Bar */
         .search-bar {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            position: sticky;
-            top: 10px;
-            z-index: 80;
-            box-shadow: 0 4px 20px var(--shadow-glass);
             position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-bar .icon {
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            color: var(--text-3);
+            pointer-events: none;
         }
 
         .search-bar input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-color);
             width: 100%;
-            font-size: 0.95rem;
-            font-family: inherit;
+            height: 32px;
+            padding: 0 12px 0 34px;
+            background: var(--raised);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 8px;
+            color: var(--text);
+            font: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 150ms var(--ease);
         }
 
         .search-bar input::placeholder {
-            color: var(--text-muted);
+            color: var(--text-3);
         }
 
-        /* Autocomplete dropdown styling matching PFAttach select */
-        #autocompleteList {
+        .search-bar input:focus {
+            border-color: var(--accent-ink);
+        }
+
+        #autocompleteList,
+        .custom-select-options {
             position: absolute;
-            width: 100%;
-            top: calc(100% + 6px);
             left: 0;
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            box-shadow: 0 10px 24px var(--shadow-glass);
-            z-index: 100;
+            top: calc(100% + 4px);
+            width: 100%;
             display: none;
-            max-height: 250px;
-            overflow-y: auto;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        #autocompleteList::-webkit-scrollbar {
-            display: none;
-        }
-
-        [data-theme="dark"] #autocompleteList {
-            background: rgba(15, 23, 42, 0.9);
-        }
-
-        #autocompleteList div {
-            padding: 10px 14px;
-            cursor: pointer;
-            color: var(--text-color);
-            font-size: 0.88rem;
-            font-weight: 500;
-            transition: background 0.2s ease;
-        }
-
-        #autocompleteList div:hover {
-            background: rgba(92, 107, 192, 0.15);
-        }
-
-        /* Team Making Lobby styling */
-        .lobby-panel {
-            display: flex;
             flex-direction: column;
-            gap: 10px;
+            max-height: 240px;
+            overflow: auto;
+            background: var(--surface);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 8px;
+            box-shadow: var(--shadow-pop);
+            z-index: 50;
         }
 
-        .filter-row {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-            align-items: center;
-        }
-
-        .filter-row::-webkit-scrollbar {
-            display: none;
-        }
-
-        .filter-chip {
-            border: 1px solid var(--border-glass);
-            background: var(--chip-bg);
-            color: var(--text-color);
-            border-radius: 12px;
-            padding: 6px 12px;
-            font-size: 0.76rem;
-            font-weight: 800;
+        #autocompleteList div,
+        .custom-option {
+            padding: 0 12px;
+            height: 32px;
+            line-height: 32px;
+            font-size: 13px;
+            cursor: pointer;
             white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: background-color 150ms var(--ease);
         }
 
-        .filter-chip button {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 700;
+        #autocompleteList div:hover,
+        .custom-option:hover {
+            background: var(--raised);
+        }
+
+        .custom-option.active {
+            background: var(--raised);
+            font-weight: 500;
+        }
+
+        .custom-select-wrapper {
+            position: relative;
+            width: 176px;
+            flex: none;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            height: 32px;
+            padding: 0 10px 0 12px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            outline: none;
+            justify-content: space-between;
+            gap: 8px;
+            background: var(--raised);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 8px;
+            font-size: 13px;
+            transition: border-color 150ms var(--ease);
         }
 
-        .filter-chip button:hover {
-            color: var(--text-color);
+        .custom-select-trigger:hover {
+            border-color: var(--text-3);
         }
 
-        .control-btn {
-            border: none;
-            border-radius: 12px;
-            height: 42px;
-            background: var(--accent-color);
-            color: white;
-            font-weight: 800;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(92, 107, 192, 0.25);
-            display: flex;
+        .custom-select-trigger .icon {
+            color: var(--text-3);
+            transition: transform 150ms var(--ease);
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger .icon {
+            transform: rotate(180deg);
+        }
+
+        /* 목록: 한 줄 = 한 선수. 넓은 화면에서는 표, compact에서는 카드 */
+        .list-head,
+        .row {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1.6fr) 124px 108px 56px 68px 68px 84px;
+            column-gap: 12px;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            padding: 0 16px;
         }
 
-        [data-theme="dark"] .control-btn {
-            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.35);
+        .list-head {
+            height: 32px;
+            font-size: 12px;
+            color: var(--text-3);
+            border-bottom: 1px solid var(--hairline);
         }
 
-        .control-btn:hover:not(:disabled) {
-            opacity: 0.95;
-            transform: translateY(-1px);
+        .r {
+            text-align: right;
         }
 
-        .control-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .control-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* Card list layout */
         .card-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
         }
 
-        .card-list::-webkit-scrollbar {
+        .row {
+            height: 44px;
+            border-bottom: 1px solid var(--hairline);
+            cursor: pointer;
+            transition: background-color 150ms var(--ease);
+        }
+
+        .row:hover {
+            background: var(--raised);
+        }
+
+        .row.in-lobby {
+            box-shadow: inset 2px 0 0 var(--accent);
+        }
+
+        .row-head {
+            display: contents;
+        }
+
+        .c-rank {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text-3);
+        }
+
+        .c-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .c-elo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .c-elo .num {
+            min-width: 36px;
+            font-weight: 500;
+        }
+
+        .c-kdr,
+        .c-wr,
+        .c-matches {
+            text-align: right;
+        }
+
+        .cell::before {
             display: none;
         }
 
-        .item-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 14px;
-            cursor: pointer;
+        .lobby-toggle {
+            justify-self: end;
+            height: 28px;
+            padding: 0 10px;
+            border: 1px solid var(--hairline-strong);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-2);
+            transition: color 150ms var(--ease), border-color 150ms var(--ease), background-color 150ms var(--ease);
+        }
+
+        .lobby-toggle:hover {
+            color: var(--text);
+            border-color: var(--text-3);
+        }
+
+        .row.in-lobby .lobby-toggle {
+            color: var(--accent-ink);
+            border-color: var(--accent);
+        }
+
+        /* 사이드: 로비, 경기 기록 */
+        .lobby-body {
+            padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
-        .item-card:hover {
-            border-color: rgba(92, 107, 192, 0.35);
-            box-shadow: 0 8px 24px var(--shadow-glass);
-        }
-
-        .item-card:active {
-            transform: scale(0.98);
-        }
-
-        .item-card-header {
+        .chips {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 8px;
+            max-height: 112px;
+            overflow-y: auto;
         }
 
-        .item-card-title {
-            display: flex;
+        .chips:empty {
+            min-height: 28px;
             align-items: center;
-            gap: 8px;
         }
 
-        .item-card-rank {
-            font-size: 0.9rem;
-            font-weight: 800;
-            color: var(--gold);
+        .chips:empty::before {
+            content: "Add players from the list";
+            font-size: 13px;
+            color: var(--text-3);
         }
 
-        .item-card-name {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--card-title);
-        }
-
-        .item-card-lobby-toggle {
-            border: 1px solid var(--border-glass);
-            background: var(--chip-bg);
-            color: var(--text-color);
-            border-radius: 20px;
-            padding: 5px 12px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s;
-            outline: none;
-        }
-
-        .item-card-lobby-toggle:hover {
-            border-color: var(--accent-color);
-        }
-
-        .item-card-lobby-toggle.in-lobby {
-            background: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
-            box-shadow: 0 2px 6px rgba(92, 107, 192, 0.2);
-        }
-
-        /* Stat chip grid inside cards */
-        .stat-chip-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .stat-chip {
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
-            border-radius: 10px;
-            padding: 8px 6px;
-            text-align: center;
-        }
-
-        .stat-chip-label {
-            display: block;
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            font-weight: 800;
-            margin-bottom: 2px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-chip-value {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-color);
-            font-weight: 700;
-        }
-
-        /* Tier Badges (Clean and without emojis) */
-        .tier-badge {
+        .filter-chip {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            padding: 2px 8px;
+            gap: 4px;
+            height: 28px;
+            padding: 0 4px 0 10px;
+            background: var(--raised);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .filter-chip button {
+            display: grid;
+            place-items: center;
+            width: 20px;
+            height: 20px;
             border-radius: 4px;
-            font-size: 10px;
-            font-weight: 700;
-            border: 1px solid currentColor;
-            background: transparent;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: var(--text-3);
+            transition: color 150ms var(--ease), background-color 150ms var(--ease);
         }
 
-        .tier-copper { color: #c08457; }
-        .tier-bronze { color: #cd7f32; }
-        .tier-silver { color: #7f8c8d; }
-        [data-theme="dark"] .tier-silver { color: #94a3b8; }
-        .tier-gold { color: #f59e0b; }
-        .tier-platinum { color: #0284c7; }
-        [data-theme="dark"] .tier-platinum { color: #38bdf8; }
-        .tier-diamond { color: #7c3aed; }
-        [data-theme="dark"] .tier-diamond { color: #c084fc; }
-        .tier-champion { color: #e11d48; }
-        .tier-unranked { color: var(--text-muted); }
-
-        /* General Modal Styling matching PFAttach */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.2s ease-out;
-            padding: 16px;
+        .filter-chip button:hover {
+            color: var(--text);
+            background: var(--raised-hover);
         }
 
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 440px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            box-shadow: 0 12px 40px var(--shadow-glass);
-            transform: scale(0.92) translateY(8px);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
-            overflow: hidden;
+        .rounds-panel {
+            flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
         }
 
-        .modal.active .modal-content {
-            transform: scale(1) translateY(0);
+        #globalRoundsList {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
         }
 
-        .modal-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-glass);
+        .round-row {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) auto;
+            column-gap: 12px;
+            align-items: center;
+            height: 36px;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--hairline);
+            cursor: pointer;
+            transition: background-color 150ms var(--ease);
+        }
+
+        .round-row:hover {
+            background: var(--raised);
+        }
+
+        .round-id {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text-3);
+        }
+
+        .round-map {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-transform: capitalize;
+        }
+
+        .round-winner {
+            font-size: 13px;
+            color: var(--text-2);
+        }
+
+        /* 팀 배정 결과 */
+        .squads {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 12px 12px 0;
+        }
+
+        .squad {
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--raised);
+        }
+
+        .squad h3 {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .squad-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-height: 40px;
+        }
+
+        .squad-list div {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            line-height: 24px;
         }
 
-        .modal-header h2 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--card-title);
-        }
-
-        .close-btn {
-            background: transparent;
-            border: none;
-            font-size: 1.4rem;
-            color: var(--text-color);
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+        .squad-avg {
             display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--hairline);
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        .versus {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
+            gap: 12px;
+            padding: 16px 12px 0;
+        }
+
+        .vbar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            height: 8px;
+        }
+
+        .vbar>div {
+            display: flex;
+        }
+
+        .vbar .vl {
+            justify-content: flex-end;
+        }
+
+        .vbar i {
+            display: block;
+            height: 100%;
+        }
+
+        .vbar .vl i {
+            background: var(--text);
+            border-radius: 2px 0 0 2px;
+        }
+
+        .vbar .vr i {
+            box-shadow: inset 0 0 0 1.5px var(--text-2);
+            border-radius: 0 2px 2px 0;
+        }
+
+        .diff {
+            display: flex;
+            align-items: baseline;
             justify-content: center;
-            transition: background 0.2s;
-            outline: none;
+            gap: 8px;
+            padding: 12px 12px 16px;
+            font-size: 13px;
+            color: var(--text-3);
         }
 
-        .close-btn:hover {
-            background: var(--chip-bg);
+        .diff .num {
+            font-size: 20px;
+            line-height: 24px;
+            font-weight: 500;
+            color: var(--accent-ink);
         }
 
-        .modal-body {
-            overflow-y: auto;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+        @media (max-width: 479px) {
+            .wordmark span {
+                display: none;
+            }
         }
 
-        .modal-body::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Loading Screen styling */
         #loading {
             position: fixed;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 600;
-            background: var(--bg-gradient);
-            color: var(--text-color);
+            font-size: 14px;
+            color: var(--text-3);
+            background: var(--bg);
             z-index: 999;
         }
 
-        /* Custom Select component */
-        .custom-select-wrapper {
-            position: relative;
-            width: 180px;
-            z-index: 90;
-        }
-
-        .custom-select-trigger {
-            width: 100%;
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
-            border-radius: 8px;
-            color: var(--text-color);
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 8px 12px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-            outline: none;
-        }
-
-        .custom-select-trigger:hover {
-            border-color: var(--accent-color);
-        }
-
-        .custom-select-trigger .arrow-icon {
-            transition: transform 0.2s ease;
-            color: var(--text-muted);
-        }
-
-        .custom-select-wrapper.open .custom-select-trigger .arrow-icon {
-            transform: rotate(180deg);
-        }
-
-        .custom-select-options {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid var(--border-glass);
-            border-radius: 10px;
-            box-shadow: 0 8px 24px var(--shadow-glass);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        [data-theme="dark"] .custom-select-options {
-            background: rgba(15, 23, 42, 0.95);
-        }
-
-        .custom-option {
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-color);
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-
-        .custom-option:hover {
-            background: rgba(92, 107, 192, 0.15);
-        }
-
-        .custom-option.active {
-            background: var(--accent-color);
-            color: white;
-        }
-
-        .player-name-cell {
-            cursor: pointer;
-            transition: color 0.15s ease;
-        }
-
-        .player-name-cell:hover {
-            color: var(--accent-color) !important;
-            text-decoration: underline;
-        }
-
-        /* Responsive 2-column layout and tabs */
-        .tabs-bar {
-            display: flex;
-            padding: 4px;
-            gap: 4px;
-            border-radius: 14px;
-        }
-
-        .tab-btn {
-            flex: 1;
+        /* ---- Compact: 예전의 카드형 보기 (1024px 미만에서는 항상 이 보기) ---- */
+        [data-layout="compact"] .board {
             background: transparent;
             border: none;
-            border-radius: 10px;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 800;
-            padding: 8px 0;
-            transition: all 0.2s ease;
-            outline: none;
-            text-align: center;
+            overflow: visible;
+            gap: 8px;
         }
 
-        .tab-btn.active {
-            background: var(--accent-color);
-            color: white;
-            box-shadow: 0 2px 8px rgba(92, 107, 192, 0.25);
+        [data-layout="compact"] .toolbar {
+            background: var(--surface);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
         }
 
-        .main-content-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            flex: 1;
-            min-height: 0;
+        [data-layout="compact"] .list-head {
+            display: none;
         }
 
-        .left-column, .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            min-height: 0;
-        }
-
-        .rounds-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 0;
-            flex: 1;
-        }
-
-        #globalRoundsList {
+        [data-layout="compact"] .card-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
         }
 
-        #globalRoundsList::-webkit-scrollbar {
-            display: none;
-        }
-
-        .round-card {
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
+        [data-layout="compact"] .row {
+            height: auto;
+            align-items: start;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px 8px;
+            padding: 12px;
+            background: var(--surface);
+            border: 1px solid var(--hairline);
             border-radius: 12px;
-            padding: 10px 14px;
-            cursor: pointer;
-            transition: all 0.2s;
+        }
+
+        [data-layout="compact"] .row:hover {
+            background: var(--raised);
+        }
+
+        [data-layout="compact"] .row.in-lobby {
+            box-shadow: inset 2px 0 0 var(--accent);
+        }
+
+        [data-layout="compact"] .row-head {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            align-self: center;
+            min-height: 28px;
+            gap: 8px;
+            grid-column: 1 / span 3;
+            min-width: 0;
         }
 
-        .round-card:hover {
-            border-color: var(--accent-color);
-            background: var(--filter-active-bg);
+        [data-layout="compact"] .lobby-toggle {
+            grid-column: 4;
+            grid-row: 1;
         }
 
-        .round-card:active {
-            transform: scale(0.98);
+        [data-layout="compact"] .cell::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            line-height: 16px;
+            color: var(--text-3);
         }
 
-        .round-card-id {
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--text-color);
+        [data-layout="compact"] .c-elo {
+            display: block;
         }
 
-        .round-card-map {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: capitalize;
-        }
-
-        .round-card-winner {
-            font-size: 0.72rem;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid currentColor;
-            text-transform: uppercase;
-        }
-
-        .winner-phantom {
-            color: var(--accent-color);
-            background: rgba(92, 107, 192, 0.08);
-            border-color: rgba(92, 107, 192, 0.2);
-        }
-
-        .winner-ghost {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .team-mvp {
-            font-weight: 800 !important;
-            color: var(--gold) !important;
-        }
-
-        #matchDetails {
-            font-size: 0.78rem;
-            table-layout: fixed;
+        [data-layout="compact"] .c-elo .ruler {
+            display: block;
+            margin-top: 6px;
             width: 100%;
-            min-width: 420px;
+            max-width: 56px;
         }
 
-        #matchDetails th,
-        #matchDetails td {
-            padding: 8px 4px;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #matchDetails th:nth-child(1),
-        #matchDetails td:nth-child(1) {
-            width: 22%;
+        [data-layout="compact"] .c-kdr,
+        [data-layout="compact"] .c-wr,
+        [data-layout="compact"] .c-matches {
             text-align: left;
         }
 
-        #matchDetails th:nth-child(2),
-        #matchDetails td:nth-child(2),
-        #matchDetails th:nth-child(3),
-        #matchDetails td:nth-child(3) {
-            width: 6%;
-        }
-
-        #matchDetails th:nth-child(4),
-        #matchDetails td:nth-child(4) {
-            width: 16%;
-        }
-
-        #matchDetails th:nth-child(5),
-        #matchDetails td:nth-child(5) {
-            width: 22%;
-            text-align: left;
-        }
-
-        #matchDetails th:nth-child(6),
-        #matchDetails td:nth-child(6),
-        #matchDetails th:nth-child(7),
-        #matchDetails td:nth-child(7) {
-            width: 6%;
-        }
-
-        #matchDetails th:nth-child(8),
-        #matchDetails td:nth-child(8) {
-            width: 16%;
-        }
-
-        .positive {
-            color: var(--green);
-            font-weight: 700;
-        }
-
-        .negative {
-            color: var(--red);
-            font-weight: 700;
-        }
-
-        @media (min-width: 800px) {
-            .app-container {
-                max-width: 900px !important;
+        /* 800px 미만: 한 열 + 탭 */
+        @media (max-width: 799px) {
+            .tabs {
+                display: block;
             }
 
-            .tabs-bar {
-                display: none !important;
+            .content,
+            [data-layout="compact"] .content {
+                grid-template-columns: minmax(0, 1fr);
+                padding: 12px 16px 16px;
             }
 
-            .main-content-layout {
-                display: grid;
-                grid-template-columns: 1fr 340px;
-                gap: 16px;
-                flex: 1;
-                min-height: 0;
+            .wrap {
+                padding: 0 16px;
             }
 
-            .left-column {
-                display: flex;
-                flex-direction: column;
-                gap: 14px;
-                min-height: 0;
+            .content[data-tab="leaderboard"] .right-column,
+            .content[data-tab="lobby"] .board,
+            .content[data-tab="rounds"] .board,
+            .content[data-tab="lobby"] #roundsPanel,
+            .content[data-tab="rounds"] #lobbyPanel {
+                display: none;
             }
 
-            .right-column {
-                display: flex;
-                flex-direction: column;
-                gap: 14px;
-                min-height: 0;
+            .toolbar {
+                flex-wrap: wrap;
+            }
+
+            .custom-select-wrapper {
+                width: 100%;
             }
         }
     </style>
@@ -863,159 +634,144 @@
 
 <body>
 
-    <div id="loading">
-        데이터 불러오는 중...
-    </div>
+    <div id="loading">데이터 불러오는 중...</div>
 
-    <!-- Glowing Fixed Blobs -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+    <div class="shell" style="display:none;">
 
-    <div class="app-container" style="display:none;">
-
-        <!-- Header Panel -->
-        <header class="glass-panel header">
-            <h1>KPFM <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-left: 4px; vertical-align: middle;">Leaderboard</span></h1>
-            <button class="theme-btn" id="themeToggleBtn" title="화면 테마 변경">☀️</button>
+        <header class="topbar">
+            <div class="wrap topbar-in">
+                <h1 class="wordmark">KPFM <span>Leaderboard</span></h1>
+                <span class="meta meta-stats"><span id="playerCount">0</span> players · <span id="rankedCount">0</span> ranked</span>
+                <div class="spacer"></div>
+                <div class="seg layout-toggle" role="group" aria-label="Layout">
+                    <button type="button" data-layout-pref="wide" aria-pressed="true">Wide</button>
+                    <button type="button" data-layout-pref="compact" aria-pressed="false">Compact</button>
+                </div>
+                <button class="icon-btn" id="themeToggleBtn" type="button"></button>
+            </div>
         </header>
 
-        <!-- Stats Overview Panel -->
-        <div class="glass-panel" style="display: flex; justify-content: space-between; padding: 12px 20px;">
-            <div style="flex: 1; text-align: center;">
-                <span style="display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;">Total Players</span>
-                <span id="playerCount" style="font-size: 1.15rem; font-weight: 800; color: var(--card-title);">0</span>
-            </div>
-            <div style="width: 1px; background: var(--border-glass);"></div>
-            <div style="flex: 1; text-align: center;">
-                <span style="display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;">Ranked Players</span>
-                <span id="rankedCount" style="font-size: 1.15rem; font-weight: 800; color: var(--card-title);">0</span>
+        <!-- 모바일 탭 (800px 미만에서만 보임) -->
+        <div class="tabs">
+            <div class="seg" role="tablist">
+                <button type="button" id="tabLeaderboard" aria-pressed="true">Leaderboard</button>
+                <button type="button" id="tabLobby" aria-pressed="false">Lobby</button>
+                <button type="button" id="tabRounds" aria-pressed="false">Rounds</button>
             </div>
         </div>
 
-        <!-- Mobile Tab Switcher Bar -->
-        <div class="tabs-bar glass-panel">
-            <button id="tabLeaderboard" class="tab-btn active">Leaderboard</button>
-            <button id="tabLobby" class="tab-btn">Lobby</button>
-            <button id="tabRounds" class="tab-btn">Rounds</button>
-        </div>
+        <div class="content main-content-layout" id="mainContent" data-tab="leaderboard">
 
-        <!-- Two-column responsive wrapper -->
-        <div class="main-content-layout">
-            <div class="left-column" id="leftColumn">
-                <!-- Sticky Search panel -->
-                <div class="glass-panel search-bar">
-                    <input type="text" id="searchBox" placeholder="Search player..." autocomplete="off">
-                    <div id="autocompleteList"></div>
-                </div>
-
-                <!-- Sort / Filter Panel -->
-                <div class="glass-panel" style="display: flex; gap: 10px; align-items: center; padding: 10px 16px; justify-content: space-between; overflow: visible;">
-                    <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Sort By</span>
+            <section class="panel board left-column" id="leftColumn">
+                <div class="toolbar">
+                    <div class="search-bar">
+                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="searchBox" placeholder="Search" autocomplete="off" aria-label="Search player">
+                        <div id="autocompleteList"></div>
+                    </div>
                     <div class="custom-select-wrapper" id="customSortWrapper">
-                        <button class="custom-select-trigger" id="customSortTrigger">
-                            <span>ELO (High &rarr; Low)</span>
-                            <svg class="arrow-icon" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                        <button type="button" class="custom-select-trigger" id="customSortTrigger" aria-label="Sort by">
+                            <span>ELO, high to low</span>
+                            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                         <div class="custom-select-options" id="customSortOptions">
-                            <div class="custom-option active" data-value="elo">ELO (High &rarr; Low)</div>
-                            <div class="custom-option" data-value="kdr">KDR (High &rarr; Low)</div>
-                            <div class="custom-option" data-value="winrate">Win Rate (High &rarr; Low)</div>
-                            <div class="custom-option" data-value="matches">Matches (High &rarr; Low)</div>
+                            <div class="custom-option active" data-value="elo">ELO, high to low</div>
+                            <div class="custom-option" data-value="kdr">KDR, high to low</div>
+                            <div class="custom-option" data-value="winrate">Win rate, high to low</div>
+                            <div class="custom-option" data-value="matches">Matches, high to low</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Leaderboard List -->
+                <div class="list-head" aria-hidden="true">
+                    <span>#</span>
+                    <span>Player</span>
+                    <span>Tier</span>
+                    <span>ELO</span>
+                    <span class="r">KDR</span>
+                    <span class="r">Win rate</span>
+                    <span class="r">Matches</span>
+                    <span></span>
+                </div>
+
                 <main class="card-list" id="leaderboardListContainer"></main>
-            </div>
+            </section>
 
             <div class="right-column" id="rightColumn">
-                <!-- Team Making Lobby Panel -->
-                <div class="glass-panel lobby-panel" id="lobbyPanel">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px;">
-                        <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px;">TEAM MAKING LOBBY</span>
-                        <span id="lobbyCount" style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">0 selected</span>
+                <section class="panel lobby-panel" id="lobbyPanel">
+                    <div class="panel-head">
+                        <span class="label">Team making lobby</span>
+                        <span class="meta" id="lobbyCount">0 selected</span>
                     </div>
-                    <div class="filter-row" id="filterTags" style="height: 36px; flex-shrink: 0;"></div>
-                    <button id="teamBalanceButton" class="control-btn" style="width: 100%; margin-top: 4px;" disabled>
-                        Balance Teams
-                    </button>
-                </div>
+                    <div class="lobby-body">
+                        <div class="chips" id="filterTags"></div>
+                        <button id="teamBalanceButton" class="btn btn-primary" type="button" disabled>Balance teams</button>
+                    </div>
+                </section>
 
-                <!-- Global Rounds Panel -->
-                <div class="glass-panel rounds-panel" id="roundsPanel">
-                    <div style="font-size: 0.72rem; font-weight: 800; color: var(--accent-color); letter-spacing: 0.5px; border-bottom: 1px dashed var(--border-glass); padding-bottom: 6px; text-transform: uppercase;">
-                        Global Match History
+                <section class="panel rounds-panel" id="roundsPanel">
+                    <div class="panel-head">
+                        <span class="label">Global match history</span>
                     </div>
-                    <div id="globalRoundsList">
-                        <!-- Loaded dynamically -->
+                    <div id="globalRoundsList"></div>
+                    <div class="pager">
+                        <button id="prevRoundPageBtn" class="icon-btn" type="button" aria-label="Previous page"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <span class="meta" id="roundPageInfo">1 / 1</span>
+                        <button id="nextRoundPageBtn" class="icon-btn" type="button" aria-label="Next page"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
                     </div>
-                    <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 4px; border-top: 1px dashed var(--border-glass); padding-top: 8px;">
-                        <button id="prevRoundPageBtn" class="page-btn" style="background: var(--chip-bg); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-color); cursor: pointer; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; outline: none;">&lt;</button>
-                        <span id="roundPageInfo" style="font-size: 0.75rem; font-weight: 700; color: var(--text-color);">1 / 1</span>
-                        <button id="nextRoundPageBtn" class="page-btn" style="background: var(--chip-bg); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-color); cursor: pointer; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; outline: none;">&gt;</button>
-                    </div>
-                </div>
+                </section>
             </div>
         </div>
-
     </div>
 
-    <!-- Team Balancing Results Glass Modal -->
+    <!-- 팀 배정 결과 -->
     <div class="modal" id="lobbyModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 520px;">
             <div class="modal-header">
-                <h2>Balanced Squads</h2>
-                <button class="close-btn" id="closeLobbyModal">&times;</button>
+                <h2>Balanced squads</h2>
+                <button class="icon-btn" id="closeLobbyModal" type="button" aria-label="Close" style="border-color: transparent; background: transparent;"></button>
             </div>
-            <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <!-- Team 1 (Phantom) -->
-                    <div class="glass-panel" style="padding: 12px; background: rgba(92, 107, 192, 0.05); border-radius: 14px;">
-                        <h3 style="font-size: 0.8rem; font-weight: 800; color: var(--accent-color); margin-bottom: 8px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">Phantom</h3>
-                        <div id="team1List" style="display: flex; flex-direction: column; gap: 6px; min-height: 40px;"></div>
-                        <div style="margin-top: 10px; padding-top: 6px; border-top: 1px dashed var(--border-glass); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); display: flex; justify-content: space-between;">
-                            <span>AVG ELO</span>
-                            <span id="team1Avg" style="color: var(--text-color);">0</span>
-                        </div>
+            <div class="modal-body" style="padding: 0;">
+                <div class="squads">
+                    <div class="squad">
+                        <h3 class="team"><i class="team-mark team-1"></i>Phantom</h3>
+                        <div class="squad-list" id="team1List"></div>
+                        <div class="squad-avg"><span>Avg ELO</span><span class="num" id="team1Avg" style="color: var(--text);">0</span></div>
                     </div>
-                    <!-- Team 2 (Ghost) -->
-                    <div class="glass-panel" style="padding: 12px; background: rgba(239, 68, 68, 0.05); border-radius: 14px;">
-                        <h3 style="font-size: 0.8rem; font-weight: 800; color: #ef4444; margin-bottom: 8px; border-bottom: 1px solid var(--border-glass); padding-bottom: 4px;">Ghost</h3>
-                        <div id="team2List" style="display: flex; flex-direction: column; gap: 6px; min-height: 40px;"></div>
-                        <div style="margin-top: 10px; padding-top: 6px; border-top: 1px dashed var(--border-glass); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); display: flex; justify-content: space-between;">
-                            <span>AVG ELO</span>
-                            <span id="team2Avg" style="color: var(--text-color);">0</span>
-                        </div>
+                    <div class="squad">
+                        <h3 class="team"><i class="team-mark team-2"></i>Ghost</h3>
+                        <div class="squad-list" id="team2List"></div>
+                        <div class="squad-avg"><span>Avg ELO</span><span class="num" id="team2Avg" style="color: var(--text);">0</span></div>
                     </div>
                 </div>
-                <div style="text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); border-top: 1px dashed var(--border-glass); padding-top: 10px;">
-                    ELO Difference: <span id="eloDiff" style="color: var(--card-title); font-size: 0.85rem;">0</span>
+                <div class="versus">
+                    <span class="num" id="versusLeft">0</span>
+                    <div class="vbar"><div class="vl"><i id="barLeft" style="width: 0%"></i></div><div class="vr"><i id="barRight" style="width: 0%"></i></div></div>
+                    <span class="num" id="versusRight">0</span>
                 </div>
+                <div class="diff"><span>Avg ELO difference</span><span class="num" id="eloDiff">0</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Match Details Popup Modal (Shared globally) -->
+    <!-- 라운드 상세 -->
     <div class="modal" id="matchModal">
-        <div class="modal-content" style="max-width: 600px; width: 95vw;">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
-                <h2 id="modalRoundTitle">Match Details</h2>
-                <button class="close-btn" id="closeMatchModal">&times;</button>
+                <h2 id="modalRoundTitle">Match details</h2>
+                <button class="icon-btn" id="closeMatchModal" type="button" aria-label="Close" style="border-color: transparent; background: transparent;"></button>
             </div>
-            <div class="modal-body" style="padding: 12px 16px 20px 16px;">
-                <table id="matchDetails">
+            <div class="modal-body">
+                <table id="matchDetails" class="tbl">
                     <thead>
                         <tr>
-                            <th>Phantom</th>
-                            <th>K</th>
-                            <th>D</th>
+                            <th><span class="team"><i class="team-mark team-1"></i>Phantom</span></th>
+                            <th class="r">K</th>
+                            <th class="r">D</th>
                             <th>ELO</th>
-                            <th>Ghost</th>
-                            <th>K</th>
-                            <th>D</th>
+                            <th><span class="team"><i class="team-mark team-2"></i>Ghost</span></th>
+                            <th class="r">K</th>
+                            <th class="r">D</th>
                             <th>ELO</th>
                         </tr>
                     </thead>
@@ -1027,10 +783,6 @@
 
     <script src="maps.js"></script>
     <script>
-        // Set page theme from localStorage
-        let currentTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        
         let leaderboardData = [];
         let selectedUsers = new Set();
         const timestamp = `?timestamp=${Date.now()}`;
@@ -1038,125 +790,96 @@
         let allMatches = [];
         let allAftercalc = [];
         let currentSort = 'elo';
-        let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds'
+        let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds' (800px 미만)
 
         let globalRoundsData = [];
         let currentRoundPage = 1;
         let roundsPerPage = 10;
+        const ROUND_ROW_H = 36; // .round-row 높이와 같아야 한 페이지에 들어갈 개수를 맞게 계산한다
 
         window.addEventListener('DOMContentLoaded', () => {
-            const themeBtn = document.getElementById('themeToggleBtn');
-            if (themeBtn) {
-                themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
-                themeBtn.addEventListener('click', () => {
-                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', currentTheme);
-                    themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
-                    localStorage.setItem('theme', currentTheme);
-                });
-            }
-
-            // Tab Buttons logic
-            const tabs = ['Leaderboard', 'Lobby', 'Rounds'];
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab${t}`);
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        tabs.forEach(x => document.getElementById(`tab${x}`)?.classList.remove('active'));
-                        btn.classList.add('active');
-                        activeTab = t.toLowerCase();
-                        updateLayout();
-                    });
-                }
+            // 모달 닫기 버튼 아이콘
+            ['closeLobbyModal', 'closeMatchModal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = UI.icon('x');
             });
 
-            // Custom Select logic
+            // 모바일 탭
+            ['Leaderboard', 'Lobby', 'Rounds'].forEach(t => {
+                const btn = document.getElementById(`tab${t}`);
+                if (!btn) return;
+                btn.addEventListener('click', () => {
+                    activeTab = t.toLowerCase();
+                    document.getElementById('mainContent').setAttribute('data-tab', activeTab);
+                    ['Leaderboard', 'Lobby', 'Rounds'].forEach(x => {
+                        document.getElementById(`tab${x}`).setAttribute('aria-pressed', String(x === t));
+                    });
+                    recalcAndRender();
+                });
+            });
+
+            // 정렬 선택
             const customTrigger = document.getElementById('customSortTrigger');
             const customOptions = document.getElementById('customSortOptions');
             const optionsList = customOptions.querySelectorAll('.custom-option');
 
-            if (customTrigger && customOptions) {
-                customTrigger.addEventListener('click', (e) => {
+            customTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = customOptions.style.display === 'flex';
+                customOptions.style.display = isOpen ? 'none' : 'flex';
+                document.getElementById('customSortWrapper').classList.toggle('open', !isOpen);
+            });
+
+            optionsList.forEach(opt => {
+                opt.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const isOpen = customOptions.style.display === 'flex';
-                    customOptions.style.display = isOpen ? 'none' : 'flex';
-                    document.getElementById('customSortWrapper').classList.toggle('open', !isOpen);
+                    customTrigger.querySelector('span').innerHTML = opt.innerHTML;
+                    optionsList.forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    customOptions.style.display = 'none';
+                    document.getElementById('customSortWrapper').classList.remove('open');
+                    currentSort = opt.getAttribute('data-value');
+                    refreshLeaderboard();
                 });
+            });
 
-                optionsList.forEach(opt => {
-                    opt.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const val = opt.getAttribute('data-value');
-                        const text = opt.innerHTML;
-
-                        customTrigger.querySelector('span').innerHTML = text;
-
-                        optionsList.forEach(o => o.classList.remove('active'));
-                        opt.classList.add('active');
-
-                        customOptions.style.display = 'none';
-                        document.getElementById('customSortWrapper').classList.remove('open');
-
-                        currentSort = val;
-                        refreshLeaderboard();
-                    });
-                });
-            }
-
-            // Close Match Modal
-            const closeMatchBtn = document.getElementById('closeMatchModal');
-            if (closeMatchBtn) {
-                closeMatchBtn.addEventListener('click', () => {
-                    document.getElementById('matchModal').classList.remove('active');
-                });
-            }
+            document.getElementById('closeMatchModal').addEventListener('click', () => {
+                document.getElementById('matchModal').classList.remove('active');
+            });
 
             window.addEventListener('click', e => {
                 const modal = document.getElementById('matchModal');
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
+                if (e.target === modal) modal.classList.remove('active');
 
-                // Close custom select dropdown if clicked outside
-                const customOptions = document.getElementById('customSortOptions');
-                const customWrapper = document.getElementById('customSortWrapper');
-                if (customOptions && customWrapper && !customWrapper.contains(e.target)) {
+                const wrapper = document.getElementById('customSortWrapper');
+                if (wrapper && !wrapper.contains(e.target)) {
                     customOptions.style.display = 'none';
-                    customWrapper.classList.remove('open');
+                    wrapper.classList.remove('open');
                 }
             });
 
-            // Round list pagination buttons
-            const prevRoundBtn = document.getElementById('prevRoundPageBtn');
-            if (prevRoundBtn) {
-                prevRoundBtn.addEventListener('click', () => {
-                    if (currentRoundPage > 1) {
-                        currentRoundPage--;
-                        renderGlobalRoundsPage();
-                    }
-                });
-            }
-
-            const nextRoundBtn = document.getElementById('nextRoundPageBtn');
-            if (nextRoundBtn) {
-                nextRoundBtn.addEventListener('click', () => {
-                    const totalPages = Math.ceil(globalRoundsData.length / roundsPerPage) || 1;
-                    if (currentRoundPage < totalPages) {
-                        currentRoundPage++;
-                        renderGlobalRoundsPage();
-                    }
-                });
-            }
-
-            window.addEventListener('resize', () => {
-                updateLayout();
-                recalcAndRender();
+            // 라운드 기록 페이지 이동
+            document.getElementById('prevRoundPageBtn').addEventListener('click', () => {
+                if (currentRoundPage > 1) {
+                    currentRoundPage--;
+                    renderGlobalRoundsPage();
+                }
             });
+            document.getElementById('nextRoundPageBtn').addEventListener('click', () => {
+                const totalPages = Math.ceil(globalRoundsData.length / roundsPerPage) || 1;
+                if (currentRoundPage < totalPages) {
+                    currentRoundPage++;
+                    renderGlobalRoundsPage();
+                }
+            });
+
+            window.addEventListener('resize', recalcAndRender);
+            window.addEventListener('layoutchange', () => requestAnimationFrame(recalcAndRender));
         });
 
         async function loadAndProcessData() {
             const loading = document.getElementById('loading');
-            const container = document.querySelector('.app-container');
+            const shell = document.querySelector('.shell');
 
             try {
                 const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
@@ -1171,53 +894,30 @@
                     aftercalcResponse.text()
                 ]);
 
-                const matchRows = matchText.trim().split('\n');
-                const matchHeaders = matchRows[0].split(',').map(h => h.trim());
+                const parse = (text) => {
+                    const rows = text.trim().split('\n');
+                    const headers = rows[0].split(',').map(h => h.trim());
+                    return rows.slice(1).map(row => {
+                        const values = row.split(',').map(v => v.trim());
+                        return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+                    });
+                };
 
-                allMatches = matchRows.slice(1).map(row =>
-                    Object.fromEntries(
-                        matchHeaders.map((h, i) => [
-                            h,
-                            row.split(',').map(v => v.trim())[i]
-                        ])
-                    )
-                );
-
-                const lboardRows = lboardText.trim().split('\n');
-                const lboardHeaders = lboardRows[0].split(',').map(h => h.trim());
-
-                const leaderboard = lboardRows.slice(1).map(row =>
-                    Object.fromEntries(
-                        lboardHeaders.map((h, i) => [
-                            h,
-                            row.split(',').map(v => v.trim())[i]
-                        ])
-                    )
-                );
-
-                const aftercalcRows = aftercalcText.trim().split('\n');
-                const aftercalcHeaders = aftercalcRows[0].split(',').map(h => h.trim());
-
-                allAftercalc = aftercalcRows.slice(1).map(row =>
-                    Object.fromEntries(
-                        aftercalcHeaders.map((h, i) => [
-                            h,
-                            row.split(',').map(v => v.trim())[i]
-                        ])
-                    )
-                );
+                allMatches = parse(matchText);
+                const leaderboard = parse(lboardText);
+                allAftercalc = parse(aftercalcText);
 
                 processMatches(allMatches);
                 updateLeaderboardWithEloAndTier(leaderboard);
-                updateLayout();
 
             } catch (err) {
                 console.error(err);
                 loading.innerText = '데이터 로딩 실패';
-            } finally {
-                loading.style.display = 'none';
-                container.style.display = 'flex';
+                return;
             }
+            loading.style.display = 'none';
+            shell.style.display = 'flex';
+            recalcAndRender();
         }
 
         document.addEventListener('DOMContentLoaded', loadAndProcessData);
@@ -1231,14 +931,7 @@
                 if (!nickname) return;
 
                 if (!playerStats[nickname]) {
-                    playerStats[nickname] = {
-                        nickname,
-                        matches: 0,
-                        kills: 0,
-                        deaths: 0,
-                        wins: 0,
-                        losses: 0
-                    };
+                    playerStats[nickname] = { nickname, matches: 0, kills: 0, deaths: 0, wins: 0, losses: 0 };
                 }
 
                 const p = playerStats[nickname];
@@ -1252,7 +945,6 @@
                     p.losses++;
                 }
 
-                // Collect round details
                 const roundNum = parseInt(match.Round);
                 if (roundNum && !roundsMap[roundNum]) {
                     roundsMap[roundNum] = {
@@ -1267,10 +959,6 @@
             globalRoundsData = Object.values(roundsMap);
             globalRoundsData.sort((a, b) => b.round - a.round);
             currentRoundPage = 1;
-            // Use requestAnimationFrame so the container has its final layout height
-            requestAnimationFrame(() => {
-                recalcAndRender();
-            });
         }
 
         let searchQuery = '';
@@ -1278,19 +966,14 @@
         function refreshLeaderboard() {
             let filteredData = leaderboardData;
             if (searchQuery) {
-                filteredData = leaderboardData.filter(p =>
-                    p.nickname.toLowerCase().includes(searchQuery)
-                );
+                filteredData = leaderboardData.filter(p => p.nickname.toLowerCase().includes(searchQuery));
             }
             renderLeaderboard(filteredData);
         }
-                
+
         function updateLeaderboardWithEloAndTier(leaderboard) {
             leaderboard.forEach(rankEntry => {
-                const player = leaderboardData.find(
-                    p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase()
-                );
-
+                const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
                 if (player) {
                     player.elo = parseInt(rankEntry.ELO) || 0;
                     player.tier = rankEntry.Tier || 'Unranked';
@@ -1299,26 +982,19 @@
 
             leaderboardData.sort((a, b) => b.elo - a.elo);
 
+            // 순위는 6경기 이상인 선수만 (5경기 이하는 배치중)
             let rankCounter = 1;
             leaderboardData.forEach(p => {
-                p.rank = (p.matches > 5 && p.elo > 0)
-                    ? rankCounter++
-                    : 'N/A';
+                p.rank = (p.matches > UI.PLACEMENT_GAMES && p.elo > 0) ? rankCounter++ : 'N/A';
             });
 
             renderLeaderboard(leaderboardData);
 
             document.getElementById('playerCount').innerText = leaderboardData.length;
-            document.getElementById('rankedCount').innerText =
-                leaderboardData.filter(p => p.rank !== 'N/A').length;
+            document.getElementById('rankedCount').innerText = leaderboardData.filter(p => p.rank !== 'N/A').length;
         }
 
         function renderLeaderboard(data) {
-            const formatTier = (tier) => {
-                if (!tier) return 'Unranked';
-                return tier.replace('Platinum', 'Plat');
-            };
-
             data.sort((a, b) => {
                 const aSelected = selectedUsers.has(a.nickname);
                 const bSelected = selectedUsers.has(b.nickname);
@@ -1326,87 +1002,67 @@
                 if (!aSelected && bSelected) return 1;
 
                 if (currentSort === 'kdr') {
-                    const kdrA = (a.kills / Math.max(1, a.deaths));
-                    const kdrB = (b.kills / Math.max(1, b.deaths));
-                    return kdrB - kdrA;
+                    return (b.kills / Math.max(1, b.deaths)) - (a.kills / Math.max(1, a.deaths));
                 } else if (currentSort === 'winrate') {
                     const wrA = a.matches > 0 ? (a.wins / a.matches) : 0;
                     const wrB = b.matches > 0 ? (b.wins / b.matches) : 0;
                     return wrB - wrA;
                 } else if (currentSort === 'matches') {
                     return (b.matches || 0) - (a.matches || 0);
-                } else {
-                    return (b.elo || 0) - (a.elo || 0);
                 }
+                return (b.elo || 0) - (a.elo || 0);
             });
 
             const container = document.getElementById('leaderboardListContainer');
             container.innerHTML = '';
 
             data.forEach(player => {
-                const tierName = player.tier?.split(' ')[0] || 'Unranked';
-                const tierClass = `tier-${tierName.toLowerCase()}`;
                 const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
-                const winRate = player.matches > 0
-                    ? ((player.wins / player.matches) * 100).toFixed(1) + '%'
-                    : '0%';
-                
+                const winRate = player.matches > 0 ? ((player.wins / player.matches) * 100).toFixed(1) + '%' : '0%';
                 const isInLobby = selectedUsers.has(player.nickname);
 
-                const card = document.createElement('div');
-                card.className = 'item-card';
-                card.onclick = () => {
-                    window.location.href = `user.html?nickname=${encodeURIComponent(player.nickname)}&t=${Date.now()}`;
-                };
+                const row = document.createElement('div');
+                row.className = 'row' + (isInLobby ? ' in-lobby' : '');
+                row.onclick = () => UI.goToPlayer(player.nickname);
 
-                card.innerHTML = `
-                    <div class="item-card-header">
-                        <div class="item-card-title">
-                            <span class="item-card-rank">${player.rank === 'N/A' ? 'N/A' : '#' + player.rank}</span>
-                            <span class="item-card-name">${player.nickname}</span>
-                            <span class="tier-badge ${tierClass}">${formatTier(player.tier)}</span>
-                        </div>
-                        <button class="item-card-lobby-toggle ${isInLobby ? 'in-lobby' : ''}" onclick="event.stopPropagation(); toggleLobbyPlayer('${player.nickname.replace(/'/g, "\\'")}')">
-                            ${isInLobby ? 'Remove' : '+ Lobby'}
-                        </button>
+                row.innerHTML = `
+                    <div class="row-head">
+                        <span class="c-rank">${player.rank === 'N/A' ? '–' : player.rank}</span>
+                        <span class="c-name">${UI.esc(player.nickname)}</span>
+                        <span class="c-tier">${UI.tierHTML(player.tier, player.matches)}</span>
                     </div>
-                    <div class="stat-chip-grid">
-                        <div class="stat-chip">
-                            <span class="stat-chip-label">ELO</span>
-                            <span class="stat-chip-value">${player.elo || 'N/A'}</span>
-                        </div>
-                        <div class="stat-chip">
-                            <span class="stat-chip-label">KDR</span>
-                            <span class="stat-chip-value">${kdr}</span>
-                        </div>
-                        <div class="stat-chip">
-                            <span class="stat-chip-label">Win Rate</span>
-                            <span class="stat-chip-value">${winRate}</span>
-                        </div>
-                        <div class="stat-chip">
-                            <span class="stat-chip-label">Matches</span>
-                            <span class="stat-chip-value">${player.matches}</span>
-                        </div>
+                    <div class="cell c-elo" data-label="ELO">
+                        <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
                     </div>
+                    <div class="cell c-kdr num" data-label="KDR">${kdr}</div>
+                    <div class="cell c-wr num" data-label="Win rate">${winRate}</div>
+                    <div class="cell c-matches num" data-label="Matches">${player.matches}</div>
                 `;
-                container.appendChild(card);
+
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'lobby-toggle';
+                toggle.textContent = isInLobby ? 'Remove' : '+ Lobby';
+                toggle.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleLobbyPlayer(player.nickname);
+                };
+                row.appendChild(toggle);
+                container.appendChild(row);
             });
         }
 
-        // Search Autocomplete Logic
+        // 검색 자동완성
         const searchBox = document.getElementById('searchBox');
         searchBox.addEventListener('input', function () {
             searchQuery = this.value.trim().toLowerCase();
             refreshLeaderboard();
-            
+
             const autocomplete = document.getElementById('autocompleteList');
             autocomplete.innerHTML = '';
-            
+
             if (searchQuery.length > 0) {
-                const players = leaderboardData.filter(p =>
-                    p.nickname.toLowerCase().includes(searchQuery)
-                );
-                
+                const players = leaderboardData.filter(p => p.nickname.toLowerCase().includes(searchQuery));
                 if (players.length > 0) {
                     players.forEach(player => {
                         const item = document.createElement('div');
@@ -1417,7 +1073,7 @@
                         };
                         autocomplete.appendChild(item);
                     });
-                    autocomplete.style.display = 'block';
+                    autocomplete.style.display = 'flex';
                 }
             } else {
                 autocomplete.style.display = 'none';
@@ -1428,8 +1084,7 @@
             if (selectedUsers.has(nickname)) return;
             selectedUsers.add(nickname);
             updateFilterTags();
-            
-            // Clear search when player is selected via search autocomplete
+
             searchBox.value = '';
             searchQuery = '';
             refreshLeaderboard();
@@ -1448,28 +1103,30 @@
         function updateFilterTags() {
             const container = document.getElementById('filterTags');
             container.innerHTML = '';
-            
+
             selectedUsers.forEach(nickname => {
                 const chip = document.createElement('div');
                 chip.className = 'filter-chip';
-                chip.innerHTML = `
-                    <span>${nickname}</span>
-                    <button onclick="toggleLobbyPlayer('${nickname.replace(/'/g, "\\'")}')">&times;</button>
-                `;
+                chip.innerHTML = `<span>${UI.esc(nickname)}</span>`;
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.setAttribute('aria-label', `Remove ${nickname}`);
+                remove.innerHTML = UI.icon('x', 14);
+                remove.onclick = () => toggleLobbyPlayer(nickname);
+                chip.appendChild(remove);
                 container.appendChild(chip);
             });
-            
+
             document.getElementById('teamBalanceButton').disabled = selectedUsers.size < 2;
             document.getElementById('lobbyCount').innerText = `${selectedUsers.size} selected`;
         }
 
-        // Team Balance logic
+        // 팀 배정 (알고리즘은 그대로: ELO 내림차순으로 합이 작은 쪽에 한 명씩)
         function balanceTeams() {
             const players = Array.from(selectedUsers).map(nickname => {
                 return leaderboardData.find(p => p.nickname === nickname) || { nickname, elo: 1000 };
             });
 
-            // Sort by ELO descending
             players.sort((a, b) => (b.elo || 0) - (a.elo || 0));
 
             const team1 = [];
@@ -1488,39 +1145,34 @@
                 }
             });
 
-            // Render Team 1
-            const t1Container = document.getElementById('team1List');
-            t1Container.innerHTML = '';
-            team1.forEach(p => {
-                const div = document.createElement('div');
-                div.style.display = 'flex';
-                div.style.justify = 'space-between';
-                div.style.fontSize = '0.8rem';
-                div.style.fontWeight = '700';
-                div.innerHTML = `<span>${p.nickname}</span><span style="color: var(--text-muted);">${p.elo || 'N/A'}</span>`;
-                t1Container.appendChild(div);
-            });
-            document.getElementById('team1Avg').innerText = team1.length > 0 ? Math.round(sum1 / team1.length) : 0;
+            const fill = (containerId, team) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                team.forEach(p => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `<span>${UI.esc(p.nickname)}</span><span class="num muted">${p.elo || 'N/A'}</span>`;
+                    container.appendChild(div);
+                });
+            };
+            fill('team1List', team1);
+            fill('team2List', team2);
 
-            // Render Team 2
-            const t2Container = document.getElementById('team2List');
-            t2Container.innerHTML = '';
-            team2.forEach(p => {
-                const div = document.createElement('div');
-                div.style.display = 'flex';
-                div.style.justify = 'space-between';
-                div.style.fontSize = '0.8rem';
-                div.style.fontWeight = '700';
-                div.innerHTML = `<span>${p.nickname}</span><span style="color: var(--text-muted);">${p.elo || 'N/A'}</span>`;
-                t2Container.appendChild(div);
-            });
-            document.getElementById('team2Avg').innerText = team2.length > 0 ? Math.round(sum2 / team2.length) : 0;
+            const avg1 = team1.length > 0 ? Math.round(sum1 / team1.length) : 0;
+            const avg2 = team2.length > 0 ? Math.round(sum2 / team2.length) : 0;
+            document.getElementById('team1Avg').innerText = avg1;
+            document.getElementById('team2Avg').innerText = avg2;
+            // 인원이 다른 팀(예: 4명 대 3명)에서도 의미가 있도록 합계가 아니라 평균의 차이를 보여 준다
+            document.getElementById('eloDiff').innerText = Math.abs(avg1 - avg2);
 
-            document.getElementById('eloDiff').innerText = Math.abs(sum1 - sum2);
+            // 좌우 대칭 막대: 평균 ELO를 같은 기준선에서 비교한다 (기준선 = 둘 중 낮은 값과 1500 중 작은 쪽에서 200점 아래)
+            const base = Math.min(avg1, avg2, 1500) - 200;
+            const top = Math.max(avg1, avg2) - base || 1;
+            document.getElementById('versusLeft').innerText = avg1;
+            document.getElementById('versusRight').innerText = avg2;
+            document.getElementById('barLeft').style.width = `${((avg1 - base) / top) * 100}%`;
+            document.getElementById('barRight').style.width = `${((avg2 - base) / top) * 100}%`;
 
-            // Open Modal
-            const modal = document.getElementById('lobbyModal');
-            modal.classList.add('active');
+            document.getElementById('lobbyModal').classList.add('active');
         }
 
         document.getElementById('closeLobbyModal').onclick = () => {
@@ -1552,191 +1204,30 @@
             if (currentRoundPage < 1) currentRoundPage = 1;
 
             const startIndex = (currentRoundPage - 1) * roundsPerPage;
-            const endIndex = Math.min(startIndex + roundsPerPage, totalItems);
-            const pageItems = globalRoundsData.slice(startIndex, endIndex);
+            const pageItems = globalRoundsData.slice(startIndex, Math.min(startIndex + roundsPerPage, totalItems));
 
             pageItems.forEach(r => {
-                const mapDisplay = mapDisplayName(r.map);
-                const winnerName = r.winningTeam === 1 ? 'Phantom' : 'Ghost';
-                const winnerClass = r.winningTeam === 1 ? 'winner-phantom' : 'winner-ghost';
-
-                const card = document.createElement('div');
-                card.className = 'round-card';
-                card.onclick = () => {
-                    displayMatchDetails(r.round);
-                };
-
-                card.innerHTML = `
-                    <span class="round-card-id">#${r.round}</span>
-                    <span class="round-card-map">${mapDisplay}</span>
-                    <span class="round-card-winner ${winnerClass}">${winnerName} Win</span>
+                const team = r.winningTeam === 1 ? 1 : 2;
+                const row = document.createElement('div');
+                row.className = 'round-row';
+                row.onclick = () => displayMatchDetails(r.round);
+                row.innerHTML = `
+                    <span class="round-id">#${r.round}</span>
+                    <span class="round-map">${UI.esc(mapDisplayName(r.map))}</span>
+                    <span class="round-winner team"><i class="team-mark team-${team}"></i>${team === 1 ? 'Phantom' : 'Ghost'} win</span>
                 `;
-                container.appendChild(card);
+                container.appendChild(row);
             });
 
-            // Update page controls
-            const pageInfo = document.getElementById('roundPageInfo');
-            if (pageInfo) {
-                pageInfo.textContent = `${currentRoundPage} / ${totalPages}`;
-            }
-
-            const prevBtn = document.getElementById('prevRoundPageBtn');
-            if (prevBtn) {
-                prevBtn.disabled = (currentRoundPage === 1);
-            }
-
-            const nextBtn = document.getElementById('nextRoundPageBtn');
-            if (nextBtn) {
-                nextBtn.disabled = (currentRoundPage === totalPages);
-            }
+            document.getElementById('roundPageInfo').textContent = `${currentRoundPage} / ${totalPages}`;
+            document.getElementById('prevRoundPageBtn').disabled = (currentRoundPage === 1);
+            document.getElementById('nextRoundPageBtn').disabled = (currentRoundPage === totalPages);
         }
 
         function displayMatchDetails(round) {
-            const modal = document.getElementById('matchModal');
-            const tbody = document.querySelector('#matchDetails tbody');
-            tbody.innerHTML = '';
-
-            document.getElementById('modalRoundTitle').textContent = `${round} Round Details`;
-
-            const roundPlayers = allMatches.filter(
-                p => String(p.Round) === String(round)
-            );
-
-            function getEloStats(nickname, roundNum) {
-                if (!nickname) return { text: '', diff: -9999, current: 0 };
-                const rNum = parseInt(roundNum);
-
-                const currentEntry = allAftercalc.find(
-                    e => parseInt(e.Round) === rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-                );
-
-                if (!currentEntry) {
-                    return { text: '1500 (+0)', diff: 0, current: 1500, nickname: nickname };
-                }
-
-                const currentElo = parseInt(currentEntry.ELO || 1500);
-
-                const prevEntries = allAftercalc.filter(
-                    e => parseInt(e.Round) < rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-                );
-
-                let prevElo = 1500;
-                if (prevEntries.length > 0) {
-                    prevEntries.sort((a, b) => parseInt(b.Round) - parseInt(a.Round));
-                    prevElo = parseInt(prevEntries[0].ELO || 1500);
-                }
-
-                const diff = currentElo - prevElo;
-                const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
-                const diffClass = diff >= 0 ? 'positive' : 'negative';
-
-                return {
-                    text: `${currentElo} <span class="${diffClass}">(${diffStr})</span>`,
-                    diff: diff,
-                    current: currentElo,
-                    nickname: nickname
-                };
-            }
-
-            const phantom = roundPlayers.filter(p => p.Team === '1');
-            const ghost = roundPlayers.filter(p => p.Team === '2');
-
-            let phantomMvpNickname = "";
-            let maxPhantomDiff = -9999;
-            const phantomStats = phantom.map(p => {
-                const stats = getEloStats(p.Nickname, round);
-                if (p.Nickname && stats.diff > maxPhantomDiff) {
-                    maxPhantomDiff = stats.diff;
-                    phantomMvpNickname = p.Nickname;
-                }
-                return stats;
-            });
-
-            let ghostMvpNickname = "";
-            let maxGhostDiff = -9999;
-            const ghostStats = ghost.map(p => {
-                const stats = getEloStats(p.Nickname, round);
-                if (p.Nickname && stats.diff > maxGhostDiff) {
-                    maxGhostDiff = stats.diff;
-                    ghostMvpNickname = p.Nickname;
-                }
-                return stats;
-            });
-
-            const max = Math.max(phantom.length, ghost.length);
-
-            for (let i = 0; i < max; i++) {
-                const p1 = phantom[i] || {};
-                const p2 = ghost[i] || {};
-
-                const p1Stats = phantomStats[i] || { text: '', diff: -9999, current: 0 };
-                const p2Stats = ghostStats[i] || { text: '', diff: -9999, current: 0 };
-
-                const isP1Mvp = p1.Nickname && p1.Nickname === phantomMvpNickname;
-                const isP2Mvp = p2.Nickname && p2.Nickname === ghostMvpNickname;
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="player-name-cell ${isP1Mvp ? 'team-mvp' : ''}" data-nickname="${p1.Nickname || ''}">
-                        ${p1.Nickname || ''}
-                    </td>
-                    <td>${p1.Nickname ? (p1.Kills || '0') : ''}</td>
-                    <td>${p1.Nickname ? (p1.Deaths || '0') : ''}</td>
-                    <td>${p1Stats.text}</td>
-                    <td class="player-name-cell ${isP2Mvp ? 'team-mvp' : ''}" data-nickname="${p2.Nickname || ''}">
-                        ${p2.Nickname || ''}
-                    </td>
-                    <td>${p2.Nickname ? (p2.Kills || '0') : ''}</td>
-                    <td>${p2.Nickname ? (p2.Deaths || '0') : ''}</td>
-                    <td>${p2Stats.text}</td>
-                `;
-
-                row.querySelectorAll('.player-name-cell').forEach(cell => {
-                    const nick = cell.getAttribute('data-nickname');
-                    if (nick) {
-                        cell.addEventListener('click', () => {
-                            window.location.href = `user.html?nickname=${encodeURIComponent(nick)}&t=${Date.now()}`;
-                        });
-                    }
-                });
-
-                tbody.appendChild(row);
-            }
-
-            modal.classList.add('active');
-        }
-
-        function updateLayout() {
-            const isDesktop = window.innerWidth >= 800;
-            const leftCol = document.getElementById('leftColumn');
-            const rightCol = document.getElementById('rightColumn');
-            const lobbyPan = document.getElementById('lobbyPanel');
-            const roundsPan = document.getElementById('roundsPanel');
-            const tabsBar = document.querySelector('.tabs-bar');
-
-            if (isDesktop) {
-                leftCol.style.display = 'flex';
-                rightCol.style.display = 'flex';
-                lobbyPan.style.display = 'flex';
-                roundsPan.style.display = 'flex';
-                tabsBar.style.display = 'none';
-            } else {
-                tabsBar.style.display = 'flex';
-                if (activeTab === 'leaderboard') {
-                    leftCol.style.display = 'flex';
-                    rightCol.style.display = 'none';
-                } else if (activeTab === 'lobby') {
-                    leftCol.style.display = 'none';
-                    rightCol.style.display = 'flex';
-                    lobbyPan.style.display = 'flex';
-                    roundsPan.style.display = 'none';
-                } else if (activeTab === 'rounds') {
-                    leftCol.style.display = 'none';
-                    rightCol.style.display = 'flex';
-                    lobbyPan.style.display = 'none';
-                    roundsPan.style.display = 'flex';
-                }
-            }
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}`;
+            UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
+            document.getElementById('matchModal').classList.add('active');
         }
 
         function calcRoundsPerPage() {
@@ -1744,18 +1235,13 @@
             if (!listEl) return;
             const availableH = listEl.clientHeight;
             if (availableH <= 0) return;
-            // round-card: padding 10px top+bottom (20px) + ~20px content height + 8px gap between items
-            const CARD_H = 20 + 20 + 8; // 48px
-            const count = Math.max(1, Math.floor(availableH / CARD_H));
-            if (count !== roundsPerPage) {
-                roundsPerPage = count;
-            }
+            const count = Math.max(1, Math.floor(availableH / ROUND_ROW_H));
+            if (count !== roundsPerPage) roundsPerPage = count;
         }
 
         function recalcAndRender() {
             if (globalRoundsData.length === 0) return;
             calcRoundsPerPage();
-            // Clamp current page
             const totalPages = Math.ceil(globalRoundsData.length / roundsPerPage) || 1;
             if (currentRoundPage > totalPages) currentRoundPage = totalPages;
             renderGlobalRoundsPage();

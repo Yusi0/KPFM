@@ -4,767 +4,386 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Player Status</title>
+    <title>Player - KPFM</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="ui.css">
+    <script src="ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
-    <!-- Plus Jakarta Sans Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-
     <style>
-        /* CSS variables aligned with PFAttach aesthetics */
-        :root {
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --bg-glass: rgba(255, 255, 255, 0.4);
-            --border-glass: rgba(255, 255, 255, 0.3);
-            --shadow-glass: rgba(31, 38, 135, 0.08);
-            --text-color: #2c3e50;
-            --text-muted: #7f8c8d;
-            --accent-color: #5c6bc0;
-            --card-bg: rgba(255, 255, 255, 0.45);
-            --card-title: #1a252f;
-            --table-header: rgba(255, 255, 255, 0.5);
-            --filter-active-bg: rgba(92, 107, 192, 0.18);
-            --chip-bg: rgba(255, 255, 255, 0.34);
-            --green: #27ae60;
-            --red: #c0392b;
-            --gold: #f59e0b;
-        }
-
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            --bg-glass: rgba(15, 23, 42, 0.6);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --shadow-glass: rgba(0, 0, 0, 0.3);
-            --text-color: #f1f5f9;
-            --text-muted: #94a3b8;
-            --accent-color: #818cf8;
-            --card-bg: rgba(15, 23, 42, 0.7);
-            --card-title: #f8fafc;
-            --table-header: rgba(15, 23, 42, 0.5);
-            --filter-active-bg: rgba(129, 140, 248, 0.18);
-            --chip-bg: rgba(255, 255, 255, 0.08);
-            --green: #22c55e;
-            --red: #ef4444;
-            --gold: #fbbf24;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html,
-        body {
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-color);
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-
-        /* Glassmorphism Background Blobs */
-        .blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            opacity: 0.55;
-            transition: all 0.5s ease;
-        }
-
-        .blob-1 {
-            width: 320px;
-            height: 320px;
-            background: #a78bfa;
-            top: 10%;
-            left: calc(50% - 300px);
-        }
-
-        .blob-2 {
-            width: 300px;
-            height: 300px;
-            background: #60a5fa;
-            bottom: 15%;
-            right: calc(50% - 280px);
-        }
-
-        /* Mobile-First App Container (centered, matching PFAttach) */
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            height: calc(100vh - 32px);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            z-index: 1;
-        }
-
-        /* Glass Frame styling */
-        .glass-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            box-shadow: 0 8px 32px 0 var(--shadow-glass);
-            border-radius: 20px;
-            padding: 16px;
-            transition: all 0.3s ease;
-        }
-
-        /* Topbar header styling */
         .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .page {
+            padding-top: 24px;
+            padding-bottom: 48px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        /* Wide: 왼쪽에 프로필과 맵 전적, 오른쪽에 차트와 경기 기록 */
+        [data-layout="wide"] .grid {
+            grid-template-columns: 360px minmax(0, 1fr);
+            grid-template-areas:
+                "profile elo"
+                "profile kdr"
+                "maps history";
+            gap: 24px;
+        }
+
+        [data-layout="wide"] .profile {
+            grid-area: profile;
+        }
+
+        [data-layout="wide"] .elo {
+            grid-area: elo;
+        }
+
+        [data-layout="wide"] .kdr {
+            grid-area: kdr;
+        }
+
+        [data-layout="wide"] .maps {
+            grid-area: maps;
+            align-self: start;
+        }
+
+        [data-layout="wide"] .history {
+            grid-area: history;
+        }
+
+        [data-layout="wide"] .profile {
+            align-self: start;
+        }
+
+        /* Compact: 예전의 좁은 한 열 */
+        [data-layout="compact"] .wrap {
+            max-width: 520px;
+        }
+
+        @media (max-width: 599px) {
+            .wrap {
+                padding: 0 16px;
+            }
+
+            .page {
+                padding-top: 16px;
+            }
+        }
+
+        .topbar-in .back {
+            margin-right: 4px;
+        }
+
+        /* 프로필 */
+        .profile-head {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-
-        .topbar h1 {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: var(--card-title);
-            letter-spacing: -0.5px;
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid var(--border-glass);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-color);
-            transition: background 0.3s, transform 0.2s;
-            outline: none;
-        }
-
-        .back-btn:active {
-            transform: scale(0.95);
-        }
-
-        .theme-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid var(--border-glass);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            color: var(--text-color);
-            transition: background 0.3s, transform 0.2s;
-            outline: none;
-        }
-
-        .theme-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Profile card details */
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 14px;
-            border-bottom: 1px dashed var(--border-glass);
-            padding-bottom: 12px;
+            gap: 12px;
+            padding: 16px;
         }
 
         .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: var(--filter-active-bg);
-            color: var(--card-title);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 800;
-            border: 1px solid var(--border-glass);
-            box-shadow: 0 2px 8px var(--shadow-glass);
-        }
-
-        .nickname-wrap h2 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--card-title);
-        }
-
-        .tier-label {
-            margin-top: 3px;
-            display: inline-flex;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 9px;
-            font-weight: 700;
-            border: 1px solid currentColor;
-            background: transparent;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Stat chip grid */
-        .stats-grid {
+            width: 40px;
+            height: 40px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            place-items: center;
+            border-radius: 8px;
+            background: var(--raised);
+            border: 1px solid var(--hairline);
+            font-size: 16px;
+            font-weight: 500;
         }
 
-        .stat-box {
-            padding: 8px 10px;
-            border-radius: 12px;
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
+        .profile-head h2 {
+            font-size: 20px;
+            line-height: 24px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
         }
 
-        .stat-title {
-            color: var(--text-muted);
-            font-size: 0.65rem;
-            margin-bottom: 2px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .profile-head .tier {
+            margin-top: 4px;
         }
 
-        .stat-value {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--card-title);
+        .elo-block {
+            padding: 16px;
+            border-top: 1px solid var(--hairline);
+            border-bottom: 1px solid var(--hairline);
         }
 
-        /* Charts styling */
-        .chart-card {
+        .elo-figure {
             display: flex;
-            flex-direction: column;
+            align-items: baseline;
             gap: 8px;
         }
 
-        .chart-title {
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px dashed var(--border-glass);
-            padding-bottom: 4px;
+        .elo-figure .big {
+            font-size: 28px;
+            line-height: 32px;
+            font-weight: 500;
         }
 
-        .chart-wrapper {
+        .tier-scale {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        .tier-scale .ruler {
+            flex: 1;
+            margin-bottom: 4px;
+        }
+
+        .stats>div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 36px;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--hairline);
+        }
+
+        .stats>div:last-child {
+            border-bottom: none;
+        }
+
+        .stats dt {
+            color: var(--text-3);
+            font-size: 13px;
+        }
+
+        .stats dd {
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        /* 차트 */
+        .chart-wrap {
             position: relative;
-            width: 100%;
-            height: 180px;
+            padding: 12px 16px 16px;
+        }
+
+        .elo .chart-wrap {
+            height: 300px;
+        }
+
+        .kdr .chart-wrap {
+            height: 160px;
+        }
+
+        [data-layout="compact"] .elo .chart-wrap {
+            height: 240px;
         }
 
         canvas {
             cursor: crosshair;
         }
 
-        /* Section table containers */
-        .section-title {
-            font-size: 0.82rem;
-            font-weight: 800;
-            color: var(--card-title);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 8px;
-            margin-bottom: 8px;
+        .panel-head .hint {
+            color: var(--text-3);
+            font-size: 12px;
         }
 
-        /* Table design */
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 0.8rem;
+        @media (max-width: 599px) {
+            .hint {
+                display: none;
+            }
         }
 
-        thead th {
-            text-align: left;
-            padding: 6px 12px;
-            font-size: 0.65rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            background: var(--table-header);
-            border-bottom: 1px solid var(--border-glass);
-            font-weight: 800;
+        /* 표 */
+        .scroll-x {
+            overflow-x: auto;
         }
 
-        tbody td {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border-glass);
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        tbody tr {
-            transition: background 0.15s ease;
-        }
-
-        #matchHistory tbody tr {
-            cursor: pointer;
-        }
-
-        tbody tr:hover {
-            background: var(--chip-bg);
-        }
-
-        .positive {
-            color: var(--green);
-            font-weight: 700;
-        }
-
-        .negative {
-            color: var(--red);
-            font-weight: 700;
-        }
-
-        /* Tier labels color styling */
-        .tier-copper {
-            color: #c08457;
-        }
-
-        .tier-bronze {
-            color: #cd7f32;
-        }
-
-        .tier-silver {
-            color: #7f8c8d;
-        }
-
-        [data-theme="dark"] .tier-silver {
-            color: #94a3b8;
-        }
-
-        .tier-gold {
-            color: #f59e0b;
-        }
-
-        .tier-platinum {
-            color: #0284c7;
-        }
-
-        [data-theme="dark"] .tier-platinum {
-            color: #38bdf8;
-        }
-
-        .tier-diamond {
-            color: #7c3aed;
-        }
-
-        [data-theme="dark"] .tier-diamond {
-            color: #c084fc;
-        }
-
-        .tier-champion {
-            color: #e11d48;
-        }
-
-        .tier-unranked {
-            color: var(--text-muted);
-        }
-
-        .match-pill {
+        .result {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            padding: 2px 6px;
-            border-radius: 6px;
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
-            color: var(--text-color);
-            font-weight: 700;
-            font-size: 0.72rem;
+            gap: 8px;
         }
 
-        /* Modal popups */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.2s ease-out;
-            padding: 32px;
-        }
-
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 440px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            box-shadow: 0 12px 40px var(--shadow-glass);
-            transform: scale(0.92) translateY(8px);
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .modal.active .modal-content {
-            transform: scale(1) translateY(0);
-        }
-
-        .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--card-title);
-        }
-
-        .close-btn {
-            background: transparent;
-            border: none;
-            font-size: 1.4rem;
-            color: var(--text-color);
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
+        .result .dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            outline: none;
         }
 
-        .close-btn:hover {
-            background: var(--chip-bg);
+        .result.win .dot {
+            background: var(--pos);
         }
 
-        .scroll-content {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            padding-bottom: 8px;
+        .result.loss .dot {
+            background: var(--neg);
         }
 
-        .scroll-content::-webkit-scrollbar {
-            display: none;
+        .history .tbl td:first-child,
+        .history .tbl th:first-child {
+            padding-left: 16px;
         }
 
-        .modal-body {
-            overflow-y: auto;
-            max-height: 320px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            padding: 12px 24px 24px 24px;
+        .history .tbl td:last-child,
+        .history .tbl th:last-child,
+        .maps .tbl td:last-child,
+        .maps .tbl th:last-child {
+            padding-right: 16px;
         }
 
-        .modal-body::-webkit-scrollbar {
-            display: none;
+        .maps .tbl td:first-child,
+        .maps .tbl th:first-child {
+            padding-left: 16px;
         }
 
-        .team-mvp {
-            font-weight: 800 !important;
-            color: var(--gold) !important;
+        @media (max-width: 599px) {
+            .kd-raw { display: none; }
+            .history .tbl th, .history .tbl td { padding-left: 8px; padding-right: 8px; }
+            .history .tbl th:first-child, .history .tbl td:first-child { padding-left: 12px; }
+            .history .tbl th:last-child, .history .tbl td:last-child { padding-right: 12px; }
         }
 
-        #matchModal .modal-content {
-            max-width: 600px;
-        }
-
-        #matchDetails {
-            font-size: 0.78rem;
-            table-layout: fixed;
-            width: 100%;
-        }
-
-        #matchDetails th,
-        #matchDetails td {
-            padding: 8px 4px;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #matchDetails th:nth-child(1),
-        #matchDetails td:nth-child(1) {
-            width: 22%;
-            /* Phantom Nickname */
-            text-align: left;
-        }
-
-        #matchDetails th:nth-child(2),
-        #matchDetails td:nth-child(2),
-        #matchDetails th:nth-child(3),
-        #matchDetails td:nth-child(3) {
-            width: 6%;
-            /* K, D */
-        }
-
-        #matchDetails th:nth-child(4),
-        #matchDetails td:nth-child(4) {
-            width: 16%;
-            /* ELO */
-        }
-
-        #matchDetails th:nth-child(5),
-        #matchDetails td:nth-child(5) {
-            width: 22%;
-            /* Ghost Nickname */
-            text-align: left;
-        }
-
-        #matchDetails th:nth-child(6),
-        #matchDetails td:nth-child(6),
-        #matchDetails th:nth-child(7),
-        #matchDetails td:nth-child(7) {
-            width: 6%;
-            /* K, D */
-        }
-
-        #matchDetails th:nth-child(8),
-        #matchDetails td:nth-child(8) {
-            width: 16%;
-            /* ELO */
-        }
-
-        .page-btn {
-            background: var(--chip-bg);
-            border: 1px solid var(--border-glass);
-            border-radius: 8px;
-            color: var(--text-color);
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 800;
-            padding: 6px 12px;
-            transition: background 0.2s, transform 0.1s;
-            outline: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background: var(--filter-active-bg);
-        }
-
-        .page-btn:active:not(:disabled) {
-            transform: scale(0.95);
-        }
-
-        .page-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .result-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            border: 1px solid currentColor;
-            background: transparent;
-            text-transform: uppercase;
-        }
-
-        .result-win {
-            color: var(--green);
-            background: rgba(34, 197, 94, 0.08);
-            border-color: rgba(34, 197, 94, 0.2);
-        }
-
-        .result-lose {
-            color: var(--red);
-            background: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .player-name-cell {
-            cursor: pointer;
-            transition: color 0.15s ease;
-        }
-
-        .player-name-cell:hover {
-            color: var(--accent-color) !important;
-            text-decoration: underline;
+        .map-name {
+            text-transform: capitalize;
         }
     </style>
 </head>
 
 <body>
 
-    <!-- Glowing Fixed Blobs -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-
-    <div class="app-container">
-
-        <!-- Topbar navigation header -->
-        <div class="glass-panel topbar">
-            <button id="backButton" class="back-btn" title="뒤로 가기">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                        d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708.708L2.707 7.5H14.5a.5.5 0 0 1 .5.5z" />
-                </svg>
-            </button>
-            <h1>PLAYER STATUS</h1>
-            <button class="theme-btn" id="themeToggleBtn" title="화면 테마 변경">☀️</button>
+    <header class="topbar">
+        <div class="wrap topbar-in">
+            <button id="backButton" class="icon-btn back" type="button" title="뒤로 가기" aria-label="Back to leaderboard"></button>
+            <h1 class="wordmark">KPFM <span>Player</span></h1>
+            <div class="spacer"></div>
+            <div class="seg layout-toggle" role="group" aria-label="Layout">
+                <button type="button" data-layout-pref="wide" aria-pressed="true">Wide</button>
+                <button type="button" data-layout-pref="compact" aria-pressed="false">Compact</button>
+            </div>
+            <button class="icon-btn" id="themeToggleBtn" type="button"></button>
         </div>
+    </header>
 
-        <div class="scroll-content">
+    <div class="wrap page">
+        <div class="grid">
 
-            <!-- Profile Card -->
-            <div class="glass-panel">
-                <div class="profile-header">
+            <section class="panel profile">
+                <div class="profile-head">
                     <div class="avatar" id="avatarLetter">P</div>
-                    <div class="nickname-wrap">
+                    <div>
                         <h2 id="statNickname">Nickname</h2>
-                        <div class="tier-label" id="statTier">Unranked</div>
+                        <div id="statTier"></div>
                     </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-box" style="grid-column: span 2;">
-                        <div class="stat-title">Rank (ELO)</div>
-                        <div class="stat-value" id="statRankElo">#0 (1500)</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">Kills / Deaths (KDR)</div>
-                        <div class="stat-value" id="statKD_KDR">0 / 0 (0.00)</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">KPR</div>
-                        <div class="stat-value" id="statKPR">0.0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">Wins / Losses (Win Rate)</div>
-                        <div class="stat-value" id="statWL_WR">0 / 0 (0%)</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-title">Matches</div>
-                        <div class="stat-value" id="statMatches">0</div>
+                <div class="elo-block">
+                    <div class="elo-figure"><span class="big num" id="statElo">1500</span><span class="muted">ELO</span></div>
+                    <div class="tier-scale">
+                        <span class="num" id="scaleLow">1500</span>
+                        <span class="ruler ruler-lg" id="statRuler"><i></i></span>
+                        <span class="num" id="scaleHigh">1600</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Charts Trends Panels (Stacked vertically) -->
-            <div class="glass-panel chart-card">
-                <div class="chart-title">ELO Trend</div>
-                <div class="chart-wrapper">
-                    <canvas id="eloTrend"></canvas>
-                </div>
-            </div>
+                <dl class="stats">
+                    <div><dt>Rank</dt><dd id="statRank">–</dd></div>
+                    <div><dt>Kills / deaths</dt><dd id="statKD">0 / 0</dd></div>
+                    <div><dt>KDR</dt><dd id="statKDR">0.00</dd></div>
+                    <div><dt>KPR</dt><dd id="statKPR">0.0</dd></div>
+                    <div><dt>Wins / losses</dt><dd id="statWL">0 / 0</dd></div>
+                    <div><dt>Win rate</dt><dd id="statWR">0%</dd></div>
+                    <div><dt>Matches</dt><dd id="statMatches">0</dd></div>
+                </dl>
+            </section>
 
-            <div class="glass-panel chart-card">
-                <div class="chart-title">KDR Trend</div>
-                <div class="chart-wrapper">
-                    <canvas id="kdrTrend"></canvas>
+            <section class="panel elo">
+                <div class="panel-head">
+                    <span class="label">ELO trend</span>
+                    <span class="hint">Drag to zoom, double-click to reset</span>
                 </div>
-            </div>
+                <div class="chart-wrap"><canvas id="eloTrend"></canvas></div>
+            </section>
 
-            <!-- Map Win Rate Section -->
-            <div class="glass-panel" style="padding: 12px 14px;">
-                <div class="section-title">Map Statistics</div>
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                <table id="mapWinRate">
-                    <thead>
-                        <tr>
-                            <th>Map</th>
-                            <th>Wins</th>
-                            <th>Total</th>
-                            <th>Win Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <section class="panel kdr">
+                <div class="panel-head">
+                    <span class="label">KDR trend</span>
+                    <span class="meta">cumulative</span>
                 </div>
-            </div>
+                <div class="chart-wrap"><canvas id="kdrTrend"></canvas></div>
+            </section>
 
-            <!-- Match History Section -->
-            <div class="glass-panel" style="padding: 12px 14px;">
-                <div class="section-title">Match History</div>
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                  <table id="matchHistory">
-                    <thead>
-                        <tr>
-                            <th style="text-align: center; width: 10%;">#</th>
-                            <th style="width: 18%;">Result</th>
-                            <th style="width: 26%;">Map</th>
-                            <th style="width: 24%;">K/D (KDR)</th>
-                            <th style="width: 22%;">ELO</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <section class="panel maps">
+                <div class="panel-head"><span class="label">Map statistics</span></div>
+                <div class="scroll-x">
+                    <table id="mapWinRate" class="tbl">
+                        <thead>
+                            <tr>
+                                <th>Map</th>
+                                <th class="r">Wins</th>
+                                <th class="r">Total</th>
+                                <th class="r">Win rate</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 14px;">
-                    <button id="prevPageBtn" class="page-btn">&lt;</button>
-                    <span id="pageInfo" style="font-size: 0.8rem; font-weight: 700; color: var(--text-color);">1 / 1</span>
-                    <button id="nextPageBtn" class="page-btn">&gt;</button>
+            </section>
+
+            <section class="panel history">
+                <div class="panel-head"><span class="label">Match history</span></div>
+                <div class="scroll-x">
+                    <table id="matchHistory" class="tbl rows-click">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Result</th>
+                                <th>Map</th>
+                                <th class="r">KDR (K/D)</th>
+                                <th class="r">ELO</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-            </div>
+                <div class="pager">
+                    <button id="prevPageBtn" class="icon-btn" type="button" aria-label="Previous page"></button>
+                    <span class="meta" id="pageInfo">1 / 1</span>
+                    <button id="nextPageBtn" class="icon-btn" type="button" aria-label="Next page"></button>
+                </div>
+            </section>
 
         </div>
-
     </div>
 
-    <!-- Match Details Popup Modal (PFAttach composition style) -->
+    <!-- 라운드 상세 -->
     <div class="modal" id="matchModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
-                <h2 id="modalRoundTitle">Match Details</h2>
-                <button class="close-btn" id="closeModal">&times;</button>
+                <h2 id="modalRoundTitle">Match details</h2>
+                <button class="icon-btn" id="closeModal" type="button" aria-label="Close" style="border-color: transparent; background: transparent;"></button>
             </div>
             <div class="modal-body">
-                <table id="matchDetails">
+                <table id="matchDetails" class="tbl">
                     <thead>
                         <tr>
-                            <th>Phantom</th>
-                            <th>K</th>
-                            <th>D</th>
+                            <th><span class="team"><i class="team-mark team-1"></i>Phantom</span></th>
+                            <th class="r">K</th>
+                            <th class="r">D</th>
                             <th>ELO</th>
-                            <th>Ghost</th>
-                            <th>K</th>
-                            <th>D</th>
+                            <th><span class="team"><i class="team-mark team-2"></i>Ghost</span></th>
+                            <th class="r">K</th>
+                            <th class="r">D</th>
                             <th>ELO</th>
                         </tr>
                     </thead>
@@ -776,53 +395,37 @@
 
     <script src="maps.js"></script>
     <script>
-        // Load page theme
-        let currentTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', currentTheme);
-
         let eloChartInstance = null;
         let kdrChartInstance = null;
+
         let matchHistoryList = [];
         let currentPage = 1;
         const itemsPerPage = 10;
 
         window.addEventListener('DOMContentLoaded', () => {
-            const themeBtn = document.getElementById('themeToggleBtn');
-            if (themeBtn) {
-                themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
-                themeBtn.addEventListener('click', () => {
-                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', currentTheme);
-                    themeBtn.innerText = currentTheme === 'light' ? '🌙' : '☀️';
-                    localStorage.setItem('theme', currentTheme);
+            document.getElementById('backButton').innerHTML = UI.icon('back');
+            document.getElementById('prevPageBtn').innerHTML = UI.icon('left');
+            document.getElementById('nextPageBtn').innerHTML = UI.icon('right');
+            document.getElementById('closeModal').innerHTML = UI.icon('x');
 
-                    // Trigger Chart theme rendering updates
-                    if (eloChartInstance) eloChartInstance.update();
-                    if (kdrChartInstance) kdrChartInstance.update();
-                });
-            }
+            document.getElementById('prevPageBtn').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderMatchHistoryPage();
+                }
+            });
 
-            const prevBtn = document.getElementById('prevPageBtn');
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderMatchHistoryPage();
-                    }
-                });
-            }
-
-            const nextBtn = document.getElementById('nextPageBtn');
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    const totalPages = Math.ceil(matchHistoryList.length / itemsPerPage) || 1;
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        renderMatchHistoryPage();
-                    }
-                });
-            }
+            document.getElementById('nextPageBtn').addEventListener('click', () => {
+                const totalPages = Math.ceil(matchHistoryList.length / itemsPerPage) || 1;
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderMatchHistoryPage();
+                }
+            });
         });
+
+        // 테마가 바뀌면 차트 색도 함께 바꾼다
+        window.addEventListener('themechange', applyChartTheme);
 
         const params = new URLSearchParams(window.location.search);
         const nickname = params.get("nickname");
@@ -832,12 +435,8 @@
             window.location.href = "index.html";
         }
 
-        const avatarLetter = document.getElementById("avatarLetter");
-        const statNickname = document.getElementById("statNickname");
-
-        statNickname.textContent = nickname;
-        avatarLetter.textContent = nickname[0]?.toUpperCase() || "P";
-
+        document.getElementById("statNickname").textContent = nickname;
+        document.getElementById("avatarLetter").textContent = nickname?.[0]?.toUpperCase() || "P";
         document.title = `${nickname} - KPFM`;
 
         document.getElementById("backButton").addEventListener("click", () => {
@@ -876,93 +475,60 @@
 
             return rows.slice(1).map(row => {
                 const values = row.split(',').map(v => v.trim());
-                return Object.fromEntries(
-                    headers.map((h, i) => [h, values[i]])
-                );
+                return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
             });
         }
 
         function processLeaderboard(leaderboard) {
-            leaderboard.sort((a, b) =>
-                parseInt(b.ELO || 0) - parseInt(a.ELO || 0)
-            );
-
-            leaderboard.forEach((player, index) => {
-                player.rank = index + 1;
-            });
-
-            const user = leaderboard.find(
-                p => p.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-            );
+            const sameName = (p) => p.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase();
+            const user = leaderboard.find(sameName);
 
             if (!user) {
                 alert("유저를 찾을 수 없습니다.");
                 return;
             }
 
+            // 순위는 index.html과 같은 기준: 6경기 이상인 선수끼리 ELO 순 (5경기 이하는 배치중)
+            const ranked = leaderboard
+                .filter(p => parseInt(p.Total || 0) > UI.PLACEMENT_GAMES)
+                .sort((a, b) => parseInt(b.ELO || 0) - parseInt(a.ELO || 0));
+            const rankIndex = ranked.findIndex(sameName);
+
             const kills = parseInt(user.Kills || 0);
             const deaths = parseInt(user.Deaths || 0);
             const wins = parseInt(user.Wins || 0);
             const losses = parseInt(user.Losses || 0);
             const matches = parseInt(user.Total || 0);
+            const elo = parseInt(user.ELO || 1500);
 
-            const eloVal = user.ELO || 1500;
-            const rankVal = user.rank || 0;
-            document.getElementById("statRankElo").textContent = `#${rankVal} (${eloVal})`;
+            document.getElementById("statTier").innerHTML = UI.tierHTML(user.Tier, matches);
 
-            const formattedTier = (user.Tier || "Unranked").replace('Platinum', 'Plat');
-            document.getElementById("statTier").textContent = formattedTier;
+            document.getElementById("statElo").textContent = elo;
+            const t = UI.tierInfo(elo);
+            document.getElementById("scaleLow").textContent = t.low;
+            document.getElementById("scaleHigh").textContent = t.high;
+            document.getElementById("statRuler").style.setProperty('--pos', `${(t.pos * 100).toFixed(1)}%`);
+            document.getElementById("statRuler").title = `${t.name} · ${Math.round(t.pos * 100)} / 100`;
 
-            const kdrVal = (kills / Math.max(1, deaths)).toFixed(2);
-            document.getElementById("statKD_KDR").textContent = `${kills} / ${deaths} (${kdrVal})`;
-
+            document.getElementById("statRank").textContent = rankIndex >= 0 ? `#${rankIndex + 1}` : `– (placement ${matches}/${UI.PLACEMENT_GAMES})`;
+            document.getElementById("statKD").textContent = `${kills} / ${deaths}`;
+            document.getElementById("statKDR").textContent = (kills / Math.max(1, deaths)).toFixed(2);
             document.getElementById("statKPR").textContent = (kills / Math.max(1, matches)).toFixed(1);
-
-            const wrVal = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
-            document.getElementById("statWL_WR").textContent = `${wins} / ${losses} (${wrVal})`;
-
+            document.getElementById("statWL").textContent = `${wins} / ${losses}`;
+            document.getElementById("statWR").textContent = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
             document.getElementById("statMatches").textContent = matches;
-
-            applyTierColor(user.Tier || "Unranked");
-        }
-
-        function applyTierColor(tier) {
-            const el = document.getElementById("statTier");
-            const tierName = tier.split(' ')[0].toLowerCase();
-            el.className = `tier-label tier-${tierName}`;
         }
 
         function processUserStats(matches, aftercalc) {
-            const userMatches = matches.filter(
-                m => m.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-            );
-
-            const userRounds = aftercalc.filter(
-                r => r.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-            );
+            const userMatches = matches.filter(m => m.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase());
+            const userRounds = aftercalc.filter(r => r.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase());
 
             renderMapStats(userMatches);
             renderMatchHistory(userMatches, userRounds);
 
-            function calculateTier(elo, matchCount) {
-                if (matchCount <= 5) return 'Unranked';
-                const baseElo = 1500;
-                const tierNames = [
-                    "Copper 3", "Copper 2", "Copper 1",
-                    "Bronze 3", "Bronze 2", "Bronze 1",
-                    "Silver 3", "Silver 2", "Silver 1",
-                    "Gold 3", "Gold 2", "Gold 1",
-                    "Platinum 3", "Platinum 2", "Platinum 1",
-                    "Diamond 3", "Diamond 2", "Diamond 1",
-                    "Champion"
-                ];
-                let tierIndex = Math.floor((elo - baseElo) / 100) + 9;
-                tierIndex = Math.max(0, Math.min(tierIndex, tierNames.length - 1));
-                return tierNames[tierIndex].replace('Platinum', 'Plat');
-            }
-
             eloHistory = userRounds.map(r => parseInt(r.ELO || 1500));
-            tierHistory = eloHistory.map((elo, idx) => calculateTier(elo, idx + 1));
+            // 툴팁에 쓰는 티어: 5경기 이하는 배치중
+            tierHistory = eloHistory.map((elo, idx) => (idx + 1 <= UI.PLACEMENT_GAMES ? 'Placement' : UI.tierInfo(elo).short));
 
             renderELOTrend();
             renderKDRTrend(userMatches);
@@ -974,65 +540,47 @@
             const stats = {};
 
             matches.forEach(match => {
-                const rawMap = (match.Map || 'Unknown').toLowerCase();
-                const map = mapDisplayName(rawMap);
-
-                if (!stats[map]) {
-                    stats[map] = { wins: 0, total: 0 };
-                }
+                const map = mapDisplayName((match.Map || 'Unknown').toLowerCase());
+                if (!stats[map]) stats[map] = { wins: 0, total: 0 };
                 stats[map].total++;
-                if (match.Team === match['Winning Team']) {
-                    stats[map].wins++;
-                }
+                if (match.Team === match['Winning Team']) stats[map].wins++;
             });
 
             Object.entries(stats).forEach(([map, data]) => {
                 const rate = ((data.wins / data.total) * 100).toFixed(1);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${map}</td>
-                    <td>${data.wins}</td>
-                    <td>${data.total}</td>
-                    <td class="${rate < 50 ? 'negative' : 'positive'}">${rate}%</td>
+                    <td class="map-name">${UI.esc(map)}</td>
+                    <td class="r num">${data.wins}</td>
+                    <td class="r num">${data.total}</td>
+                    <td class="r num ${rate < 50 ? 'negative' : 'positive'}">${rate}%</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
         function renderMatchHistory(matches, userRounds) {
-            // Pre-calculate match history data in chronological order (oldest to newest)
+            // 시간순(오래된 것부터)으로 계산한 뒤 최신순으로 보여 준다
             matchHistoryList = matches.map((match, index) => {
                 const kills = parseInt(match.Kills || 0);
                 const deaths = parseInt(match.Deaths || 0);
-                const kdr = (kills / Math.max(1, deaths)).toFixed(2);
-
                 const currentELO = parseInt(userRounds[index]?.ELO || 1500);
-                const previousELO = index > 0
-                    ? parseInt(userRounds[index - 1]?.ELO || 1500)
-                    : 1500;
-
-                const diff = currentELO - previousELO;
-
-                const won = match.Team === match['Winning Team'];
-                const rawMap = (match.Map || 'Unknown').toLowerCase();
-                const map = mapDisplayName(rawMap);
+                const previousELO = index > 0 ? parseInt(userRounds[index - 1]?.ELO || 1500) : 1500;
 
                 return {
                     playNumber: index + 1,
                     round: match.Round || '-',
-                    kills: kills,
-                    deaths: deaths,
-                    kdr: kdr,
-                    currentELO: currentELO,
-                    diff: diff,
-                    won: won,
-                    map: map
+                    kills,
+                    deaths,
+                    kdr: (kills / Math.max(1, deaths)).toFixed(2),
+                    currentELO,
+                    diff: currentELO - previousELO,
+                    won: match.Team === match['Winning Team'],
+                    map: mapDisplayName((match.Map || 'Unknown').toLowerCase())
                 };
             });
 
-            // Display newest first
             matchHistoryList.reverse();
-
             currentPage = 1;
             renderMatchHistoryPage();
         }
@@ -1048,181 +596,124 @@
             if (currentPage < 1) currentPage = 1;
 
             const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-            const pageItems = matchHistoryList.slice(startIndex, endIndex);
+            const pageItems = matchHistoryList.slice(startIndex, Math.min(startIndex + itemsPerPage, totalItems));
 
             pageItems.forEach((item) => {
                 const row = document.createElement('tr');
-                const resultClass = item.won ? 'result-win' : 'result-lose';
-                const resultText = item.won ? 'WIN' : 'LOSE';
-
                 row.innerHTML = `
-                    <td style="text-align: center; color: var(--text-muted); font-weight: 700;">
-                        #${item.playNumber}
-                    </td>
-                    <td>
-                        <span class="result-badge ${resultClass}">${resultText}</span>
-                    </td>
-                    <td style="font-weight: 700; color: var(--card-title); text-transform: capitalize;">
-                        ${item.map}
-                    </td>
-                    <td style="font-weight: 700;">
-                        ${item.kdr} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">(${item.kills}/${item.deaths})</span>
-                    </td>
-                    <td>
-                        ${item.currentELO}
-                        <span class="${item.diff >= 0 ? 'positive' : 'negative'}" style="font-size: 0.75rem;">
-                            (${item.diff >= 0 ? '+' : ''}${item.diff})
-                        </span>
-                    </td>
+                    <td class="num muted">#${item.playNumber}</td>
+                    <td><span class="result ${item.won ? 'win' : 'loss'}"><i class="dot"></i>${item.won ? 'Win' : 'Loss'}</span></td>
+                    <td class="map-name">${UI.esc(item.map)}</td>
+                    <td class="r num">${item.kdr} <span class="muted kd-raw">(${item.kills}/${item.deaths})</span></td>
+                    <td class="r num">${item.currentELO} <span class="${item.diff >= 0 ? 'positive' : 'negative'}">${item.diff >= 0 ? '+' : ''}${item.diff}</span></td>
                 `;
-
-                row.addEventListener('click', () => {
-                    displayMatchDetails(item.round);
-                });
-
+                row.addEventListener('click', () => displayMatchDetails(item.round));
                 tbody.appendChild(row);
             });
 
-            // Update page controls
-            const pageInfo = document.getElementById('pageInfo');
-            if (pageInfo) {
-                pageInfo.textContent = `${currentPage} / ${totalPages}`;
-            }
-
-            const prevBtn = document.getElementById('prevPageBtn');
-            if (prevBtn) {
-                prevBtn.disabled = (currentPage === 1);
-            }
-
-            const nextBtn = document.getElementById('nextPageBtn');
-            if (nextBtn) {
-                nextBtn.disabled = (currentPage === totalPages);
-            }
+            document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
+            document.getElementById('prevPageBtn').disabled = (currentPage === 1);
+            document.getElementById('nextPageBtn').disabled = (currentPage === totalPages);
         }
 
         function displayMatchDetails(round) {
-            const modal = document.getElementById('matchModal');
-            const tbody = document.querySelector('#matchDetails tbody');
-            tbody.innerHTML = '';
-
-            document.getElementById('modalRoundTitle').innerHTML = `Round <span style="color: var(--accent-color);">#${round}</span> &mdash; Match Details`;
-
-            const roundPlayers = allMatches.filter(
-                p => String(p.Round) === String(round)
-            );
-
-            // Helper to get ELO and ELO change for a nickname in a given round
-            function getEloStats(nickname, roundNum) {
-                if (!nickname) return { text: '', diff: -9999, current: 0 };
-                const rNum = parseInt(roundNum);
-
-                // Find current round's ELO
-                const currentEntry = allAftercalc.find(
-                    e => parseInt(e.Round) === rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-                );
-
-                if (!currentEntry) {
-                    return { text: '1500 (+0)', diff: 0, current: 1500, nickname: nickname };
-                }
-
-                const currentElo = parseInt(currentEntry.ELO || 1500);
-
-                // Find previous round's ELO (most recent round < rNum)
-                const prevEntries = allAftercalc.filter(
-                    e => parseInt(e.Round) < rNum && e.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase()
-                );
-
-                let prevElo = 1500;
-                if (prevEntries.length > 0) {
-                    prevEntries.sort((a, b) => parseInt(b.Round) - parseInt(a.Round));
-                    prevElo = parseInt(prevEntries[0].ELO || 1500);
-                }
-
-                const diff = currentElo - prevElo;
-                const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
-                const diffClass = diff >= 0 ? 'positive' : 'negative';
-
-                return {
-                    text: `${currentElo} <span class="${diffClass}">(${diffStr})</span>`,
-                    diff: diff,
-                    current: currentElo,
-                    nickname: nickname
-                };
-            }
-
-            const phantom = roundPlayers.filter(p => p.Team === '1');
-            const ghost = roundPlayers.filter(p => p.Team === '2');
-
-            // Determine MVP for Phantom Team
-            let phantomMvpNickname = "";
-            let maxPhantomDiff = -9999;
-            const phantomStats = phantom.map(p => {
-                const stats = getEloStats(p.Nickname, round);
-                if (p.Nickname && stats.diff > maxPhantomDiff) {
-                    maxPhantomDiff = stats.diff;
-                    phantomMvpNickname = p.Nickname;
-                }
-                return stats;
-            });
-
-            // Determine MVP for Ghost Team
-            let ghostMvpNickname = "";
-            let maxGhostDiff = -9999;
-            const ghostStats = ghost.map(p => {
-                const stats = getEloStats(p.Nickname, round);
-                if (p.Nickname && stats.diff > maxGhostDiff) {
-                    maxGhostDiff = stats.diff;
-                    ghostMvpNickname = p.Nickname;
-                }
-                return stats;
-            });
-
-            const max = Math.max(phantom.length, ghost.length);
-
-            for (let i = 0; i < max; i++) {
-                const p1 = phantom[i] || {};
-                const p2 = ghost[i] || {};
-
-                const p1Stats = phantomStats[i] || { text: '', diff: -9999, current: 0 };
-                const p2Stats = ghostStats[i] || { text: '', diff: -9999, current: 0 };
-
-                const isP1Mvp = p1.Nickname && p1.Nickname === phantomMvpNickname;
-                const isP2Mvp = p2.Nickname && p2.Nickname === ghostMvpNickname;
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="player-name-cell ${isP1Mvp ? 'team-mvp' : ''}" data-nickname="${p1.Nickname || ''}">
-                        ${p1.Nickname || ''}
-                    </td>
-                    <td>${p1.Nickname ? (p1.Kills || '0') : ''}</td>
-                    <td>${p1.Nickname ? (p1.Deaths || '0') : ''}</td>
-                    <td>${p1Stats.text}</td>
-                    <td class="player-name-cell ${isP2Mvp ? 'team-mvp' : ''}" data-nickname="${p2.Nickname || ''}">
-                        ${p2.Nickname || ''}
-                    </td>
-                    <td>${p2.Nickname ? (p2.Kills || '0') : ''}</td>
-                    <td>${p2.Nickname ? (p2.Deaths || '0') : ''}</td>
-                    <td>${p2Stats.text}</td>
-                `;
-
-                row.querySelectorAll('.player-name-cell').forEach(cell => {
-                    const nick = cell.getAttribute('data-nickname');
-                    if (nick) {
-                        cell.addEventListener('click', () => {
-                            window.location.href = `user.html?nickname=${encodeURIComponent(nick)}&t=${Date.now()}`;
-                        });
-                    }
-                });
-
-                tbody.appendChild(row);
-            }
-
-            modal.classList.add('active');
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}`;
+            UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
+            document.getElementById('matchModal').classList.add('active');
         }
 
+        // ---- 차트 ----
+        function hexToRgba(hex, alpha) {
+            const h = hex.replace('#', '');
+            const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+            return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+        }
+
+        function chartFont() {
+            return { family: "'Geist Mono', ui-monospace, monospace", size: 11 };
+        }
+
+        function baseOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                interaction: { mode: 'index', intersect: false },
+                layout: { padding: { right: 4 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        padding: 8,
+                        cornerRadius: 8,
+                        borderWidth: 1,
+                        titleFont: chartFont(),
+                        bodyFont: chartFont(),
+                    },
+                    zoom: { zoom: { drag: { enabled: true, borderWidth: 1 }, mode: 'x' } },
+                },
+            };
+        }
+
+        // 테마에 맞는 색을 차트에 넣는다 (테마 전환 때마다 다시 호출)
+        function applyChartTheme() {
+            const muted = UI.cssVar('--text-3');
+            const grid = UI.cssVar('--hairline');
+            const accent = UI.cssVar('--accent');
+            [eloChartInstance, kdrChartInstance].forEach(chart => {
+                if (!chart) return;
+                const o = chart.options;
+                o.scales.x.ticks.color = muted;
+                o.scales.y.ticks.color = muted;
+                o.scales.y.grid.color = grid;
+                o.plugins.tooltip.backgroundColor = UI.cssVar('--raised');
+                o.plugins.tooltip.borderColor = UI.cssVar('--hairline-strong');
+                o.plugins.tooltip.titleColor = UI.cssVar('--text');
+                o.plugins.tooltip.bodyColor = UI.cssVar('--text-2');
+                o.plugins.zoom.zoom.drag.backgroundColor = hexToRgba(accent, 0.15);
+                o.plugins.zoom.zoom.drag.borderColor = accent;
+            });
+            if (eloChartInstance) {
+                eloChartInstance.data.datasets[0].borderColor = accent;
+                eloChartInstance.data.datasets[0].pointHoverBackgroundColor = accent;
+                eloChartInstance.update('none');
+            }
+            if (kdrChartInstance) {
+                kdrChartInstance.data.datasets[0].borderColor = UI.cssVar('--text-2');
+                kdrChartInstance.data.datasets[0].pointHoverBackgroundColor = UI.cssVar('--text-2');
+                kdrChartInstance.update('none');
+            }
+        }
+
+        // ELO 추이: 100점 단위 티어 구간을 눈금으로 깔고 그 위에 선수의 선 하나만 액센트로 그린다
         function renderELOTrend() {
             const ctx = document.getElementById('eloTrend').getContext('2d');
+            const lo = Math.min(...eloHistory), hi = Math.max(...eloHistory);
+            const options = baseOptions();
+            options.scales = {
+                x: {
+                    grid: { display: false },
+                    border: { color: UI.cssVar('--hairline-strong') },
+                    ticks: { maxTicksLimit: 10, font: chartFont() },
+                },
+                y: {
+                    min: Math.floor((lo - 20) / 100) * 100,
+                    max: Math.ceil((hi + 20) / 100) * 100,
+                    border: { display: false },
+                    grid: { lineWidth: 1 },
+                    ticks: {
+                        stepSize: 100,
+                        font: chartFont(),
+                        // 눈금 하나가 티어 하나의 시작점: 값 대신 티어 이름을 적는다
+                        callback: (value) => UI.tierInfo(value).short,
+                    },
+                },
+            };
+            options.plugins.tooltip.callbacks = {
+                title: (items) => `Match #${items[0].dataIndex + 1}`,
+                label: (context) => `ELO ${context.raw} · ${tierHistory[context.dataIndex] || ''}`,
+            };
+
             eloChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1230,69 +721,20 @@
                     datasets: [{
                         label: 'ELO',
                         data: eloHistory,
-                        borderColor: '#8b5cf6',
-                        backgroundColor: 'rgba(139,92,246,0.15)',
-                        tension: 0.3,
-                        fill: true
+                        borderWidth: 2,
+                        tension: 0.25,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
-                            },
-                            ticks: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
-                                font: { family: 'Plus Jakarta Sans' }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
-                            },
-                            ticks: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
-                                font: { family: 'Plus Jakarta Sans' }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const tier = tierHistory[context.dataIndex] || 'Unranked';
-                                    return `ELO: ${context.raw} (${tier})`;
-                                }
-                            }
-                        },
-                        zoom: {
-                            zoom: {
-                                drag: {
-                                    enabled: true,
-                                    backgroundColor: 'rgba(129, 140, 248, 0.25)',
-                                    borderColor: 'rgba(129, 140, 248, 0.65)',
-                                    borderWidth: 1.5
-                                },
-                                mode: 'x'
-                            }
-                        }
-                    }
-                }
+                options
             });
-
-            ctx.canvas.addEventListener('dblclick', () => {
-                if (eloChartInstance) eloChartInstance.resetZoom();
-            });
+            ctx.canvas.addEventListener('dblclick', () => eloChartInstance && eloChartInstance.resetZoom());
+            applyChartTheme();
         }
 
+        // KDR 추이는 조용한 보조: 중립색 선 하나
         function renderKDRTrend(matches) {
             const ctx = document.getElementById('kdrTrend').getContext('2d');
             let totalKills = 0;
@@ -1301,8 +743,26 @@
             const kdrHistory = matches.map(match => {
                 totalKills += parseInt(match.Kills || 0);
                 totalDeaths += parseInt(match.Deaths || 0);
-                return (totalKills / Math.max(1, totalDeaths)).toFixed(2);
+                return Number((totalKills / Math.max(1, totalDeaths)).toFixed(2));
             });
+
+            const options = baseOptions();
+            options.scales = {
+                x: {
+                    grid: { display: false },
+                    border: { color: UI.cssVar('--hairline-strong') },
+                    ticks: { maxTicksLimit: 10, font: chartFont() },
+                },
+                y: {
+                    border: { display: false },
+                    grid: { lineWidth: 1 },
+                    ticks: { maxTicksLimit: 4, font: chartFont(), callback: (v) => Number(v).toFixed(1) },
+                },
+            };
+            options.plugins.tooltip.callbacks = {
+                title: (items) => `Match #${items[0].dataIndex + 1}`,
+                label: (context) => `KDR ${Number(context.raw).toFixed(2)}`,
+            };
 
             kdrChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -1311,59 +771,17 @@
                     datasets: [{
                         label: 'KDR',
                         data: kdrHistory,
-                        borderColor: '#ec4899',
-                        backgroundColor: 'rgba(236,72,153,0.12)',
-                        tension: 0.3,
-                        fill: true
+                        borderWidth: 1.5,
+                        tension: 0.25,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 3,
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
-                            },
-                            ticks: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
-                                font: { family: 'Plus Jakarta Sans' }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'
-                            },
-                            ticks: {
-                                color: () => document.documentElement.getAttribute('data-theme') === 'light' ? '#7f8c8d' : '#94a3b8',
-                                font: { family: 'Plus Jakarta Sans' }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        zoom: {
-                            zoom: {
-                                drag: {
-                                    enabled: true,
-                                    backgroundColor: 'rgba(236, 72, 153, 0.2)',
-                                    borderColor: 'rgba(236, 72, 153, 0.6)',
-                                    borderWidth: 1.5
-                                },
-                                mode: 'x'
-                            }
-                        }
-                    }
-                }
+                options
             });
-
-            ctx.canvas.addEventListener('dblclick', () => {
-                if (kdrChartInstance) kdrChartInstance.resetZoom();
-            });
+            ctx.canvas.addEventListener('dblclick', () => kdrChartInstance && kdrChartInstance.resetZoom());
+            applyChartTheme();
         }
 
         document.getElementById('closeModal').addEventListener('click', () => {
@@ -1372,9 +790,7 @@
 
         window.addEventListener('click', e => {
             const modal = document.getElementById('matchModal');
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
+            if (e.target === modal) modal.classList.remove('active');
         });
     </script>
 
