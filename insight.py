@@ -24,6 +24,8 @@ CONFIG = {
     "placement_games": 5,    # 이 경기 수 이하는 판단을 보류하는 문장만 쓴다
     "ridge": 3.0,            # 경기 수가 적은 선수를 평균 쪽으로 당기는 세기 (가상의 평균 경기 수)
     "gap_min_games": 10,     # 순위 차이를 말하려면 필요한 경기 수 (적으면 보정값이 불안정)
+    "adj_good": 1.15,        # 보정값이 이 이상이면 '상대에 비해 성적이 좋다'
+    "adj_bad": 0.87,         # 이 이하이면 '상대에 비해 성적이 낮다'
     "rank_gap": 8,           # ELO 순위와 보정 순위가 이만큼 이상 차이나면 '다르다'고 말함
     "opp_delta": 60,         # 상대 평균 ELO가 리그 평균과 이만큼 이상 차이나면 언급
     "mate_theta": 0.15,      # 팀원 강도 추정값이 이만큼 이상 낮으면(약하면) 언급
@@ -105,7 +107,7 @@ def compute_insights(rows, result, config=None):
         out[p] = {
             "games": n, "adj": round(math.exp(theta[p]), 2), "opp_avg": round(opp_avg), "opp_delta": round(opp_delta), "theta": round(theta[p], 3),
             "elo_rank": elo_rank.get(p), "adj_rank": adj_rank.get(p), "gap": gap,
-            "trend": trend, "text": sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg),
+            "trend": trend, "text": sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg, math.exp(theta[p])),
         }
     return out
 
@@ -115,14 +117,14 @@ def _ro(number):
     return "으로" if str(number)[-1] in "036" else "로"
 
 
-def sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg):
+def sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg, adj=1.0):
     """해당하는 조각 중 우선순위가 높은 두 개를 문장으로 만든다. 쉼표는 쓰지 않는다."""
     opp = round(opp_avg)
     if n <= cfg["placement_games"]:
         if opp_delta >= cfg["opp_delta"]:
-            tail = f"지금까지 만난 상대는 평균 ELO {opp}{_ro(opp)} 보통보다 강한 편이었습니다."
+            tail = f"지금까지 만난 상대는 평균 ELO {opp}{_ro(opp)} 보통보다 강한 편이어서 KDR과 승률은 낮게 나왔을 수 있습니다."
         elif opp_delta <= -cfg["opp_delta"]:
-            tail = f"지금까지 만난 상대는 평균 ELO {opp}{_ro(opp)} 보통보다 약한 편이었습니다."
+            tail = f"지금까지 만난 상대는 평균 ELO {opp}{_ro(opp)} 보통보다 약한 편이어서 KDR과 승률은 후하게 나왔을 수 있습니다."
         else:
             tail = "지금까지 만난 상대는 보통 수준이었습니다."
         return f"아직 {n}경기라 평가하기엔 이릅니다. {tail}"
@@ -133,10 +135,24 @@ def sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg):
             parts.append("상대 강도를 감안하면 ELO 순위보다 성적이 좋은 편입니다.")
         elif gap <= -cfg["rank_gap"]:
             parts.append("상대 강도를 감안하면 ELO 순위만큼의 성적은 아닌 편입니다.")
+    # 상대 강도는 선수 자신의 수준(보정값)과 함께 읽어야 뜻이 정해진다
+    good, bad = adj >= cfg["adj_good"], adj <= cfg["adj_bad"]
     if opp_delta >= cfg["opp_delta"]:
-        parts.append(f"평균 ELO {opp}{_ro(opp)} 보통보다 강한 상대와 많이 붙었습니다.")
+        head = f"평균 ELO {opp}{_ro(opp)} 보통보다 강한 상대와 많이 붙"
+        if good:
+            parts.append(f"{head}었는데도 성적이 좋았습니다.")
+        elif bad:
+            parts.append(f"{head}었고 성적은 평균 이하입니다.")
+        else:
+            parts.append(f"{head}어서 KDR과 승률이 낮게 나왔을 수 있습니다.")
     elif opp_delta <= -cfg["opp_delta"]:
-        parts.append(f"평균 ELO {opp}{_ro(opp)} 보통보다 약한 상대와 많이 붙었습니다.")
+        head = f"평균 ELO {opp}{_ro(opp)} 보통보다 약한 상대와 많이 붙"
+        if good:
+            parts.append(f"{head}었지만 상대 강도를 빼도 성적이 좋습니다.")
+        elif bad:
+            parts.append(f"{head}었는데도 성적은 평균 이하입니다.")
+        else:
+            parts.append(f"{head}어서 KDR과 승률이 후하게 나왔을 수 있습니다.")
     if mate_theta <= -cfg["mate_theta"] and win_rate >= cfg["mate_winrate"]:
         parts.append("팀원이 약한 경기에서도 승률이 높습니다.")
     if trend >= cfg["trend_delta"]:
