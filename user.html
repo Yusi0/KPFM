@@ -774,6 +774,7 @@
         </div>
     </div>
 
+    <script src="maps.js"></script>
     <script>
         // Load page theme
         let currentTheme = localStorage.getItem('theme') || 'dark';
@@ -974,13 +975,7 @@
 
             matches.forEach(match => {
                 const rawMap = (match.Map || 'Unknown').toLowerCase();
-                const mapNames = {
-                    metro: "Metro",
-                    warehouse: "Warehouse",
-                    desert: "Desert Storm",
-                    elevation: "Elevation"
-                };
-                const map = mapNames[rawMap] || rawMap;
+                const map = mapDisplayName(rawMap);
 
                 if (!stats[map]) {
                     stats[map] = { wins: 0, total: 0 };
@@ -1020,13 +1015,7 @@
 
                 const won = match.Team === match['Winning Team'];
                 const rawMap = (match.Map || 'Unknown').toLowerCase();
-                const mapNames = {
-                    metro: "Metro",
-                    warehouse: "Warehouse",
-                    desert: "Desert Storm",
-                    elevation: "Elevation"
-                };
-                const map = mapNames[rawMap] || rawMap;
+                const map = mapDisplayName(rawMap);
 
                 return {
                     playNumber: index + 1,

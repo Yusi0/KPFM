@@ -1025,6 +1025,7 @@
         </div>
     </div>
 
+    <script src="maps.js"></script>
     <script>
         // Set page theme from localStorage
         let currentTheme = localStorage.getItem('theme') || 'dark';
@@ -1555,13 +1556,7 @@
             const pageItems = globalRoundsData.slice(startIndex, endIndex);
 
             pageItems.forEach(r => {
-                const mapNames = {
-                    metro: "Metro",
-                    warehouse: "Warehouse",
-                    desert: "Desert Storm",
-                    elevation: "Elevation"
-                };
-                const mapDisplay = mapNames[r.map.toLowerCase()] || r.map;
+                const mapDisplay = mapDisplayName(r.map);
                 const winnerName = r.winningTeam === 1 ? 'Phantom' : 'Ghost';
                 const winnerClass = r.winningTeam === 1 ? 'winner-phantom' : 'winner-ghost';
 
