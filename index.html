@@ -523,33 +523,6 @@
             z-index: 999;
         }
 
-        /* 보정값과 한 줄 설명: 닉네임 아래 */
-        .c-name-wrap {
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .c-note {
-            font-size: 12px;
-            line-height: 16px;
-            color: var(--text-3);
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            word-break: keep-all;
-        }
-
-        .c-note .adj {
-            font-family: var(--mono);
-        }
-
-        .c-note-text {
-            margin-left: 8px;
-        }
-
         /* ---- Wide: 상자 없이 한 장의 페이지처럼 ---- */
         .page-title {
             display: none;
@@ -621,7 +594,7 @@
 
         /* 이름과 ELO가 먼저 보이고 나머지 열은 한 단계 조용하게 */
         [data-layout="wide"] .row {
-            height: 68px;
+            height: 56px;
         }
 
         [data-layout="wide"] .c-name {
@@ -777,22 +750,6 @@
             left: auto;
             right: 0;
             width: 200px;
-        }
-
-        [data-layout="compact"] .c-name-wrap {
-            display: contents;
-        }
-
-        [data-layout="compact"] .row-head {
-            flex-wrap: wrap;
-        }
-
-        [data-layout="compact"] .c-note {
-            order: 10;
-            flex: 0 0 100%;
-            display: block;
-            overflow: visible;
-            margin-top: 2px;
         }
 
         /* Compact에서도 와이드와 같은 기조: 이름과 ELO가 먼저, 나머지는 조용하게 */
@@ -1026,7 +983,6 @@
         let allAftercalc = [];
         let currentSort = 'elo';
         let sortDesc = true;
-        let insightMap = {};
         let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds' (800px 미만)
 
         let globalRoundsData = [];
@@ -1148,12 +1104,6 @@
                     aftercalcResponse.text()
                 ]);
 
-                // 보정값과 설명은 있으면 보여 주고 없어도 화면은 정상 동작
-                try {
-                    const insightResponse = await fetch(`insight.csv${timestamp}`);
-                    if (insightResponse.ok) insightMap = UI.parseInsights(await insightResponse.text());
-                } catch (e) { /* 무시 */ }
-
                 const parse = (text) => {
                     const rows = text.trim().split('\n');
                     const headers = rows[0].split(',').map(h => h.trim());
@@ -1254,12 +1204,6 @@
             document.getElementById('rankedCount').innerText = leaderboardData.filter(p => p.rank !== 'N/A').length;
         }
 
-        function noteHTML(nickname) {
-            const ins = insightMap[nickname.toLowerCase()];
-            if (!ins) return '';
-            return `<span class="c-note" title="${UI.esc(ins.text)}">${UI.adjHTML(ins.adj)}<span class="c-note-text">${UI.esc(ins.text)}</span></span>`;
-        }
-
         function renderLeaderboard(data) {
             const dir = sortDesc ? 1 : -1;
             data.sort((a, b) => {
@@ -1295,10 +1239,7 @@
                 row.innerHTML = `
                     <div class="row-head">
                         <span class="c-rank">${player.rank === 'N/A' ? '–' : player.rank}</span>
-                        <span class="c-name-wrap">
-                            <span class="c-name">${UI.esc(player.nickname)}</span>
-                            ${noteHTML(player.nickname)}
-                        </span>
+                        <span class="c-name">${UI.esc(player.nickname)}</span>
                         <span class="c-tier">${UI.tierHTML(player.tier, player.matches)}</span>
                     </div>
                     <div class="cell c-elo" data-label="ELO">
