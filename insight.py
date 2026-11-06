@@ -121,37 +121,39 @@ def sentence(n, opp_avg, opp_delta, gap, mate_theta, win_rate, trend, cfg, adj=1
     """해당하는 조각 중 우선순위가 높은 두 개를 짧은 문장으로 만든다. 쉼표는 쓰지 않는다."""
     strong = opp_delta >= cfg["opp_delta"]
     weak = opp_delta <= -cfg["opp_delta"]
+    # 기준은 모든 경기의 상대 평균 ELO. 숫자 대신 그 기준과의 차이로 말한다 (1499를 '약하다'고 하면 어색하므로)
+    opp = f"평균적인 상대보다 ELO가 {abs(round(opp_delta))} {'높은' if strong else '낮은'} 상대"
     if n <= cfg["placement_games"]:
         text = f"아직 {n}경기라 판단하기 어렵습니다."
         if weak:
-            text += " 만난 상대가 약한 편이라 KDR과 승률이 높게 보일 수 있습니다."
+            text += f" {opp}를 만나 KDR과 승률이 높게 보일 수 있습니다."
         elif strong:
-            text += " 만난 상대가 강한 편이라 KDR과 승률이 낮게 보일 수 있습니다."
+            text += f" {opp}를 만나 KDR과 승률이 낮게 보일 수 있습니다."
         return text
 
     good, bad = adj >= cfg["adj_good"], adj <= cfg["adj_bad"]
     parts = []
     if gap is not None and n >= cfg["gap_min_games"]:
         if gap >= cfg["rank_gap"]:
-            parts.append("상대 강도를 반영하면 순위보다 성적이 좋습니다.")
+            parts.append("상대 수준을 고려하면 순위보다 성적이 좋습니다.")
         elif gap <= -cfg["rank_gap"]:
-            parts.append("상대 강도를 반영하면 순위보다 성적이 낮습니다.")
-    # 상대 강도는 선수 자신의 수준(보정값)과 함께 읽어야 뜻이 정해진다
+            parts.append("상대 수준을 고려하면 순위보다 성적이 낮습니다.")
+    # 상대 수준은 선수 자신의 성적(보정값)과 함께 읽어야 뜻이 정해진다
     if strong:
-        parts.append("강한 상대와 자주 붙었는데도 성적이 좋습니다." if good
-                     else "강한 상대와 자주 붙었고 성적은 평균 이하입니다." if bad
-                     else "강한 상대와 자주 붙어서 KDR과 승률이 낮게 보일 수 있습니다.")
+        parts.append(f"{opp}와 자주 매칭됐음에도 성적이 좋습니다." if good
+                     else f"{opp}와 자주 매칭됐고 성적은 평균 이하입니다." if bad
+                     else f"{opp}와 자주 매칭돼 KDR과 승률이 낮게 보일 수 있습니다.")
     elif weak:
-        parts.append("약한 상대와 자주 붙었지만 그걸 빼도 성적이 좋습니다." if good
-                     else "약한 상대와 자주 붙었는데도 성적은 평균 이하입니다." if bad
-                     else "약한 상대와 자주 붙어서 KDR과 승률이 높게 보일 수 있습니다.")
+        parts.append(f"{opp}와 자주 매칭됐지만 이를 감안해도 성적이 좋습니다." if good
+                     else f"{opp}와 자주 매칭됐음에도 성적은 평균 이하입니다." if bad
+                     else f"{opp}와 자주 매칭돼 KDR과 승률이 높게 보일 수 있습니다.")
     if mate_theta <= -cfg["mate_theta"] and win_rate >= cfg["mate_winrate"]:
-        parts.append("팀원이 약한 경기에서도 승률이 높습니다.")
+        parts.append("팀원 수준이 낮은 경기에서도 승률이 높습니다.")
     if trend >= cfg["trend_delta"]:
         parts.append(f"최근 {cfg['trend_games']}경기에서 ELO가 {trend} 올랐습니다.")
     elif trend <= -cfg["trend_delta"]:
         parts.append(f"최근 {cfg['trend_games']}경기에서 ELO가 {abs(trend)} 내려갔습니다.")
-    text = " ".join(parts[:2]) or "상대 강도를 반영해도 순위와 성적이 비슷합니다."
+    text = " ".join(parts[:2]) or "상대 수준을 고려해도 순위와 성적이 비슷합니다."
     assert "," not in text
     return text
 
