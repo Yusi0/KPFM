@@ -9,6 +9,8 @@ const MAP_NAMES = {
     derrick: "Derrick",
     containers: "Containers O' Fun",
     suburbia: "Suburbia",
+    bazaar: "Bazaar",
+    mall: "Mall",
 };
 
 function mapDisplayName(raw) {

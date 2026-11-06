@@ -57,13 +57,17 @@
             padding: 12px 16px 0;
         }
 
+        .tabs {
+            border-bottom: 1px solid var(--hairline);
+        }
+
         .tabs .seg {
             display: flex;
-            width: 100%;
+            gap: 24px;
         }
 
         .tabs .seg button {
-            flex: 1;
+            height: 40px;
         }
 
         /* 랭킹 패널 */
@@ -522,9 +526,10 @@
         }
 
         [data-layout="compact"] .toolbar {
-            background: var(--surface);
-            border: 1px solid var(--hairline);
-            border-radius: 12px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--hairline);
+            border-radius: 0;
         }
 
         [data-layout="compact"] .list-head {
@@ -542,14 +547,15 @@
             align-items: start;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px 8px;
-            padding: 12px;
-            background: var(--surface);
-            border: 1px solid var(--hairline);
-            border-radius: 12px;
+            padding: 16px 4px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--hairline);
+            border-radius: 0;
         }
 
         [data-layout="compact"] .row:hover {
-            background: var(--raised);
+            background: transparent;
         }
 
         [data-layout="compact"] .row.in-lobby {

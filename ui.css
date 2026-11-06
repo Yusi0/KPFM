@@ -206,6 +206,8 @@ a {
 .icon-btn {
     width: 32px;
     color: var(--text-2);
+    background: transparent;
+    border-color: transparent;
 }
 
 .btn:hover:not(:disabled),
@@ -237,23 +239,19 @@ a {
     opacity: 0.92;
 }
 
-/* Wide / Compact 전환 */
+/* 탭과 보기 전환: 상자 없이 글자 + 밑줄 */
 .seg {
     display: inline-flex;
-    padding: 2px;
-    gap: 2px;
-    border: 1px solid var(--hairline-strong);
-    border-radius: 8px;
+    gap: 16px;
 }
 
 .seg button {
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 6px;
+    height: 32px;
+    padding: 0;
     font-size: 13px;
-    font-weight: 500;
     color: var(--text-3);
-    transition: color 150ms var(--ease), background-color 150ms var(--ease);
+    border-bottom: 1px solid transparent;
+    transition: color 150ms var(--ease), border-color 150ms var(--ease);
 }
 
 .seg button:hover {
@@ -261,8 +259,8 @@ a {
 }
 
 .seg button[aria-pressed="true"] {
-    background: var(--raised);
     color: var(--text);
+    border-bottom-color: var(--accent);
 }
 
 @media (max-width: 1023px) {
@@ -598,5 +596,15 @@ a {
     *::after {
         animation-duration: 1ms !important;
         transition-duration: 1ms !important;
+    }
+}
+
+/* 모바일: 카드 상자를 걷어내고 구분선으로만 나눈다 */
+@media (max-width: 599px) {
+    .panel {
+        background: transparent;
+        border-color: transparent;
+        border-radius: 0;
+        border-top-color: var(--hairline);
     }
 }

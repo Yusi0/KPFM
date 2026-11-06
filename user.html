@@ -248,10 +248,27 @@
         }
 
         @media (max-width: 599px) {
-            .kd-raw { display: none; }
-            .history .tbl th, .history .tbl td { padding-left: 8px; padding-right: 8px; }
-            .history .tbl th:first-child, .history .tbl td:first-child { padding-left: 12px; }
-            .history .tbl th:last-child, .history .tbl td:last-child { padding-right: 12px; }
+            /* 표 대신 두 줄짜리 목록: 1줄 결과 · 맵 · ELO, 2줄 번호 · KDR */
+            .history .tbl, .history .tbl tbody { display: block; }
+            .history .tbl thead { display: none; }
+            .history .tbl tbody tr {
+                display: grid;
+                grid-template-columns: 72px minmax(0, 1fr) auto;
+                grid-template-areas: "res map elo" "num kdr kdr";
+                column-gap: 8px;
+                row-gap: 2px;
+                align-items: center;
+                padding: 10px 16px;
+                border-bottom: 1px solid var(--hairline);
+            }
+            .history .tbl tbody tr:last-child { border-bottom: none; }
+            .history .tbl td { display: block; height: auto; padding: 0; border: none; text-align: left; }
+            .history .tbl td:nth-child(1) { grid-area: num; font-size: 12px; }
+            .history .tbl td:nth-child(2) { grid-area: res; }
+            .history .tbl td:nth-child(3) { grid-area: map; overflow: hidden; text-overflow: ellipsis; }
+            .history .tbl td:nth-child(4) { grid-area: kdr; font-size: 12px; text-align: left; }
+            .history .tbl td:nth-child(5) { grid-area: elo; text-align: right; }
+            .kd-raw { display: inline; }
         }
 
         .map-name {
