@@ -589,6 +589,45 @@ a {
     font-weight: 500;
 }
 
+/* 좁은 화면에서 쌓은 보기 (ui.js가 .stacked를 붙인다) */
+#matchDetails.stacked {
+    min-width: 0;
+}
+
+#matchDetails.stacked thead {
+    display: none;
+}
+
+#matchDetails.stacked td:nth-child(n) {
+    border-left: none;
+    padding-left: 8px;
+}
+
+#matchDetails.stacked td:nth-child(1) {
+    width: 46%;
+}
+
+#matchDetails.stacked td:nth-child(2),
+#matchDetails.stacked td:nth-child(3) {
+    width: 12%;
+    text-align: right;
+}
+
+#matchDetails.stacked td:nth-child(4) {
+    width: 30%;
+    text-align: right;
+}
+
+#matchDetails.stacked .team-row td {
+    height: 32px;
+    font-size: 12px;
+    color: var(--text-3);
+}
+
+#matchDetails.stacked .team-row:not(:first-child) td {
+    padding-top: 12px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 
     *,

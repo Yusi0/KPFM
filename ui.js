@@ -154,13 +154,37 @@
                     <td class="num">${x.elo} <span class="${x.diff >= 0 ? 'positive' : 'negative'}">${sign}${x.diff}</span></td>`;
         };
 
-        for (let i = 0; i < rows; i++) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = cells(sides[0], i) + cells(sides[1], i);
+        const wire = (tr) => {
             tr.querySelectorAll('.name').forEach(td => {
                 const nick = td.getAttribute('data-nickname');
                 if (nick) td.addEventListener('click', () => goToPlayer(nick));
             });
+        };
+
+        // 좁은 화면: 두 팀을 위아래로 쌓아 가로 스크롤이 생기지 않게 한다 (4열)
+        const table = tbody.closest('table');
+        const narrow = window.innerWidth < 600;
+        if (table) table.classList.toggle('stacked', narrow);
+        if (narrow) {
+            [['Phantom', 1], ['Ghost', 2]].forEach(([label, team], si) => {
+                const head = document.createElement('tr');
+                head.className = 'team-row';
+                head.innerHTML = `<td><span class="team"><i class="team-mark team-${team}"></i>${label}</span></td><td class="r">K</td><td class="r">D</td><td>ELO</td>`;
+                tbody.appendChild(head);
+                sides[si].list.forEach((_x, i) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = cells(sides[si], i);
+                    wire(tr);
+                    tbody.appendChild(tr);
+                });
+            });
+            return;
+        }
+
+        for (let i = 0; i < rows; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = cells(sides[0], i) + cells(sides[1], i);
+            wire(tr);
             tbody.appendChild(tr);
         }
     }
