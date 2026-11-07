@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="ui.css">
     <script src="ui.js"></script>
 
@@ -204,7 +204,7 @@
         .list-head,
         .row {
             display: grid;
-            grid-template-columns: 40px minmax(0, 1.6fr) 124px 108px 56px 68px 68px 84px;
+            grid-template-columns: 40px minmax(0, 1.6fr) 124px 108px 56px 68px 68px 68px 84px;
             column-gap: 12px;
             align-items: center;
             padding: 0 16px;
@@ -273,6 +273,8 @@
         }
 
         .c-kdr,
+
+        .c-adj,
         .c-wr,
         .c-matches {
             text-align: right;
@@ -607,6 +609,8 @@
         }
 
         [data-layout="wide"] .c-kdr,
+
+        [data-layout="wide"] .c-adj,
         [data-layout="wide"] .c-wr,
         [data-layout="wide"] .c-matches {
             color: var(--text-2);
@@ -655,7 +659,7 @@
         [data-layout="compact"] .row {
             height: auto;
             align-items: start;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px 8px;
             padding: 16px 4px;
             background: transparent;
@@ -678,12 +682,12 @@
             align-self: center;
             min-height: 28px;
             gap: 8px;
-            grid-column: 1 / span 3;
+            grid-column: 1 / span 4;
             min-width: 0;
         }
 
         [data-layout="compact"] .lobby-toggle {
-            grid-column: 4;
+            grid-column: 5;
             grid-row: 1;
         }
 
@@ -708,6 +712,8 @@
         }
 
         [data-layout="compact"] .c-kdr,
+
+        [data-layout="compact"] .c-adj,
         [data-layout="compact"] .c-wr,
         [data-layout="compact"] .c-matches {
             text-align: left;
@@ -766,6 +772,8 @@
         }
 
         [data-layout="compact"] .c-kdr,
+
+        [data-layout="compact"] .c-adj,
         [data-layout="compact"] .c-wr,
         [data-layout="compact"] .c-matches {
             color: var(--text-2);
@@ -816,6 +824,169 @@
             }
 
 
+        }
+
+        /* 스탯이 주인공: KDR, 승률, 경기 수를 같은 크기의 숫자로 크게. ELO·순위·티어는 보조.
+           지금 정렬 기준인 열만 밝게 */
+        .c-kdr,
+        .c-adj,
+        .c-wr,
+        .c-matches {
+            font-family: var(--display);
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: 0.01em;
+            color: var(--text-2);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .c-wr {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .wr-bar {
+            display: block;
+            width: 100%;
+            max-width: 64px;
+            height: 3px;
+            background: var(--hairline-strong);
+        }
+
+        .wr-bar::after {
+            content: "";
+            display: block;
+            height: 100%;
+            width: var(--w);
+            background: var(--text-3);
+        }
+
+        .board[data-sort="kdr"] .c-kdr,
+        .board[data-sort="adj"] .c-adj,
+        .board[data-sort="winrate"] .c-wr,
+        .board[data-sort="matches"] .c-matches {
+            color: var(--text);
+        }
+
+        .board[data-sort="winrate"] .wr-bar::after {
+            background: var(--accent);
+        }
+
+        .list-head [data-k] {
+            transition: color 150ms var(--ease);
+        }
+
+        .board[data-sort="elo"] .list-head [data-k="elo"],
+        .board[data-sort="kdr"] .list-head [data-k="kdr"],
+        .board[data-sort="adj"] .list-head [data-k="adj"],
+        .board[data-sort="winrate"] .list-head [data-k="winrate"],
+        .board[data-sort="matches"] .list-head [data-k="matches"] {
+            color: var(--text);
+        }
+
+        .c-elo .num,
+        .c-elo {
+            color: var(--text-3);
+        }
+
+        .c-elo .ruler {
+            opacity: 0.55;
+        }
+
+        .board[data-sort="elo"] .c-elo {
+            color: var(--text);
+        }
+
+        [data-layout="wide"] .row,
+        [data-layout="wide"] .list-head {
+            grid-template-columns: 40px minmax(0, 1.4fr) 104px 112px 76px 76px 100px 76px 84px;
+        }
+
+        [data-layout="wide"] .row {
+            height: 60px;
+        }
+
+        [data-layout="wide"] .c-kdr,
+
+        [data-layout="wide"] .c-adj,
+        [data-layout="wide"] .c-wr,
+        [data-layout="wide"] .c-matches {
+            font-size: 26px;
+            color: var(--text-2);
+        }
+
+        [data-layout="wide"] .board[data-sort="kdr"] .c-kdr,
+        [data-layout="wide"] .board[data-sort="adj"] .c-adj,
+        [data-layout="wide"] .board[data-sort="winrate"] .c-wr,
+        [data-layout="wide"] .board[data-sort="matches"] .c-matches {
+            color: var(--text);
+        }
+
+        [data-layout="wide"] .c-elo .num {
+            font-size: 14px;
+            min-width: 36px;
+        }
+
+        /* Wide인데 목록이 좁을 때(1024~1319px): 티어 열과 ELO 막대를 빼서 이름 칸을 지킨다 */
+        @media (min-width: 1024px) and (max-width: 1319px) {
+
+            [data-layout="wide"] .row,
+            [data-layout="wide"] .list-head {
+                grid-template-columns: 32px minmax(0, 1fr) 56px 64px 64px 88px 64px 72px;
+                column-gap: 8px;
+            }
+
+            [data-layout="wide"] .c-tier,
+            [data-layout="wide"] .list-head > span:nth-child(3),
+            [data-layout="wide"] .c-elo .ruler {
+                display: none;
+            }
+
+            [data-layout="wide"] .c-kdr,
+
+            [data-layout="wide"] .c-adj,
+            [data-layout="wide"] .c-wr,
+            [data-layout="wide"] .c-matches {
+                font-size: 22px;
+            }
+        }
+
+        [data-layout="compact"] .c-kdr,
+
+        [data-layout="compact"] .c-adj,
+        [data-layout="compact"] .c-wr,
+        [data-layout="compact"] .c-matches {
+            font-size: 24px;
+            color: var(--text-2);
+        }
+
+        [data-layout="compact"] .board[data-sort="kdr"] .c-kdr,
+        [data-layout="compact"] .board[data-sort="adj"] .c-adj,
+        [data-layout="compact"] .board[data-sort="winrate"] .c-wr,
+        [data-layout="compact"] .board[data-sort="matches"] .c-matches {
+            color: var(--text);
+        }
+
+        [data-layout="compact"] .c-wr {
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        [data-layout="compact"] .c-wr {
+            gap: 0;
+        }
+
+        [data-layout="compact"] .wr-bar {
+            max-width: 48px;
+            margin-top: 6px;
+        }
+
+        [data-layout="compact"] .c-elo .num {
+            font-size: 14px;
         }
     </style>
 </head>
@@ -869,6 +1040,7 @@
                         <div class="custom-select-options" id="customSortOptions">
                             <div class="custom-option active" data-value="elo" data-short="ELO">ELO</div>
                             <div class="custom-option" data-value="kdr" data-short="KDR">KDR</div>
+                            <div class="custom-option" data-value="adj" data-short="보정값">보정값</div>
                             <div class="custom-option" data-value="winrate" data-short="Win rate">Win rate</div>
                             <div class="custom-option" data-value="matches" data-short="Matches">Matches</div>
                         </div>
@@ -879,10 +1051,11 @@
                     <span>#</span>
                     <span>Player</span>
                     <span>Tier</span>
-                    <span>ELO</span>
-                    <span class="r">KDR</span>
-                    <span class="r">Win rate</span>
-                    <span class="r">Matches</span>
+                    <span data-k="elo">ELO</span>
+                    <span class="r" data-k="kdr">KDR</span>
+                    <span class="r" data-k="adj">보정값</span>
+                    <span class="r" data-k="winrate">Win rate</span>
+                    <span class="r" data-k="matches">Matches</span>
                     <span></span>
                 </div>
 
@@ -1092,6 +1265,8 @@
             const shell = document.querySelector('.shell');
 
             try {
+                // 보정값 (insight.csv가 없어도 나머지는 정상 동작)
+                const insightPromise = fetch(`insight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
                 const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
                     fetch(`match.csv${timestamp}`),
                     fetch(`lboard.csv${timestamp}`),
@@ -1118,6 +1293,11 @@
                 allAftercalc = parse(aftercalcText);
 
                 processMatches(allMatches);
+                const insights = UI.parseInsights(await insightPromise);
+                leaderboardData.forEach(p => {
+                    const ins = insights[p.nickname.toLowerCase()];
+                    p.adj = ins ? parseFloat(ins.adj) : null;
+                });
                 updateLeaderboardWithEloAndTier(leaderboard);
 
             } catch (err) {
@@ -1214,6 +1394,9 @@
 
                 if (currentSort === 'kdr') {
                     return dir * ((b.kills / Math.max(1, b.deaths)) - (a.kills / Math.max(1, a.deaths)));
+                } else if (currentSort === 'adj') {
+                    const av = x => (x.adj == null ? -Infinity : x.adj);
+                    return dir * (av(b) - av(a));
                 } else if (currentSort === 'winrate') {
                     const wrA = a.matches > 0 ? (a.wins / a.matches) : 0;
                     const wrB = b.matches > 0 ? (b.wins / b.matches) : 0;
@@ -1226,13 +1409,16 @@
 
             const container = document.getElementById('leaderboardListContainer');
             container.innerHTML = '';
+            const board = container.closest('.board');
+            if (board) board.dataset.sort = currentSort;
 
             data.forEach(player => {
                 const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
                 const winRate = player.matches > 0 ? ((player.wins / player.matches) * 100).toFixed(1) + '%' : '0%';
+                const winPct = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
                 const isInLobby = selectedUsers.has(player.nickname);
 
-                const row = document.createElement('div');
+                const row =document.createElement('div');
                 row.className = 'row' + (isInLobby ? ' in-lobby' : '');
                 row.onclick = () => UI.goToPlayer(player.nickname);
 
@@ -1246,7 +1432,8 @@
                         <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
                     </div>
                     <div class="cell c-kdr num" data-label="KDR">${kdr}</div>
-                    <div class="cell c-wr num" data-label="Win rate">${winRate}</div>
+                    <div class="cell c-adj num" data-label="보정값">${player.adj == null ? '–' : player.adj.toFixed(2)}</div>
+                    <div class="cell c-wr num" data-label="Win rate">${winRate}<i class="wr-bar" style="--w:${winPct}%"></i></div>
                     <div class="cell c-matches num" data-label="Matches">${player.matches}</div>
                 `;
 

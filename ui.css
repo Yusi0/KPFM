@@ -8,6 +8,7 @@
 
     --font: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
     --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --display: 'Barlow Condensed', 'Geist', system-ui, sans-serif;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Dark: 따뜻한 그라파이트 */
