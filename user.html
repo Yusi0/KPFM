@@ -150,6 +150,19 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .tv.dim {
+            filter: blur(8px);
+            opacity: 0.8;
+            user-select: none;
+            transition: filter 150ms var(--ease);
+        }
+
+        @media (hover: hover) {
+            .tile:hover .tv.dim {
+                filter: none;
+            }
+        }
+
         .tl-note {
             font-size: 12px;
             line-height: 16px;
@@ -368,7 +381,7 @@
 
                 <div class="tiles">
                     <div class="tile"><span class="tl">KDR</span><span class="tv num" id="statKDR">0.00</span></div>
-                    <div class="tile"><span class="tl" id="statAdjLabel">보정값</span><span class="tv num" id="statAdj">–</span></div>
+                    <div class="tile"><span class="tl" id="statAdjLabel">보정값</span><span class="tv num" id="statAdj">–</span><span class="tl-note muted" id="statAdjNote" hidden>배치 중이라 참고용입니다</span></div>
                     <div class="tile"><span class="tl">Win rate</span><span class="tv num" id="statWR">0%</span><i class="wr-bar" id="statWRBar"></i></div>
                     <div class="tile"><span class="tl">Matches</span><span class="tv num" id="statMatches">0</span></div>
                 </div>
@@ -615,6 +628,9 @@
             document.getElementById("statWL").textContent = `${wins} / ${losses}`;
             document.getElementById("statWR").textContent = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
             document.getElementById("statMatches").textContent = matches;
+            const placing = matches <= UI.PLACEMENT_GAMES;
+            document.getElementById("statAdj").classList.toggle("dim", placing);
+            document.getElementById("statAdjNote").hidden = !placing;
             document.getElementById("statWRBar").style.setProperty('--w', `${Math.round((wins / Math.max(1, matches)) * 100)}%`);
         }
 

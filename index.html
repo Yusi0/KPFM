@@ -897,6 +897,20 @@
             opacity: 0.55;
         }
 
+        /* 배치 선수(5경기 이하)의 보정값은 경기가 적어 믿기 어려우므로 흐리게 가린다. 올려 두면 보인다 */
+        .board .c-adj.is-placement {
+            filter: blur(5px);
+            opacity: 0.8;
+            user-select: none;
+            transition: filter 150ms var(--ease);
+        }
+
+        @media (hover: hover) {
+            .board .row:hover .c-adj.is-placement {
+                filter: none;
+            }
+        }
+
         .board[data-sort="elo"] .c-elo {
             color: var(--text);
         }
@@ -1445,7 +1459,7 @@
                         <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
                     </div>
                     <div class="cell c-kdr num" data-label="KDR">${kdr}</div>
-                    <div class="cell c-adj num" data-label="보정값">${player.adj == null ? '–' : UI.adjIndex(player.adj)}</div>
+                    <div class="cell c-adj num${player.matches <= UI.PLACEMENT_GAMES ? ' is-placement' : ''}" data-label="보정값"${player.matches <= UI.PLACEMENT_GAMES ? ' title="배치 중이라 참고용입니다"' : ''}>${player.adj == null ? '–' : UI.adjIndex(player.adj)}</div>
                     <div class="cell c-wr num" data-label="Win rate">${winRate}<i class="wr-bar" style="--w:${winPct}%"></i></div>
                     <div class="cell c-matches num" data-label="Matches">${player.matches}</div>
                 `;
