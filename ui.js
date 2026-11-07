@@ -191,16 +191,23 @@
 
     // ---- 보정값: 상대·팀원 강도를 뺀 킬/데스 성적 (insight.csv). 점선 밑줄을 누르면 설명이 뜬다
     function adjHTML(value) {
-        return `<button type="button" class="adj" data-adj="${esc(value)}" aria-haspopup="true">보정값 ${esc(value)}</button>`;
+        return `<button type="button" class="adj" data-adj="${esc(value)}" aria-haspopup="true">보정값 ${adjIndex(value)}</button>`;
+    }
+
+    // 화면에는 100이 평균인 정수로 보인다 (KDR의 소수 두 자리와 헷갈리지 않게). 파일에는 1.00이 평균인 배율로 저장돼 있다
+    function adjIndex(value) {
+        const v = parseFloat(value);
+        return Number.isFinite(v) ? Math.round(v * 100) : null;
     }
 
     function adjExplain(value) {
-        const v = parseFloat(value);
-        const pct = Math.round(Math.abs(v - 1) * 100);
-        const meaning = pct === 0 ? '평균과 같다는 뜻입니다.'
-            : `비슷한 상대 기준 평균보다 킬/데스 비율이 약 ${pct}% ${v > 1 ? '높다' : '낮다'}는 뜻입니다.`;
-        return `<strong>보정값 ${esc(value)}</strong>
-            <p>상대와 팀원의 수준을 빼고 본 킬/데스 성적입니다. 1.00이 평균이고, ${meaning}</p>
+        const idx = adjIndex(value);
+        const pct = idx === null ? 0 : Math.abs(idx - 100);
+        const meaning = idx === null ? '예를 들어 120이면 비슷한 상대 기준 평균보다 킬/데스 비율이 약 20% 높다는 뜻입니다.'
+            : pct === 0 ? '이 선수는 평균과 같습니다.'
+            : `이 선수는 비슷한 상대 기준 평균보다 킬/데스 비율이 약 ${pct}% ${idx > 100 ? '높습니다' : '낮습니다'}.`;
+        return `<strong>보정값${idx === null ? '' : ' ' + idx}</strong>
+            <p>상대와 팀원의 수준을 빼고 본 킬/데스 성적입니다. 100이 평균입니다. ${meaning}</p>
             <p>상대의 실력도 그 상대가 만난 상대로 다시 검증해서 모든 선수를 한꺼번에 계산합니다. 승패와 ELO는 쓰지 않습니다.</p>
             <p>5경기 이하는 평균 쪽으로 당겨지므로 참고만 하세요.</p>`;
     }
@@ -254,5 +261,5 @@
         return map;
     }
 
-    window.UI = { adjHTML, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES };
+    window.UI = { adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES };
 })();

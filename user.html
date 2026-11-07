@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css">
-    <script src="ui.js"></script>
+    <link rel="stylesheet" href="ui.css?v=20261107">
+    <script src="ui.js?v=20261107"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
@@ -117,9 +117,62 @@
             margin-top: 4px;
         }
 
-        .elo-block {
-            padding: 16px;
+        /* 스탯 타일: 프로필의 주인공 */
+        .tiles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             border-top: 1px solid var(--hairline);
+        }
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 16px;
+            border-bottom: 1px solid var(--hairline);
+        }
+
+        .tile:nth-child(odd) {
+            border-right: 1px solid var(--hairline);
+        }
+
+        .tl {
+            font-size: 13px;
+            color: var(--text-3);
+        }
+
+        .tv {
+            font-family: var(--display);
+            font-size: 44px;
+            line-height: 1;
+            font-weight: 500;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tl-note {
+            font-size: 12px;
+            line-height: 16px;
+        }
+
+        .wr-bar {
+            display: block;
+            width: 100%;
+            height: 3px;
+            margin-top: 4px;
+            background: var(--hairline-strong);
+        }
+
+        .wr-bar::after {
+            content: "";
+            display: block;
+            height: 100%;
+            width: var(--w, 0%);
+            background: var(--accent);
+        }
+
+        .elo-block {
+            padding: 12px 16px;
             border-bottom: 1px solid var(--hairline);
         }
 
@@ -130,9 +183,10 @@
         }
 
         .elo-figure .big {
-            font-size: 28px;
-            line-height: 32px;
+            font-size: 16px;
+            line-height: 24px;
             font-weight: 500;
+            color: var(--text-2);
         }
 
         .tier-scale {
@@ -173,8 +227,8 @@
         }
 
         .insight {
-            padding: 12px 16px 16px;
-            border-top: 1px solid var(--hairline);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--hairline);
             font-size: 13px;
             line-height: 20px;
             color: var(--text-2);
@@ -312,8 +366,16 @@
                     </div>
                 </div>
 
+                <div class="tiles">
+                    <div class="tile"><span class="tl">KDR</span><span class="tv num" id="statKDR">0.00</span></div>
+                    <div class="tile"><span class="tl" id="statAdjLabel">보정값</span><span class="tv num" id="statAdj">–</span></div>
+                    <div class="tile"><span class="tl">Win rate</span><span class="tv num" id="statWR">0%</span><i class="wr-bar" id="statWRBar"></i></div>
+                    <div class="tile"><span class="tl">Matches</span><span class="tv num" id="statMatches">0</span></div>
+                </div>
+                <p class="insight" id="statInsight" hidden></p>
+
                 <div class="elo-block">
-                    <div class="elo-figure"><span class="big num" id="statElo">1500</span><span class="muted">ELO</span></div>
+                    <div class="elo-figure"><span class="muted">ELO</span><span class="big num" id="statElo">1500</span></div>
                     <div class="tier-scale">
                         <span class="num" id="scaleLow">1500</span>
                         <span class="ruler ruler-lg" id="statRuler"><i></i></span>
@@ -324,14 +386,9 @@
                 <dl class="stats">
                     <div><dt>Rank</dt><dd id="statRank">–</dd></div>
                     <div><dt>Kills / deaths</dt><dd id="statKD">0 / 0</dd></div>
-                    <div><dt>KDR</dt><dd id="statKDR">0.00</dd></div>
                     <div><dt>KPR</dt><dd id="statKPR">0.0</dd></div>
                     <div><dt>Wins / losses</dt><dd id="statWL">0 / 0</dd></div>
-                    <div><dt>Win rate</dt><dd id="statWR">0%</dd></div>
-                    <div><dt>Matches</dt><dd id="statMatches">0</dd></div>
-                    <div><dt id="statAdjLabel">보정값</dt><dd id="statAdj">–</dd></div>
                 </dl>
-                <p class="insight" id="statInsight" hidden></p>
             </section>
 
             <section class="panel elo">
@@ -481,8 +538,8 @@
             .then(text => {
                 const ins = UI.parseInsights(text)[nickname.trim().toLowerCase()];
                 if (!ins) return;
-                document.getElementById('statAdjLabel').innerHTML = UI.adjHTML(ins.adj).replace('보정값 ' + ins.adj, '보정값');
-                document.getElementById('statAdj').textContent = ins.adj;
+                document.getElementById('statAdjLabel').innerHTML = UI.adjHTML(ins.adj).replace('보정값 ' + UI.adjIndex(ins.adj), '보정값');
+                document.getElementById('statAdj').textContent = UI.adjIndex(ins.adj);
                 const note = document.getElementById('statInsight');
                 note.textContent = ins.text;
                 note.hidden = false;
@@ -558,6 +615,7 @@
             document.getElementById("statWL").textContent = `${wins} / ${losses}`;
             document.getElementById("statWR").textContent = ((wins / Math.max(1, matches)) * 100).toFixed(1) + "%";
             document.getElementById("statMatches").textContent = matches;
+            document.getElementById("statWRBar").style.setProperty('--w', `${Math.round((wins / Math.max(1, matches)) * 100)}%`);
         }
 
         function processUserStats(matches, aftercalc) {

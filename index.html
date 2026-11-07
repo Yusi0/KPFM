@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css">
-    <script src="ui.js"></script>
+    <link rel="stylesheet" href="ui.css?v=20261107">
+    <script src="ui.js?v=20261107"></script>
 
     <style>
         /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
@@ -1047,13 +1047,13 @@
                     </div>
                 </div>
 
-                <div class="list-head" aria-hidden="true">
+                <div class="list-head">
                     <span>#</span>
                     <span>Player</span>
                     <span>Tier</span>
                     <span data-k="elo">ELO</span>
                     <span class="r" data-k="kdr">KDR</span>
-                    <span class="r" data-k="adj">보정값</span>
+                    <span class="r" data-k="adj"><button type="button" class="adj" data-adj="" aria-haspopup="true">보정값</button></span>
                     <span class="r" data-k="winrate">Win rate</span>
                     <span class="r" data-k="matches">Matches</span>
                     <span></span>
@@ -1407,6 +1407,19 @@
                 return dir * ((b.elo || 0) - (a.elo || 0));
             });
 
+            // 순위(#)는 현재 정렬 기준의 값으로 매긴다: 값이 높은 쪽이 1위. 화살표 방향이나 검색, 로비 선택과는 무관하다.
+            // ELO 정렬에서만 배치중(5경기 이하) 선수가 순위 없이 '–'. 다른 정렬은 모두 번호를 매긴다 (1 2 3 4 ...)
+            const metric = (p) => currentSort === 'kdr' ? p.kills / Math.max(1, p.deaths)
+                : currentSort === 'adj' ? (p.adj == null ? -Infinity : p.adj)
+                : currentSort === 'winrate' ? (p.matches > 0 ? p.wins / p.matches : 0)
+                : currentSort === 'matches' ? (p.matches || 0)
+                : (p.elo || 0);
+            const rankOf = new Map();
+            leaderboardData
+                .filter(p => (currentSort === 'elo' ? p.rank !== 'N/A' : !(currentSort === 'adj' && p.adj == null)))
+                .sort((a, b) => metric(b) - metric(a))
+                .forEach((p, i) => rankOf.set(p.nickname, i + 1));
+
             const container = document.getElementById('leaderboardListContainer');
             container.innerHTML = '';
             const board = container.closest('.board');
@@ -1424,7 +1437,7 @@
 
                 row.innerHTML = `
                     <div class="row-head">
-                        <span class="c-rank">${player.rank === 'N/A' ? '–' : player.rank}</span>
+                        <span class="c-rank">${rankOf.get(player.nickname) ?? '–'}</span>
                         <span class="c-name">${UI.esc(player.nickname)}</span>
                         <span class="c-tier">${UI.tierHTML(player.tier, player.matches)}</span>
                     </div>
@@ -1432,7 +1445,7 @@
                         <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
                     </div>
                     <div class="cell c-kdr num" data-label="KDR">${kdr}</div>
-                    <div class="cell c-adj num" data-label="보정값">${player.adj == null ? '–' : player.adj.toFixed(2)}</div>
+                    <div class="cell c-adj num" data-label="보정값">${player.adj == null ? '–' : UI.adjIndex(player.adj)}</div>
                     <div class="cell c-wr num" data-label="Win rate">${winRate}<i class="wr-bar" style="--w:${winPct}%"></i></div>
                     <div class="cell c-matches num" data-label="Matches">${player.matches}</div>
                 `;
