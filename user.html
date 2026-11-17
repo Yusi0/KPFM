@@ -38,7 +38,8 @@
             grid-template-areas:
                 "profile elo"
                 "profile kdr"
-                "maps history";
+                "maps history"
+                "mates history";
             gap: 24px;
         }
 
@@ -61,6 +62,11 @@
 
         [data-layout="wide"] .history {
             grid-area: history;
+        }
+
+        [data-layout="wide"] .mates {
+            grid-area: mates;
+            align-self: start;
         }
 
         [data-layout="wide"] .profile {
@@ -150,6 +156,37 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .tbl .bar-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .tbl .wr-bar {
+            width: 64px;
+            margin: 0;
+        }
+
+        .tbl .wr-bar::after {
+            background: var(--text-3);
+        }
+
+        .tbl .wr-bar.best::after {
+            background: var(--accent);
+        }
+
+        .tbl .kd-cell {
+            font-family: var(--display);
+            font-size: 18px;
+        }
+
+        .mates .empty {
+            padding: 16px;
+            font-size: 13px;
+            color: var(--text-3);
+        }
+
         .tv.dim {
             filter: blur(8px);
             opacity: 0.8;
@@ -161,6 +198,10 @@
             .tile:hover .tv.dim {
                 filter: none;
             }
+        }
+
+        .tile.revealed .tv.dim {
+            filter: none;
         }
 
         .tl-note {
@@ -427,14 +468,31 @@
                         <thead>
                             <tr>
                                 <th>Map</th>
-                                <th class="r">Wins</th>
-                                <th class="r">Total</th>
+                                <th class="r">Matches</th>
+                                <th class="r">KDR</th>
                                 <th class="r">Win rate</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
+            </section>
+
+            <section class="panel mates">
+                <div class="panel-head"><span class="label">Teammates</span><span class="meta">5+ matches together</span></div>
+                <div class="scroll-x">
+                    <table id="mateTable" class="tbl rows-click">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th class="r">Matches</th>
+                                <th class="r">Win rate</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="empty" id="mateEmpty" hidden>5경기 이상 함께한 팀원이 없습니다</p>
             </section>
 
             <section class="panel history">
@@ -631,6 +689,13 @@
             const placing = matches <= UI.PLACEMENT_GAMES;
             document.getElementById("statAdj").classList.toggle("dim", placing);
             document.getElementById("statAdjNote").hidden = !placing;
+            const adjTile = document.getElementById("statAdj").closest(".tile");
+            if (placing && !adjTile.dataset.bound) {
+                adjTile.dataset.bound = "1";
+                adjTile.addEventListener("click", () => {
+                    if (window.matchMedia("(hover: none)").matches) adjTile.classList.toggle("revealed");
+                });
+            }
             document.getElementById("statWRBar").style.setProperty('--w', `${Math.round((wins / Math.max(1, matches)) * 100)}%`);
         }
 
@@ -639,6 +704,7 @@
             const userRounds = aftercalc.filter(r => r.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase());
 
             renderMapStats(userMatches);
+            renderMates(matches);
             renderMatchHistory(userMatches, userRounds);
 
             eloHistory = userRounds.map(r => parseInt(r.ELO || 1500));
@@ -656,19 +722,66 @@
 
             matches.forEach(match => {
                 const map = mapDisplayName((match.Map || 'Unknown').toLowerCase());
-                if (!stats[map]) stats[map] = { wins: 0, total: 0 };
+                if (!stats[map]) stats[map] = { wins: 0, total: 0, kills: 0, deaths: 0 };
                 stats[map].total++;
+                stats[map].kills += parseInt(match.Kills || 0);
+                stats[map].deaths += parseInt(match.Deaths || 0);
                 if (match.Team === match['Winning Team']) stats[map].wins++;
             });
 
-            Object.entries(stats).forEach(([map, data]) => {
-                const rate = ((data.wins / data.total) * 100).toFixed(1);
+            // 경기 수가 많은 맵부터. 막대에 주황을 쓰는 건 승률이 가장 높은 맵 하나 (3경기 이상 중에서)
+            const list = Object.entries(stats).sort((a, b) => b[1].total - a[1].total);
+            let bestMap = null, bestRate = -1;
+            list.forEach(([map, d]) => {
+                const r = d.wins / d.total;
+                if (d.total >= 3 && r > bestRate) { bestRate = r; bestMap = map; }
+            });
+
+            list.forEach(([map, data]) => {
+                const rate = (data.wins / data.total) * 100;
+                const kdr = (data.kills / Math.max(1, data.deaths)).toFixed(2);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="map-name">${UI.esc(map)}</td>
-                    <td class="r num">${data.wins}</td>
                     <td class="r num">${data.total}</td>
-                    <td class="r num ${rate < 50 ? 'negative' : 'positive'}">${rate}%</td>
+                    <td class="r num kd-cell">${kdr}</td>
+                    <td class="r"><div class="bar-cell"><span class="num">${rate.toFixed(1)}%</span><i class="wr-bar${map === bestMap ? ' best' : ''}" style="--w:${Math.round(rate)}%"></i></div></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 함께 뛴 팀원별 승률 (5경기 이상만. 표본이 작으면 우연이 크다)
+        function renderMates(allMatches) {
+            const me = nickname.trim().toLowerCase();
+            const mineByRound = new Map();
+            allMatches.forEach(m => {
+                if (m.Nickname?.trim().toLowerCase() === me) mineByRound.set(m.Round, m);
+            });
+            const mates = {};
+            allMatches.forEach(m => {
+                const mine = mineByRound.get(m.Round);
+                if (!mine || m.Nickname?.trim().toLowerCase() === me || m.Team !== mine.Team) return;
+                const key = m.Nickname.trim();
+                if (!mates[key]) mates[key] = { total: 0, wins: 0 };
+                mates[key].total++;
+                if (mine.Team === mine['Winning Team']) mates[key].wins++;
+            });
+            const list = Object.entries(mates).filter(([, d]) => d.total >= 5)
+                .sort((a, b) => b[1].total - a[1].total || b[1].wins - a[1].wins)
+                .slice(0, 8);
+            const tbody = document.querySelector('#mateTable tbody');
+            tbody.innerHTML = '';
+            document.getElementById('mateEmpty').hidden = list.length > 0;
+            document.getElementById('mateTable').hidden = list.length === 0;
+            list.forEach(([name, d]) => {
+                const rate = (d.wins / d.total) * 100;
+                const row = document.createElement('tr');
+                row.onclick = () => UI.goToPlayer(name);
+                row.innerHTML = `
+                    <td class="pname">${UI.esc(name)}</td>
+                    <td class="r num">${d.total}</td>
+                    <td class="r"><div class="bar-cell"><span class="num">${rate.toFixed(1)}%</span><i class="wr-bar" style="--w:${Math.round(rate)}%"></i></div></td>
                 `;
                 tbody.appendChild(row);
             });
