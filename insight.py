@@ -112,6 +112,33 @@ def compute_insights(rows, result, config=None):
     return out
 
 
+def compute_adj_trend(rows, config=None):
+    """경기마다 누적한 보정값: {선수: [(라운드, 보정값 배율), ...]}. 마지막 값은 insight.csv의 Adj와 같다.
+
+    상대의 실력은 최종 값으로 고정하고 선수 본인의 추정만 경기를 더할 때마다 다시 구한다.
+    경기 수가 적을수록 평균(1.00) 쪽으로 당겨지므로 앞부분은 1.00 근처에서 시작한다."""
+    cfg = dict(CONFIG, **(config or {}))
+    recs = build_records(rows)
+    if not recs:
+        return {}
+    theta = adjusted_ratings(recs, cfg["ridge"], cfg["iterations"])
+    out = {}
+    for p, games in recs.items():
+        total = 0.0
+        series = []
+        for n, g in enumerate(games, start=1):
+            total += g["perf"] + st.mean(theta[o] for o in g["opp"] if o in theta)
+            series.append((g["round"], total / (n + cfg["ridge"])))
+        shift = theta[p] - series[-1][1]  # 전체 평균을 0으로 맞추는 상수만큼만 옮겨 마지막 값을 최종 보정값과 일치시킨다
+        out[p] = [(rnd, round(math.exp(v + shift), 2)) for rnd, v in series]
+    return out
+
+
+def trend_rows(trend):
+    """adjtrend.csv 한 줄 = (선수, 라운드, 보정값 배율). 선수 이름순 → 경기 순."""
+    return [(p, rnd, f"{adj:.2f}") for p in sorted(trend) for rnd, adj in trend[p]]
+
+
 def _ro(number):
     """숫자 뒤 조사: 받침이 있게 읽히는 끝자리(0 3 6)는 '으로', 나머지는 '로'."""
     return "으로" if str(number)[-1] in "036" else "로"

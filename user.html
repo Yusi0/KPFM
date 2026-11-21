@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261121">
-    <script src="ui.js?v=20261121"></script>
+    <link rel="stylesheet" href="ui.css?v=20261122">
+    <script src="ui.js?v=20261122"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
@@ -202,6 +202,16 @@
 
         .tile.revealed .tv.dim {
             filter: none;
+        }
+
+        .head-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        #trendMode button {
+            height: 24px;
         }
 
         .tl-note {
@@ -455,8 +465,14 @@
 
             <section class="panel kdr">
                 <div class="panel-head">
-                    <span class="label">KDR trend</span>
-                    <span class="meta">cumulative</span>
+                    <span class="label" id="trendLabel">KDR trend</span>
+                    <div class="head-right">
+                        <div class="seg" id="trendMode" hidden>
+                            <button type="button" data-mode="kdr" aria-pressed="true">KDR</button>
+                            <button type="button" data-mode="adj" aria-pressed="false">보정값</button>
+                        </div>
+                        <span class="meta">cumulative</span>
+                    </div>
                 </div>
                 <div class="chart-wrap"><canvas id="kdrTrend"></canvas></div>
             </section>
@@ -552,6 +568,9 @@
     <script>
         let eloChartInstance = null;
         let kdrChartInstance = null;
+        let trendMode = 'kdr';
+        let kdrSeries = [];
+        let adjSeries = [];
 
         let matchHistoryList = [];
         let currentPage = 1;
@@ -602,6 +621,11 @@
         let allAftercalc = [];
         let eloHistory = [];
         let tierHistory = [];
+
+        // 보정값 추이 (adjtrend.csv가 없으면 토글만 숨긴다)
+        const adjTrendPromise = fetch(`adjtrend.csv?timestamp=${Date.now()}`)
+            .then(r => (r.ok ? r.text() : ''))
+            .catch(() => '');
 
         // 보정값과 한 줄 설명 (insight.csv가 없어도 나머지 화면은 정상 동작)
         fetch(`insight.csv?timestamp=${Date.now()}`)
@@ -975,6 +999,8 @@
                 return Number((totalKills / Math.max(1, totalDeaths)).toFixed(2));
             });
 
+            kdrSeries = kdrHistory;
+
             const options = baseOptions();
             options.scales = {
                 x: {
@@ -985,12 +1011,18 @@
                 y: {
                     border: { display: false },
                     grid: { lineWidth: 1 },
-                    ticks: { maxTicksLimit: 4, font: chartFont(), callback: (v) => Number(v).toFixed(1) },
+                    ticks: {
+                        maxTicksLimit: 4,
+                        font: chartFont(),
+                        callback: (v) => (trendMode === 'adj' ? Math.round(v) : Number(v).toFixed(1)),
+                    },
                 },
             };
             options.plugins.tooltip.callbacks = {
                 title: (items) => `Match #${items[0].dataIndex + 1}`,
-                label: (context) => `KDR ${Number(context.raw).toFixed(2)}`,
+                label: (context) => (trendMode === 'adj'
+                    ? `보정값 ${Math.round(context.raw)}`
+                    : `KDR ${Number(context.raw).toFixed(2)}`),
             };
 
             kdrChartInstance = new Chart(ctx, {
@@ -1011,6 +1043,31 @@
             });
             ctx.canvas.addEventListener('dblclick', () => kdrChartInstance && kdrChartInstance.resetZoom());
             applyChartTheme();
+            setupTrendToggle(matches.length);
+        }
+
+        // 6경기 이상이면 KDR / 보정값 토글을 보여 준다. 보정값은 경기를 더할 때마다 다시 계산한 누적 추정 (adjtrend.csv)
+        function setupTrendToggle(games) {
+            adjTrendPromise.then(text => {
+                const me = nickname.trim().toLowerCase();
+                const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).slice(1)
+                    .map(line => line.split(',').map(x => x.trim()))
+                    .filter(v => v[0] && v[0].toLowerCase() === me);
+                adjSeries = rows.map(v => Math.round(parseFloat(v[2]) * 100));
+                const mode = document.getElementById('trendMode');
+                if (games <= UI.PLACEMENT_GAMES || adjSeries.length !== games || adjSeries.some(Number.isNaN)) return;
+                mode.hidden = false;
+                mode.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+                    trendMode = btn.dataset.mode;
+                    mode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+                    document.getElementById('trendLabel').textContent = trendMode === 'adj' ? '보정값 trend' : 'KDR trend';
+                    const data = trendMode === 'adj' ? adjSeries : kdrSeries;
+                    kdrChartInstance.data.datasets[0].data = data;
+                    kdrChartInstance.data.datasets[0].label = trendMode === 'adj' ? '보정값' : 'KDR';
+                    kdrChartInstance.resetZoom && kdrChartInstance.resetZoom();
+                    kdrChartInstance.update();
+                }));
+            });
         }
 
         document.getElementById('closeModal').addEventListener('click', () => {

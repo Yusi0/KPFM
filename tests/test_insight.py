@@ -65,6 +65,18 @@ def test_more_kills_means_higher_adjusted_value():
     assert theta["a"] > theta["b"] > theta["d"] and theta["a"] > theta["c"] > theta["d"]
 
 
+def test_adjusted_trend_ends_at_final_value_and_covers_every_game():
+    rows, _result, ins = _load()
+    trend = insight.compute_adj_trend(rows)
+    assert set(trend) == set(ins)
+    for name, series in trend.items():
+        assert len(series) == ins[name]["games"], name
+        assert series[-1][1] == ins[name]["adj"], (name, series[-1], ins[name]["adj"])  # 마지막 점 = 현재 보정값
+        rounds = [r for r, _ in series]
+        assert rounds == sorted(rounds)
+        assert all(0.1 < a < 5 for _, a in series)
+
+
 def test_josa_by_last_digit():
     assert insight._ro(1443) == "으로" and insight._ro(1678) == "로" and insight._ro(1490) == "으로"
 
