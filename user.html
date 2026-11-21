@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261107">
-    <script src="ui.js?v=20261107"></script>
+    <link rel="stylesheet" href="ui.css?v=20261121">
+    <script src="ui.js?v=20261121"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
@@ -496,7 +496,7 @@
             </section>
 
             <section class="panel history">
-                <div class="panel-head"><span class="label">Match history</span></div>
+                <div class="panel-head"><span class="label">Match history</span><span class="meta kpt-legend" title="Rounds 1-92 are KPT scrim data"><i class="kpt-swatch"></i>KPT scrim</span></div>
                 <div class="scroll-x">
                     <table id="matchHistory" class="tbl rows-click">
                         <thead>
@@ -828,6 +828,7 @@
 
             pageItems.forEach((item) => {
                 const row = document.createElement('tr');
+                if (UI.isKPT(item.round)) { row.className = 'kpt'; row.title = 'KPT scrim'; }
                 row.innerHTML = `
                     <td class="num muted">#${item.playNumber}</td>
                     <td><span class="result ${item.won ? 'win' : 'loss'}"><i class="dot"></i>${item.won ? 'Win' : 'Loss'}</span></td>
@@ -845,7 +846,7 @@
         }
 
         function displayMatchDetails(round) {
-            document.getElementById('modalRoundTitle').textContent = `Round #${round}`;
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}${UI.isKPT(round) ? ' · KPT scrim' : ''}`;
             UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
             document.getElementById('matchModal').classList.add('active');
         }

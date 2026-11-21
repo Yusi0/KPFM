@@ -82,6 +82,8 @@
         'Platinum 3', 'Platinum 2', 'Platinum 1', 'Diamond 3', 'Diamond 2', 'Diamond 1', 'Champion',
     ];
     const PLACEMENT_GAMES = 5; // 이 경기 수 이하는 배치중, 6경기부터 정식 티어
+    const KPT_LAST_ROUND = 92; // 이 라운드까지는 KPT(토너먼트) 스크림 데이터. 93라운드부터 KPS 유저가 포함된다
+    const isKPT = (round) => Number(round) <= KPT_LAST_ROUND;
 
     function tierInfo(elo) {
         const raw = Math.floor((elo - 1500) / 100) + 9;
@@ -261,5 +263,5 @@
         return map;
     }
 
-    window.UI = { adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES };
+    window.UI = { adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
 })();

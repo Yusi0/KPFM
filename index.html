@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261107">
-    <script src="ui.js?v=20261107"></script>
+    <link rel="stylesheet" href="ui.css?v=20261121">
+    <script src="ui.js?v=20261121"></script>
 
     <style>
         /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
@@ -382,6 +382,10 @@
             border-bottom: 1px solid var(--hairline);
             cursor: pointer;
             transition: background-color 150ms var(--ease);
+        }
+
+        .round-row.kpt {
+            background: var(--kpt-row);
         }
 
         .round-row:hover {
@@ -876,6 +880,36 @@
             background: var(--accent);
         }
 
+        .filter-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        .filter-row button {
+            font-size: 12px;
+            color: var(--text-2);
+            transition: color 150ms var(--ease);
+        }
+
+        .filter-row button:hover {
+            color: var(--text);
+        }
+
+        [data-layout="wide"] .filter-row {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        [data-layout="compact"] .filter-row {
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
         .list-head [data-k] {
             transition: color 150ms var(--ease);
         }
@@ -1092,6 +1126,11 @@
                     </div>
                 </div>
 
+                <div class="filter-row">
+                    <span id="filterInfo"></span>
+                    <button type="button" id="placementToggle"></button>
+                </div>
+
                 <div class="list-head">
                     <span>#</span>
                     <span>Player</span>
@@ -1122,6 +1161,7 @@
                 <section class="panel rounds-panel" id="roundsPanel">
                     <div class="panel-head">
                         <span class="label">Global match history</span>
+                        <span class="meta kpt-legend" title="Rounds 1-92 are KPT scrim data"><i class="kpt-swatch"></i>KPT scrim</span>
                     </div>
                     <div id="globalRoundsList"></div>
                     <div class="pager">
@@ -1200,6 +1240,9 @@
         let allMatches = [];
         let allAftercalc = [];
         let currentSort = 'elo';
+        // 배치 제외 (기본 켜짐). 검색 중이거나 로비에 넣은 선수는 항상 보인다
+        let hidePlacement = true;
+        try { hidePlacement = localStorage.getItem('hidePlacement') !== '0'; } catch (e) { /* 저장소가 막혀도 동작 */ }
         let sortDesc = true;
         let activeTab = 'leaderboard'; // 'leaderboard', 'lobby', 'rounds' (800px 미만)
 
@@ -1461,7 +1504,8 @@
                 : (p.elo || 0);
             const rankOf = new Map();
             leaderboardData
-                .filter(p => (currentSort === 'elo' ? p.rank !== 'N/A' : !(currentSort === 'adj' && p.adj == null)))
+                .filter(p => (currentSort === 'elo' ? p.rank !== 'N/A'
+                    : !(hidePlacement && p.matches <= UI.PLACEMENT_GAMES) && !(currentSort === 'adj' && p.adj == null)))
                 .sort((a, b) => metric(b) - metric(a))
                 .forEach((p, i) => rankOf.set(p.nickname, i + 1));
 
@@ -1470,7 +1514,21 @@
             const board = container.closest('.board');
             if (board) board.dataset.sort = currentSort;
 
-            data.forEach(player => {
+            const placing = (p) => p.matches <= UI.PLACEMENT_GAMES;
+            const visible = data.filter(p => !hidePlacement || searchQuery || !placing(p) || selectedUsers.has(p.nickname));
+            const hiddenCount = data.length - visible.length;
+            document.getElementById('filterInfo').textContent = hiddenCount > 0
+                ? `${visible.length} players · ${hiddenCount} in placement hidden`
+                : `${visible.length} players`;
+            const toggleBtn = document.getElementById('placementToggle');
+            toggleBtn.textContent = hidePlacement ? 'Show placement' : 'Hide placement';
+            toggleBtn.onclick = () => {
+                hidePlacement = !hidePlacement;
+                try { localStorage.setItem('hidePlacement', hidePlacement ? '1' : '0'); } catch (e) { /* 무시 */ }
+                refreshLeaderboard();
+            };
+
+            visible.forEach(player => {
                 const kdr = (player.kills / Math.max(1, player.deaths)).toFixed(2);
                 const winRate = player.matches > 0 ? ((player.wins / player.matches) * 100).toFixed(1) + '%' : '0%';
                 const winPct = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
@@ -1675,7 +1733,8 @@
             pageItems.forEach(r => {
                 const team = r.winningTeam === 1 ? 1 : 2;
                 const row = document.createElement('div');
-                row.className = 'round-row';
+                row.className = 'round-row' + (UI.isKPT(r.round) ? ' kpt' : '');
+                if (UI.isKPT(r.round)) row.title = 'KPT scrim';
                 row.onclick = () => displayMatchDetails(r.round);
                 row.innerHTML = `
                     <span class="round-id">#${r.round}</span>
@@ -1691,7 +1750,7 @@
         }
 
         function displayMatchDetails(round) {
-            document.getElementById('modalRoundTitle').textContent = `Round #${round}`;
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}${UI.isKPT(round) ? ' · KPT scrim' : ''}`;
             UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
             document.getElementById('matchModal').classList.add('active');
         }

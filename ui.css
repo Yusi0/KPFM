@@ -22,6 +22,7 @@
     --text-3: #908a80;
     --hairline: rgba(239, 233, 222, 0.08);
     --hairline-strong: rgba(239, 233, 222, 0.16);
+    --kpt-row: rgba(239, 233, 222, 0.045); /* KPT 스크림 기록 행의 배경 */
 
     --accent: #f08a3c;
     /* 채움, 선, 점 */
@@ -58,6 +59,7 @@
     --text-3: #6b6256;
     --hairline: rgba(31, 27, 22, 0.10);
     --hairline-strong: rgba(31, 27, 22, 0.18);
+    --kpt-row: rgba(31, 27, 22, 0.05);
 
     --accent: #e8651a;
     --accent-ink: #a63f08;
@@ -450,6 +452,24 @@ a {
 
 .tbl.rows-click tbody tr {
     cursor: pointer;
+}
+
+.tbl tbody tr.kpt {
+    background: var(--kpt-row);
+}
+
+/* 범례: 작은 칸 + 글자 */
+.kpt-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kpt-swatch {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--hairline-strong);
+    background: var(--kpt-row);
 }
 
 .tbl tbody tr:hover {
