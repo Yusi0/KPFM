@@ -36,6 +36,24 @@ CONFIG = {
 }
 
 
+# 시즌 구간 (시작 라운드, 끝 라운드). ui.js의 UI.SEASONS와 같아야 한다. 끝이 None이면 마지막까지
+SEASONS = ((1, 1, 92), (2, 93, None))
+
+
+def season_insight_rows(rows, config=None):
+    """시즌별 보정값: (시즌, 선수, 경기 수, 보정값 배율). 그 시즌의 경기만으로 따로 푼다 (ELO는 시즌과 무관)."""
+    cfg = dict(CONFIG, **(config or {}))
+    out = []
+    for sid, first, last in SEASONS:
+        part = [r for r in rows if r.round >= first and (last is None or r.round <= last)]
+        recs = build_records(part)
+        if not recs:
+            continue
+        theta = adjusted_ratings(recs, cfg["ridge"], cfg["iterations"])
+        out.extend((sid, p, len(recs[p]), f"{math.exp(theta[p]):.2f}") for p in sorted(recs))
+    return out
+
+
 def build_records(rows):
     """(선수 -> 경기별 기록) 목록. 승리 팀이 1/2가 아닌 라운드는 제외한다 (engine.compute와 같은 규칙)."""
     by_round = defaultdict(list)

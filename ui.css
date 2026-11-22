@@ -248,6 +248,10 @@ a {
     gap: 16px;
 }
 
+.seg[hidden] {
+    display: none;
+}
+
 .seg button {
     height: 32px;
     padding: 0;
@@ -463,6 +467,10 @@ a {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+}
+
+.kpt-legend[hidden] {
+    display: none;
 }
 
 .kpt-swatch {

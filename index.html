@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261122">
-    <script src="ui.js?v=20261122"></script>
+    <link rel="stylesheet" href="ui.css?v=20261124">
+    <script src="ui.js?v=20261124"></script>
 
     <style>
         /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
@@ -900,6 +900,33 @@
             color: var(--text);
         }
 
+        .filter-left {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            min-width: 0;
+        }
+
+        #placementToggle {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .filter-row .seg {
+            gap: 14px;
+        }
+
+        .filter-row .seg button {
+            height: 28px;
+            color: var(--text-3);
+        }
+
+        .filter-row .seg button:hover,
+        .filter-row .seg button[aria-pressed="true"] {
+            color: var(--text);
+        }
+
         [data-layout="wide"] .filter-row {
             padding-left: 8px;
             padding-right: 8px;
@@ -1127,7 +1154,10 @@
                 </div>
 
                 <div class="filter-row">
-                    <span id="filterInfo"></span>
+                    <div class="filter-left">
+                        <div class="seg" id="seasonTabs" role="group" aria-label="Season"></div>
+                        <span id="filterInfo"></span>
+                    </div>
                     <button type="button" id="placementToggle"></button>
                 </div>
 
@@ -1161,7 +1191,7 @@
                 <section class="panel rounds-panel" id="roundsPanel">
                     <div class="panel-head">
                         <span class="label">Global match history</span>
-                        <span class="meta kpt-legend" title="Rounds 1-92 are KPT scrim data"><i class="kpt-swatch"></i>KPT scrim</span>
+                        <span class="meta kpt-legend" title="Rounds 1-92 · KPT scrim" id="seasonLegend"><i class="kpt-swatch"></i>Season 1</span>
                     </div>
                     <div id="globalRoundsList"></div>
                     <div class="pager">
@@ -1239,6 +1269,9 @@
 
         let allMatches = [];
         let allAftercalc = [];
+        let eloInfo = {};      // 닉네임(소문자) -> { elo, tier, total }  (ELO는 시즌과 무관하게 이어진다)
+        let insightsAll = {};  // 전체 보정값
+        let seasonAdj = {};    // 시즌별 보정값
         let currentSort = 'elo';
         // 배치 제외 (기본 켜짐). 검색 중이거나 로비에 넣은 선수는 항상 보인다
         let hidePlacement = true;
@@ -1355,6 +1388,7 @@
             try {
                 // 보정값 (insight.csv가 없어도 나머지는 정상 동작)
                 const insightPromise = fetch(`insight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
+                const seasonPromise = fetch(`seasoninsight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
                 const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
                     fetch(`match.csv${timestamp}`),
                     fetch(`lboard.csv${timestamp}`),
@@ -1380,13 +1414,17 @@
                 const leaderboard = parse(lboardText);
                 allAftercalc = parse(aftercalcText);
 
-                processMatches(allMatches);
-                const insights = UI.parseInsights(await insightPromise);
-                leaderboardData.forEach(p => {
-                    const ins = insights[p.nickname.toLowerCase()];
-                    p.adj = ins ? parseFloat(ins.adj) : null;
+                allMatches.reverse();
+                leaderboard.forEach(r => {
+                    eloInfo[r.Nickname.toLowerCase()] = { elo: parseInt(r.ELO) || 0, tier: r.Tier || 'Unranked', total: parseInt(r.Total) || 0 };
                 });
-                updateLeaderboardWithEloAndTier(leaderboard);
+                insightsAll = UI.parseInsights(await insightPromise);
+                seasonAdj = UI.parseSeasonInsights(await seasonPromise);
+                UI.mountSeasonTabs(document.getElementById('seasonTabs'), () => {
+                    applySeason();
+                    recalcAndRender();
+                });
+                applySeason();
 
             } catch (err) {
                 console.error(err);
@@ -1404,7 +1442,7 @@
             const playerStats = {};
             const roundsMap = {};
 
-            matches.reverse().forEach((match) => {
+            matches.forEach((match) => {
                 const nickname = match.Nickname;
                 if (!nickname) return;
 
@@ -1449,24 +1487,37 @@
             renderLeaderboard(filteredData);
         }
 
-        function updateLeaderboardWithEloAndTier(leaderboard) {
-            leaderboard.forEach(rankEntry => {
-                const player = leaderboardData.find(p => p.nickname.toLowerCase() === rankEntry.Nickname.toLowerCase());
-                if (player) {
-                    player.elo = parseInt(rankEntry.ELO) || 0;
-                    player.tier = rankEntry.Tier || 'Unranked';
+        // 고른 시즌의 경기만으로 KDR, 보정값, 승률, 매치 수를 다시 만든다. ELO와 티어는 시즌과 무관하다
+        function applySeason() {
+            const season = UI.getSeason();
+            processMatches(allMatches.filter(m => UI.inSeason(m.Round, season)));
+            leaderboardData.forEach(p => {
+                const key = p.nickname.toLowerCase();
+                const e = eloInfo[key];
+                p.elo = e ? e.elo : 0;
+                p.tier = e ? e.tier : 'Unranked';
+                p.total = e ? e.total : p.matches;
+                if (season === 'all') {
+                    const ins = insightsAll[key];
+                    p.adj = ins ? parseFloat(ins.adj) : null;
+                } else {
+                    const v = (seasonAdj[season] || {})[key];
+                    p.adj = v == null || Number.isNaN(v) ? null : v;
                 }
             });
 
             leaderboardData.sort((a, b) => b.elo - a.elo);
 
-            // 순위는 6경기 이상인 선수만 (5경기 이하는 배치중)
+            // 순위는 6경기 이상인 선수만 (5경기 이하는 배치중). 시즌 보기에서는 그 시즌의 경기 수로 센다
             let rankCounter = 1;
             leaderboardData.forEach(p => {
                 p.rank = (p.matches > UI.PLACEMENT_GAMES && p.elo > 0) ? rankCounter++ : 'N/A';
             });
 
-            renderLeaderboard(leaderboardData);
+            const legend = document.getElementById('seasonLegend');
+            if (legend) legend.hidden = season !== 'all';
+
+            refreshLeaderboard();
 
             document.getElementById('playerCount').innerText = leaderboardData.length;
             document.getElementById('rankedCount').innerText = leaderboardData.filter(p => p.rank !== 'N/A').length;
@@ -1542,7 +1593,7 @@
                     <div class="row-head">
                         <span class="c-rank">${rankOf.get(player.nickname) ?? '–'}</span>
                         <span class="c-name">${UI.esc(player.nickname)}</span>
-                        <span class="c-tier">${UI.tierHTML(player.tier, player.matches)}</span>
+                        <span class="c-tier">${UI.tierHTML(player.tier, player.total)}</span>
                     </div>
                     <div class="cell c-elo" data-label="ELO">
                         <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
@@ -1733,8 +1784,8 @@
             pageItems.forEach(r => {
                 const team = r.winningTeam === 1 ? 1 : 2;
                 const row = document.createElement('div');
-                row.className = 'round-row' + (UI.isKPT(r.round) ? ' kpt' : '');
-                if (UI.isKPT(r.round)) row.title = 'KPT scrim';
+                row.className = 'round-row' + (UI.isKPT(r.round) && UI.getSeason() === 'all' ? ' kpt' : '');
+                if (UI.isKPT(r.round) && UI.getSeason() === 'all') row.title = 'Season 1 · KPT scrim';
                 row.onclick = () => displayMatchDetails(r.round);
                 row.innerHTML = `
                     <span class="round-id">#${r.round}</span>
@@ -1750,7 +1801,7 @@
         }
 
         function displayMatchDetails(round) {
-            document.getElementById('modalRoundTitle').textContent = `Round #${round}${UI.isKPT(round) ? ' · KPT scrim' : ''}`;
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}${UI.isKPT(round) ? ' · Season 1 (KPT scrim)' : ' · Season 2'}`;
             UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
             document.getElementById('matchModal').classList.add('active');
         }

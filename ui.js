@@ -82,8 +82,44 @@
         'Platinum 3', 'Platinum 2', 'Platinum 1', 'Diamond 3', 'Diamond 2', 'Diamond 1', 'Champion',
     ];
     const PLACEMENT_GAMES = 5; // 이 경기 수 이하는 배치중, 6경기부터 정식 티어
-    const KPT_LAST_ROUND = 92; // 이 라운드까지는 KPT(토너먼트) 스크림 데이터. 93라운드부터 KPS 유저가 포함된다
+    // 시즌 구간 (insight.py의 SEASONS와 같아야 한다). 1시즌은 KPT(토너먼트) 스크림, 2시즌부터 KPS 유저가 포함된다
+    const SEASONS = [
+        { id: '1', name: 'Season 1', sub: 'KPT scrim', first: 1, last: 92 },
+        { id: '2', name: 'Season 2', sub: 'KPS', first: 93, last: Infinity },
+    ];
+    const KPT_LAST_ROUND = SEASONS[0].last;
     const isKPT = (round) => Number(round) <= KPT_LAST_ROUND;
+    const inSeason = (round, id) => {
+        if (id === 'all') return true;
+        const s = SEASONS.find(x => x.id === id);
+        return !!s && Number(round) >= s.first && Number(round) <= s.last;
+    };
+    const seasonLabel = (id) => (SEASONS.find(x => x.id === id) || {}).name || 'All';
+    // 고른 시즌은 두 화면이 함께 쓴다 ('all' | '1' | '2')
+    function getSeason() {
+        try {
+            const v = localStorage.getItem('season');
+            if (SEASONS.some(s => s.id === v)) return v;
+        } catch (e) { /* 저장소가 막혀도 동작 */ }
+        return 'all';
+    }
+    function setSeason(id) {
+        try { localStorage.setItem('season', id); } catch (e) { /* 무시 */ }
+    }
+    // All / Season 1 / Season 2 탭을 el 안에 그린다. 고르면 onChange(id)
+    function mountSeasonTabs(el, onChange) {
+        const items = [{ id: 'all', name: 'All', sub: 'Every round' }, ...SEASONS];
+        const current = getSeason();
+        el.innerHTML = items.map(s => {
+            const range = s.id === 'all' ? s.sub : `Rounds ${s.first}${s.last === Infinity ? '+' : '–' + s.last} · ${s.sub}`;
+            return `<button type="button" data-season="${s.id}" aria-pressed="${s.id === current}" title="${range}">${s.name}</button>`;
+        }).join('');
+        el.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+            el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+            setSeason(btn.dataset.season);
+            onChange(btn.dataset.season);
+        }));
+    }
 
     function tierInfo(elo) {
         const raw = Math.floor((elo - 1500) / 100) + 9;
@@ -263,5 +299,20 @@
         return map;
     }
 
-    window.UI = { adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
+    // seasoninsight.csv → { 시즌: { 닉네임(소문자): 보정값 } }
+    function parseSeasonInsights(text) {
+        const map = {};
+        try {
+            const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+            const headers = rows[0].split(',').map(h => h.trim());
+            rows.slice(1).forEach(line => {
+                const v = line.split(',').map(x => x.trim());
+                const o = Object.fromEntries(headers.map((h, i) => [h, v[i]]));
+                if (o.Nickname && o.Season) (map[o.Season] = map[o.Season] || {})[o.Nickname.toLowerCase()] = parseFloat(o.Adj);
+            });
+        } catch (e) { /* 무시 */ }
+        return map;
+    }
+
+    window.UI = { SEASONS, inSeason, seasonLabel, getSeason, setSeason, mountSeasonTabs, parseSeasonInsights, adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
 })();

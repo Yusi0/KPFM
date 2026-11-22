@@ -77,6 +77,17 @@ def test_adjusted_trend_ends_at_final_value_and_covers_every_game():
         assert all(0.1 < a < 5 for _, a in series)
 
 
+def test_season_adjusted_values_use_only_that_seasons_games():
+    rows, _result, ins = _load()
+    out = insight.season_insight_rows(rows)
+    games = {}
+    for sid, name, n, adj in out:
+        games[(sid, name)] = n
+        assert 0.1 < float(adj) < 5
+    for name, d in ins.items():  # 시즌별 경기 수를 더하면 전체 경기 수
+        assert sum(n for (s, p), n in games.items() if p == name) == d["games"], name
+
+
 def test_josa_by_last_digit():
     assert insight._ro(1443) == "으로" and insight._ro(1678) == "로" and insight._ro(1490) == "으로"
 

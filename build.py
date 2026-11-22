@@ -19,7 +19,7 @@ import insight
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SOURCE = os.path.join(HERE, "data", "source", "matches.csv")
 DEFAULT_OUT = os.path.join(HERE, "out")
-WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv", "adjtrend.csv")
+WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv", "adjtrend.csv", "seasoninsight.csv")
 
 
 def _cell(v):
@@ -113,6 +113,8 @@ def write_web_csvs(directory, rows, result):
             insight.insight_rows(result, insight.compute_insights(rows, result))),
         os.path.join(directory, "adjtrend.csv"): _csv_text(
             ["Nickname", "Round", "Adj"], insight.trend_rows(insight.compute_adj_trend(rows))),
+        os.path.join(directory, "seasoninsight.csv"): _csv_text(
+            ["Season", "Nickname", "Games", "Adj"], insight.season_insight_rows(rows)),
     })
 
 
