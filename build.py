@@ -19,7 +19,8 @@ import insight
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SOURCE = os.path.join(HERE, "data", "source", "matches.csv")
 DEFAULT_OUT = os.path.join(HERE, "out")
-WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv", "adjtrend.csv", "seasoninsight.csv")
+DATES_SOURCE = os.path.join(HERE, "data", "source", "rounds.csv")
+WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv", "adjtrend.csv", "seasoninsight.csv", "rounds.csv")
 
 
 def _cell(v):
@@ -99,7 +100,21 @@ def aftercalc_rows(result):
     return sorted(((rnd, nick, elo) for rnd, nick, _k, _d, _kdr, elo in result.history), key=lambda x: (x[0], x[1]))
 
 
-def write_web_csvs(directory, rows, result):
+def read_round_dates(path=DATES_SOURCE):
+    """data/source/rounds.csv에서 [(라운드, YYYY-MM-DD)]를 읽는다. 파일이 없으면 빈 목록 (날짜는 없어도 된다)."""
+    if not os.path.exists(path):
+        return []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return sorted((int(r["Round"]), r["Date"].strip()) for r in csv.DictReader(f) if r.get("Round") and r.get("Date"))
+
+
+def date_rows(rows, dates):
+    """실제로 있는 라운드의 날짜만 (라운드 순)."""
+    have = {r.round for r in rows}
+    return [(rnd, d) for rnd, d in dates if rnd in have]
+
+
+def write_web_csvs(directory, rows, result, dates=None):
     os.makedirs(directory, exist_ok=True)
     write_all_or_nothing({
         os.path.join(directory, "lboard.csv"): _csv_text(
@@ -115,6 +130,8 @@ def write_web_csvs(directory, rows, result):
             ["Nickname", "Round", "Adj"], insight.trend_rows(insight.compute_adj_trend(rows))),
         os.path.join(directory, "seasoninsight.csv"): _csv_text(
             ["Season", "Nickname", "Games", "Adj"], insight.season_insight_rows(rows)),
+        os.path.join(directory, "rounds.csv"): _csv_text(
+            ["Round", "Date"], date_rows(rows, read_round_dates() if dates is None else dates)),
     })
 
 
@@ -144,7 +161,7 @@ def print_diff(previous, result, label):
     if removed: print("  사라진 선수:", ", ".join(removed[:20]))
 
 
-GIT_PATHS = ["data/source/matches.csv", *WEB_FILES]
+GIT_PATHS = ["data/source/matches.csv", "data/source/rounds.csv", *WEB_FILES]
 
 
 def _git(*args):
@@ -214,6 +231,9 @@ def main(argv=None):
         print(f"\n⛔ 오류 {len(errors)}건, 경고 {len(warnings)}건. 아무 파일도 만들지 않았습니다.")
         return 1
 
+    stray = sorted({rnd for rnd, _d in read_round_dates()} - {r.round for r in rows})
+    if stray:
+        print(f"경고 - rounds.csv에 경기 기록이 없는 라운드가 있습니다 (무시됨): {stray[:10]}")
     result = engine.compute(rows)
     rounds = len({r.round for r in rows})
     print(f"\n✅ 검증 통과: {rounds}개 라운드, {len(rows)}행, 선수 {len(result.players)}명"

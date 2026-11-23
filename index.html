@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261124">
-    <script src="ui.js?v=20261124"></script>
+    <link rel="stylesheet" href="ui.css?v=20261125">
+    <script src="ui.js?v=20261125"></script>
 
     <style>
         /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
@@ -374,7 +374,7 @@
 
         .round-row {
             display: grid;
-            grid-template-columns: 48px minmax(0, 1fr) auto;
+            grid-template-columns: 48px minmax(0, 1fr) 40px auto;
             column-gap: 12px;
             align-items: center;
             height: 36px;
@@ -390,6 +390,13 @@
 
         .round-row:hover {
             background: var(--raised);
+        }
+
+        .round-date {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-3);
+            font-variant-numeric: tabular-nums;
         }
 
         .round-id {
@@ -1269,6 +1276,7 @@
 
         let allMatches = [];
         let allAftercalc = [];
+        let roundDates = {};   // 라운드 -> YYYY-MM-DD (rounds.csv, 없는 라운드도 있다)
         let eloInfo = {};      // 닉네임(소문자) -> { elo, tier, total }  (ELO는 시즌과 무관하게 이어진다)
         let insightsAll = {};  // 전체 보정값
         let seasonAdj = {};    // 시즌별 보정값
@@ -1388,6 +1396,7 @@
             try {
                 // 보정값 (insight.csv가 없어도 나머지는 정상 동작)
                 const insightPromise = fetch(`insight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
+                const datesPromise = fetch(`rounds.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
                 const seasonPromise = fetch(`seasoninsight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
                 const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
                     fetch(`match.csv${timestamp}`),
@@ -1420,6 +1429,7 @@
                 });
                 insightsAll = UI.parseInsights(await insightPromise);
                 seasonAdj = UI.parseSeasonInsights(await seasonPromise);
+                roundDates = UI.parseRoundDates(await datesPromise);
                 UI.mountSeasonTabs(document.getElementById('seasonTabs'), () => {
                     applySeason();
                     recalcAndRender();
@@ -1790,6 +1800,7 @@
                 row.innerHTML = `
                     <span class="round-id">#${r.round}</span>
                     <span class="round-map">${UI.esc(mapDisplayName(r.map))}</span>
+                    <span class="round-date" title="${roundDates[r.round] || ''}">${UI.dateShort(roundDates[r.round])}</span>
                     <span class="round-winner team"><i class="team-mark team-${team}"></i>${team === 1 ? 'Phantom' : 'Ghost'} win</span>
                 `;
                 container.appendChild(row);
@@ -1801,7 +1812,7 @@
         }
 
         function displayMatchDetails(round) {
-            document.getElementById('modalRoundTitle').textContent = `Round #${round}${UI.isKPT(round) ? ' · Season 1 (KPT scrim)' : ' · Season 2'}`;
+            document.getElementById('modalRoundTitle').textContent = `Round #${round}${roundDates[round] ? ' · ' + roundDates[round] : ''}${UI.isKPT(round) ? ' · Season 1 (KPT scrim)' : ' · Season 2'}`;
             UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
             document.getElementById('matchModal').classList.add('active');
         }

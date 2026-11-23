@@ -17,7 +17,7 @@ KPFM 스크림(내전) 기록으로 ELO 랭킹과 개인 전적을 보여 주는
 ```
 
 - 기록을 고치거나 추가할 때는 **`data/source/matches.csv`만** 편집합니다.
-- 루트의 `lboard.csv`, `match.csv`, `aftercalc.csv`, `insight.csv`, `adjtrend.csv`, `seasoninsight.csv`는 `build.py`가 매번 새로 만드는 결과물입니다. 여기에 직접 입력하면 순위에 반영되지 않고, 다음 빌드에서 덮어써져 사라집니다.
+- 루트의 `lboard.csv`, `match.csv`, `aftercalc.csv`, `insight.csv`, `adjtrend.csv`, `seasoninsight.csv`, `rounds.csv`는 `build.py`가 매번 새로 만드는 결과물입니다. 여기에 직접 입력하면 순위에 반영되지 않고, 다음 빌드에서 덮어써져 사라집니다.
 - 계산은 항상 **원본을 첫 라운드부터 순서대로 다시 계산**합니다. 중간 라운드를 고치거나 지워도 결과가 꼬이지 않습니다.
 
 ---
@@ -179,6 +179,7 @@ Leaderboard/
 ├── aftercalc.csv         # (생성물) 라운드 직후의 ELO
 ├── insight.csv           # (생성물) 선수별 보정값과 한 줄 설명
 ├── adjtrend.csv          # (생성물) 경기마다 누적한 보정값 (프로필의 KDR/보정값 토글 그래프)
+├── rounds.csv            # (생성물) 라운드별 날짜. 원본은 data/source/rounds.csv (Round,Date). 날짜가 없는 라운드가 있어도 됨
 ├── seasoninsight.csv     # (생성물) 시즌별 보정값. 시즌 구간은 insight.py의 SEASONS와 ui.js의 UI.SEASONS (둘이 같아야 함)
 ├── insight.py            # 보정값 계산과 문장 규칙 (기준값은 맨 위 CONFIG, `python insight.py`로 전체 확인)
 ├── data/source/

@@ -299,6 +299,19 @@
         return map;
     }
 
+    // rounds.csv → { 라운드: 'YYYY-MM-DD' }. 날짜는 없어도 되는 정보라 파일이 없거나 깨져도 빈 객체
+    function parseRoundDates(text) {
+        const map = {};
+        try {
+            text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).slice(1).forEach(line => {
+                const [r, d] = line.split(',').map(x => x.trim());
+                if (r && /^\d{4}-\d{2}-\d{2}$/.test(d || '')) map[r] = d;
+            });
+        } catch (e) { /* 무시 */ }
+        return map;
+    }
+    const dateShort = (d) => (d ? d.slice(5).replace('-', '/') : ''); // 2026-10-05 → 10/05
+
     // seasoninsight.csv → { 시즌: { 닉네임(소문자): 보정값 } }
     function parseSeasonInsights(text) {
         const map = {};
@@ -314,5 +327,5 @@
         return map;
     }
 
-    window.UI = { SEASONS, inSeason, seasonLabel, getSeason, setSeason, mountSeasonTabs, parseSeasonInsights, adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
+    window.UI = { SEASONS, inSeason, seasonLabel, getSeason, setSeason, mountSeasonTabs, parseSeasonInsights, parseRoundDates, dateShort, adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
 })();
