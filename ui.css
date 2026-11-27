@@ -469,6 +469,11 @@ a {
     gap: 6px;
 }
 
+.seg button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
 .kpt-legend[hidden] {
     display: none;
 }
@@ -616,6 +621,16 @@ a {
 #matchDetails .mvp {
     color: var(--accent-ink);
     font-weight: 500;
+}
+
+/* 전체 보기: ELO 열 감춤 (4번째, 8번째 칸) */
+#matchDetails.no-elo th:nth-child(4n),
+#matchDetails.no-elo td:nth-child(4n) {
+    display: none;
+}
+
+#matchDetails.no-elo {
+    min-width: 0;
 }
 
 /* 좁은 화면에서 쌓은 보기 (ui.js가 .stacked를 붙인다) */

@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261125">
-    <script src="ui.js?v=20261125"></script>
+    <link rel="stylesheet" href="ui.css?v=20261127">
+    <script src="ui.js?v=20261127"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
@@ -404,6 +404,32 @@
         .map-name {
             text-transform: capitalize;
         }
+
+        /* 전체 보기: ELO·티어·순위·보정값 없이 통산 기록만 */
+        .page[data-view="all"] [data-season-only] {
+            display: none !important;
+        }
+
+        .page[data-view="all"] .tile:first-child {
+            grid-column: 1 / -1;
+            border-right: none;
+        }
+
+        [data-layout="wide"] .page[data-view="all"] .grid {
+            grid-template-areas:
+                "profile kdr"
+                "profile history"
+                "maps history"
+                "mates history";
+        }
+
+        [data-layout="wide"] .page[data-view="all"] .kdr {
+            align-self: start;
+        }
+
+        [data-layout="wide"] .page[data-view="all"] .kdr .chart-wrap {
+            height: 300px;
+        }
     </style>
 </head>
 
@@ -422,7 +448,7 @@
         </div>
     </header>
 
-    <div class="wrap page">
+    <div class="wrap page" data-view="season">
         <div class="grid">
 
             <section class="panel profile">
@@ -430,7 +456,7 @@
                     <div class="avatar" id="avatarLetter">P</div>
                     <div>
                         <h2 id="statNickname">Nickname</h2>
-                        <div id="statTier"></div>
+                        <div id="statTier" data-season-only></div>
                     </div>
                 </div>
 
@@ -438,13 +464,13 @@
 
                 <div class="tiles">
                     <div class="tile"><span class="tl">KDR</span><span class="tv num" id="statKDR">0.00</span></div>
-                    <div class="tile"><span class="tl" id="statAdjLabel">보정값</span><span class="tv num" id="statAdj">–</span><span class="tl-note muted" id="statAdjNote" hidden>배치 중이라 참고용입니다</span></div>
+                    <div class="tile" data-season-only><span class="tl" id="statAdjLabel">보정값</span><span class="tv num" id="statAdj">–</span><span class="tl-note muted" id="statAdjNote" hidden>배치 중이라 참고용입니다</span></div>
                     <div class="tile"><span class="tl">Win rate</span><span class="tv num" id="statWR">0%</span><i class="wr-bar" id="statWRBar"></i></div>
                     <div class="tile"><span class="tl">Matches</span><span class="tv num" id="statMatches">0</span></div>
                 </div>
-                <p class="insight" id="statInsight" hidden></p>
+                <p class="insight" id="statInsight" data-season-only hidden></p>
 
-                <div class="elo-block">
+                <div class="elo-block" data-season-only>
                     <div class="elo-figure"><span class="muted">ELO</span><span class="big num" id="statElo">1500</span></div>
                     <div class="tier-scale">
                         <span class="num" id="scaleLow">1500</span>
@@ -454,14 +480,14 @@
                 </div>
 
                 <dl class="stats">
-                    <div><dt>Rank</dt><dd id="statRank">–</dd></div>
+                    <div data-season-only><dt>Rank</dt><dd id="statRank">–</dd></div>
                     <div><dt>Kills / deaths</dt><dd id="statKD">0 / 0</dd></div>
                     <div><dt>KPR</dt><dd id="statKPR">0.0</dd></div>
                     <div><dt>Wins / losses</dt><dd id="statWL">0 / 0</dd></div>
                 </dl>
             </section>
 
-            <section class="panel elo">
+            <section class="panel elo" data-season-only>
                 <div class="panel-head">
                     <span class="label">ELO trend</span>
                     <span class="hint">Drag to zoom, double-click to reset</span>
@@ -527,7 +553,7 @@
                                 <th>Result</th>
                                 <th>Map</th>
                                 <th class="r">KDR (K/D)</th>
-                                <th class="r">ELO</th>
+                                <th class="r" data-season-only>ELO</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -624,126 +650,86 @@
         });
 
         let allMatches = [];
-        let allAftercalc = [];
         let eloHistory = [];
         let tierHistory = [];
+        let seasonBoard = {};   // 시즌 -> 닉네임(소문자) -> { elo, tier, total }
+        let seasonCalc = [];    // 시즌별 라운드 ELO
+        let seasonStats = {};   // 시즌 -> 닉네임(소문자) -> { adj, text }
+        let trendRows = [];     // seasontrend.csv (시즌별 보정값 추이)
+        let roundDates = {};    // 라운드 -> YYYY-MM-DD (rounds.csv)
+        let userMatches = [];
+        let viewSeason = 'all'; // 이 화면에 보이는 시즌 (고른 시즌에 기록이 없으면 기록이 있는 최신 시즌)
 
-        // 보정값 추이 (adjtrend.csv가 없으면 토글만 숨긴다)
-        const adjTrendPromise = fetch(`adjtrend.csv?timestamp=${Date.now()}`)
+        const me = (nickname || '').trim().toLowerCase();
+        const isMe = (row) => row.Nickname?.trim().toLowerCase() === me;
+
+        const required = (name) => fetch(`${name}?timestamp=${Date.now()}`)
+            .then(r => { if (!r.ok) throw new Error(`${name} ${r.status}`); return r.text(); });
+        // 없어도 나머지 화면은 정상 동작하는 파일
+        const optional = (name) => fetch(`${name}?timestamp=${Date.now()}`)
             .then(r => (r.ok ? r.text() : ''))
             .catch(() => '');
 
-        // 보정값과 한 줄 설명 (insight.csv가 없어도 나머지 화면은 정상 동작)
-        let insightAll = null;     // 전체 보정값과 한 줄 설명
-        let seasonAdjMap = {};     // 시즌별 보정값
-        let statsReady = false;
-        fetch(`insight.csv?timestamp=${Date.now()}`)
-            .then(r => (r.ok ? r.text() : ''))
-            .then(text => {
-                insightAll = UI.parseInsights(text)[nickname.trim().toLowerCase()] || null;
-                if (statsReady) renderSeason();
-            })
-            .catch(() => { });
-        fetch(`seasoninsight.csv?timestamp=${Date.now()}`)
-            .then(r => (r.ok ? r.text() : ''))
-            .then(text => {
-                seasonAdjMap = UI.parseSeasonInsights(text);
-                if (statsReady) renderSeason();
-            })
-            .catch(() => { });
-
         Promise.all([
-            fetch(`match.csv?timestamp=${Date.now()}`).then(r => r.text()),
-            fetch(`lboard.csv?timestamp=${Date.now()}`).then(r => r.text()),
-            fetch(`aftercalc.csv?timestamp=${Date.now()}`).then(r => r.text())
+            required('match.csv'), required('seasonboard.csv'), required('seasoncalc.csv'),
+            optional('seasoninsight.csv'), optional('seasontrend.csv'), optional('rounds.csv'),
         ])
-            .then(([matchText, leaderboardText, aftercalcText]) => {
-                const matches = csvToJson(matchText);
-                const leaderboard = csvToJson(leaderboardText);
-                const aftercalc = csvToJson(aftercalcText);
+            .then(([matchText, boardText, calcText, insightText, trendText, datesText]) => {
+                allMatches = UI.parseRows(matchText);
+                seasonBoard = UI.parseSeasonBoard(boardText);
+                seasonCalc = UI.parseRows(calcText);
+                seasonStats = UI.parseSeasonInsights(insightText);
+                trendRows = trendText ? UI.parseRows(trendText) : [];
+                roundDates = UI.parseRoundDates(datesText);
 
-                allMatches = matches;
-                allAftercalc = aftercalc;
-
-                processLeaderboard(leaderboard);
-                processUserStats(matches, aftercalc);
+                userMatches = allMatches.filter(isMe).sort((a, b) => a.Round - b.Round);
+                if (!userMatches.length) {
+                    alert("유저를 찾을 수 없습니다.");
+                    return;
+                }
+                const played = [...new Set(userMatches.map(m => UI.seasonOf(m.Round)))].sort();
+                viewSeason = UI.getSeason();
+                if (viewSeason !== 'all' && !played.includes(viewSeason)) viewSeason = played[played.length - 1];
+                UI.mountSeasonTabs(document.getElementById('seasonTabs'), (id) => { viewSeason = id; renderSeason(); },
+                    { current: viewSeason, available: ['all', ...played] });
+                renderSeason();
             })
             .catch(err => {
                 console.error(err);
                 alert("데이터 로딩 실패");
             });
 
-        function csvToJson(text) {
-            const rows = text.trim().split('\n');
-            const headers = rows[0].split(',').map(h => h.trim());
-
-            return rows.slice(1).map(row => {
-                const values = row.split(',').map(v => v.trim());
-                return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-            });
-        }
-
-        function processLeaderboard(leaderboard) {
-            const sameName = (p) => p.Nickname?.trim().toLowerCase() === nickname.trim().toLowerCase();
-            const user = leaderboard.find(sameName);
-
-            if (!user) {
-                alert("유저를 찾을 수 없습니다.");
-                return;
-            }
-
+        // ELO, 티어, 순위: 시즌마다 1500에서 새로 계산한 값
+        function renderRating(season, matches) {
+            const board = seasonBoard[season] || {};
+            const user = board[me] || { elo: 1500, tier: 'Gold 3', total: 0 };
             // 순위는 index.html과 같은 기준: 6경기 이상인 선수끼리 ELO 순 (5경기 이하는 배치중)
-            const ranked = leaderboard
-                .filter(p => parseInt(p.Total || 0) > UI.PLACEMENT_GAMES)
-                .sort((a, b) => parseInt(b.ELO || 0) - parseInt(a.ELO || 0));
-            const rankIndex = ranked.findIndex(sameName);
+            const ranked = Object.entries(board).filter(([, p]) => p.total > UI.PLACEMENT_GAMES).sort((a, b) => b[1].elo - a[1].elo);
+            const rankIndex = ranked.findIndex(([name]) => name === me);
 
-            const matches = parseInt(user.Total || 0);
-            const elo = parseInt(user.ELO || 1500);
-
-            document.getElementById("statTier").innerHTML = UI.tierHTML(user.Tier, matches);
-
-            document.getElementById("statElo").textContent = elo;
-            const t = UI.tierInfo(elo);
+            document.getElementById("statTier").innerHTML = UI.tierHTML(user.tier, user.total);
+            document.getElementById("statElo").textContent = user.elo;
+            const t = UI.tierInfo(user.elo);
             document.getElementById("scaleLow").textContent = t.low;
             document.getElementById("scaleHigh").textContent = t.high;
             document.getElementById("statRuler").style.setProperty('--pos', `${(t.pos * 100).toFixed(1)}%`);
             document.getElementById("statRuler").title = `${t.name} · ${Math.round(t.pos * 100)} / 100`;
+            document.getElementById("statRank").textContent = rankIndex >= 0 ? `#${rankIndex + 1}` : `– (placement ${user.total}/${UI.PLACEMENT_GAMES})`;
 
-            document.getElementById("statRank").textContent = rankIndex >= 0 ? `#${rankIndex + 1}` : `– (placement ${matches}/${UI.PLACEMENT_GAMES})`;
-        }
-
-        let roundDates = {};   // 라운드 -> YYYY-MM-DD (rounds.csv)
-        fetch(`rounds.csv?timestamp=${Date.now()}`)
-            .then(r => (r.ok ? r.text() : ''))
-            .then(text => { roundDates = UI.parseRoundDates(text); if (statsReady) renderSeason(); })
-            .catch(() => { });
-
-        let userMatches = [];
-        let userRounds = [];
-
-        function processUserStats(matches, aftercalc) {
-            const me = nickname.trim().toLowerCase();
-            userMatches = matches.filter(m => m.Nickname?.trim().toLowerCase() === me);
-            userRounds = aftercalc.filter(r => r.Nickname?.trim().toLowerCase() === me);
-
-            eloHistory = userRounds.map(r => parseInt(r.ELO || 1500));
+            // 무승부처럼 계산에서 빠진 라운드는 직전 ELO가 이어진다
+            const eloByRound = new Map(seasonCalc.filter(r => r.Season === season && isMe(r)).map(r => [r.Round, parseInt(r.ELO, 10)]));
+            let last = 1500;
+            eloHistory = matches.map(m => (last = eloByRound.get(m.Round) ?? last));
             // 툴팁에 쓰는 티어: 5경기 이하는 배치중
             tierHistory = eloHistory.map((elo, idx) => (idx + 1 <= UI.PLACEMENT_GAMES ? 'Placement' : UI.tierInfo(elo).short));
-            renderELOTrend(); // ELO는 시즌과 무관하게 이어지므로 항상 전체를 보여 준다
-
-            statsReady = true;
-            UI.mountSeasonTabs(document.getElementById('seasonTabs'), renderSeason);
-            renderSeason();
         }
 
-        // 고른 시즌의 경기만으로 스탯, 맵, 팀원, 기록, KDR 추이를 다시 그린다
+        // 고른 시즌의 경기만으로 화면 전체를 다시 그린다. 전체 보기는 통산 기록만 (ELO·티어·순위·보정값 없음)
         function renderSeason() {
-            const season = UI.getSeason();
-            const me = nickname.trim().toLowerCase();
-            // idx = 전체 경기 중 몇 번째인지 (ELO 기록과 맞추기 위해 유지)
-            const subset = userMatches.map((m, idx) => ({ m, idx })).filter(x => UI.inSeason(x.m.Round, season));
-            const list = subset.map(x => x.m);
+            const season = viewSeason;
+            const isAll = season === 'all';
+            document.querySelector('.page').dataset.view = isAll ? 'all' : 'season';
+            const list = userMatches.filter(m => UI.inSeason(m.Round, season));
 
             let kills = 0, deaths = 0, wins = 0;
             list.forEach(m => {
@@ -761,11 +747,9 @@
             document.getElementById("statMatches").textContent = games;
             document.getElementById("statWRBar").style.setProperty('--w', `${Math.round((wins / Math.max(1, games)) * 100)}%`);
 
-            // 보정값: 전체는 insight.csv, 시즌은 그 시즌 경기만으로 다시 푼 값
-            let adj = null;
-            if (season === 'all') adj = insightAll ? parseFloat(insightAll.adj) : null;
-            else adj = (seasonAdjMap[season] || {})[me] ?? null;
-            if (Number.isNaN(adj)) adj = null;
+            // 보정값과 한 줄 설명: 그 시즌 경기만으로 푼 값
+            const stat = isAll ? null : (seasonStats[season] || {})[me];
+            const adj = stat && Number.isFinite(stat.adj) ? stat.adj : null;
             const adjLabel = document.getElementById('statAdjLabel');
             const placing = games <= UI.PLACEMENT_GAMES;
             if (adj == null) {
@@ -785,16 +769,19 @@
                     if (window.matchMedia("(hover: none)").matches) adjTile.classList.toggle("revealed");
                 });
             }
-            // 한 줄 설명은 전체 기록 기준이라 전체 보기에서만
             const note = document.getElementById('statInsight');
-            note.hidden = !(season === 'all' && insightAll && insightAll.text);
-            if (!note.hidden) note.textContent = insightAll.text;
+            note.hidden = !(stat && stat.text);
+            if (!note.hidden) note.textContent = stat.text;
 
-            document.getElementById('seasonLegend').hidden = season !== 'all';
+            document.getElementById('seasonLegend').hidden = !isAll;
 
+            if (!isAll) {
+                renderRating(season, list);
+                renderELOTrend();
+            }
             renderMapStats(list);
             renderMates(allMatches.filter(m => UI.inSeason(m.Round, season)));
-            renderMatchHistory(subset, userRounds);
+            renderMatchHistory(list, isAll);
             renderKDRTrend(list, season);
         }
 
@@ -870,13 +857,13 @@
             });
         }
 
-        function renderMatchHistory(matches, userRounds) {
-            // 시간순(오래된 것부터)으로 계산한 뒤 최신순으로 보여 준다
-            matchHistoryList = matches.map(({ m: match, idx: index }) => {
+        function renderMatchHistory(matches, isAll) {
+            // 시간순(오래된 것부터)으로 계산한 뒤 최신순으로 보여 준다. 번호와 ELO 변화는 보이는 범위 안에서 센다
+            matchHistoryList = matches.map((match, index) => {
                 const kills = parseInt(match.Kills || 0);
                 const deaths = parseInt(match.Deaths || 0);
-                const currentELO = parseInt(userRounds[index]?.ELO || 1500);
-                const previousELO = index > 0 ? parseInt(userRounds[index - 1]?.ELO || 1500) : 1500;
+                const currentELO = isAll ? null : eloHistory[index];
+                const previousELO = isAll || index === 0 ? 1500 : eloHistory[index - 1];
 
                 return {
                     playNumber: index + 1,
@@ -885,7 +872,7 @@
                     deaths,
                     kdr: (kills / Math.max(1, deaths)).toFixed(2),
                     currentELO,
-                    diff: currentELO - previousELO,
+                    diff: isAll ? null : currentELO - previousELO,
                     won: match.Team === match['Winning Team'],
                     map: mapDisplayName((match.Map || 'Unknown').toLowerCase())
                 };
@@ -911,14 +898,14 @@
 
             pageItems.forEach((item) => {
                 const row = document.createElement('tr');
-                if (UI.isKPT(item.round) && UI.getSeason() === 'all') { row.className = 'kpt'; row.title = 'Season 1 · KPT scrim'; }
+                if (UI.isKPT(item.round) && viewSeason === 'all') { row.className = 'kpt'; row.title = 'Season 1 · KPT scrim'; }
                 if (roundDates[item.round]) row.title = `${roundDates[item.round]}${row.title ? ' · ' + row.title : ''}`;
                 row.innerHTML = `
                     <td class="num muted">#${item.playNumber}</td>
                     <td><span class="result ${item.won ? 'win' : 'loss'}"><i class="dot"></i>${item.won ? 'Win' : 'Loss'}</span></td>
                     <td class="map-name">${UI.esc(item.map)}</td>
                     <td class="r num">${item.kdr} <span class="muted kd-raw">(${item.kills}/${item.deaths})</span></td>
-                    <td class="r num">${item.currentELO} <span class="${item.diff >= 0 ? 'positive' : 'negative'}">${item.diff >= 0 ? '+' : ''}${item.diff}</span></td>
+                    <td class="r num" data-season-only>${item.currentELO === null ? '' : `${item.currentELO} <span class="${item.diff >= 0 ? 'positive' : 'negative'}">${item.diff >= 0 ? '+' : ''}${item.diff}</span>`}</td>
                 `;
                 row.addEventListener('click', () => displayMatchDetails(item.round));
                 tbody.appendChild(row);
@@ -931,7 +918,7 @@
 
         function displayMatchDetails(round) {
             document.getElementById('modalRoundTitle').textContent = `Round #${round}${roundDates[round] ? ' · ' + roundDates[round] : ''}${UI.isKPT(round) ? ' · Season 1 (KPT scrim)' : ' · Season 2'}`;
-            UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
+            UI.renderMatchDetails(round, allMatches, seasonCalc, document.querySelector('#matchDetails tbody'), viewSeason !== 'all');
             document.getElementById('matchModal').classList.add('active');
         }
 
@@ -1001,6 +988,7 @@
         // ELO 추이: 100점 단위 티어 구간을 눈금으로 깔고 그 위에 선수의 선 하나만 액센트로 그린다
         function renderELOTrend() {
             const ctx = document.getElementById('eloTrend').getContext('2d');
+            if (eloChartInstance) { eloChartInstance.destroy(); eloChartInstance = null; }
             const lo = Math.min(...eloHistory), hi = Math.max(...eloHistory);
             const options = baseOptions();
             options.scales = {
@@ -1043,7 +1031,7 @@
                 },
                 options
             });
-            ctx.canvas.addEventListener('dblclick', () => eloChartInstance && eloChartInstance.resetZoom());
+            ctx.canvas.ondblclick = () => eloChartInstance && eloChartInstance.resetZoom();
             applyChartTheme();
         }
 
@@ -1105,27 +1093,20 @@
                 },
                 options
             });
-            ctx.canvas.addEventListener('dblclick', () => kdrChartInstance && kdrChartInstance.resetZoom());
+            ctx.canvas.ondblclick = () => kdrChartInstance && kdrChartInstance.resetZoom();
             applyChartTheme();
             setupTrendToggle(matches.length, season);
         }
 
-        // 6경기 이상이면 KDR / 보정값 토글을 보여 준다. 보정값은 경기를 더할 때마다 다시 계산한 누적 추정 (adjtrend.csv)
-        // 보정값 추이는 전체 기록 기준이라 전체 보기에서만 토글을 보여 준다
+        // 6경기 이상이면 KDR / 보정값 토글을 보여 준다. 보정값은 경기를 더할 때마다 다시 계산한 누적 추정 (seasontrend.csv)
+        // 보정값은 시즌 안에서만 비교할 수 있어서 전체 보기에는 토글이 없다
         function setupTrendToggle(games, season) {
             const mode = document.getElementById('trendMode');
             mode.hidden = true;
-            if (season !== 'all') return;
-            adjTrendPromise.then(text => {
-                const me = nickname.trim().toLowerCase();
-                const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).slice(1)
-                    .map(line => line.split(',').map(x => x.trim()))
-                    .filter(v => v[0] && v[0].toLowerCase() === me);
-                adjSeries = rows.map(v => Math.round(parseFloat(v[2]) * 100));
-                if (UI.getSeason() !== 'all') return;
-                if (games <= UI.PLACEMENT_GAMES || adjSeries.length !== games || adjSeries.some(Number.isNaN)) return;
-                mode.hidden = false;
-            });
+            if (season === 'all') return;
+            adjSeries = trendRows.filter(r => r.Season === season && isMe(r)).map(r => Math.round(parseFloat(r.Adj) * 100));
+            if (games <= UI.PLACEMENT_GAMES || adjSeries.length !== games || adjSeries.some(Number.isNaN)) return;
+            mode.hidden = false;
         }
 
         document.querySelectorAll('#trendMode button').forEach(btn => btn.addEventListener('click', () => {

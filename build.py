@@ -20,7 +20,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SOURCE = os.path.join(HERE, "data", "source", "matches.csv")
 DEFAULT_OUT = os.path.join(HERE, "out")
 DATES_SOURCE = os.path.join(HERE, "data", "source", "rounds.csv")
-WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv", "adjtrend.csv", "seasoninsight.csv", "rounds.csv")
+# season*.csv는 웹이 읽는 시즌별 값 (시즌마다 1500에서 새로 계산). lboard/aftercalc/insight.csv는 전 라운드 합산 값으로 디스코드 봇 호환용
+WEB_FILES = ("lboard.csv", "match.csv", "aftercalc.csv", "insight.csv",
+             "seasonboard.csv", "seasoncalc.csv", "seasoninsight.csv", "seasontrend.csv", "rounds.csv")
 
 
 def _cell(v):
@@ -100,6 +102,14 @@ def aftercalc_rows(result):
     return sorted(((rnd, nick, elo) for rnd, nick, _k, _d, _kdr, elo in result.history), key=lambda x: (x[0], x[1]))
 
 
+def season_board_rows(rows):
+    return [(sid, *line) for sid, part in insight.season_parts(rows) for line in leaderboard_rows(engine.compute(part))]
+
+
+def season_calc_rows(rows):
+    return [(sid, *line) for sid, part in insight.season_parts(rows) for line in aftercalc_rows(engine.compute(part))]
+
+
 def read_round_dates(path=DATES_SOURCE):
     """data/source/rounds.csv에서 [(라운드, YYYY-MM-DD)]를 읽는다. 파일이 없으면 빈 목록 (날짜는 없어도 된다)."""
     if not os.path.exists(path):
@@ -126,21 +136,24 @@ def write_web_csvs(directory, rows, result, dates=None):
         os.path.join(directory, "insight.csv"): _csv_text(
             ["Nickname", "Games", "Adj", "AdjRank", "OppAvg", "Text"],
             insight.insight_rows(result, insight.compute_insights(rows, result))),
-        os.path.join(directory, "adjtrend.csv"): _csv_text(
-            ["Nickname", "Round", "Adj"], insight.trend_rows(insight.compute_adj_trend(rows))),
+        os.path.join(directory, "seasonboard.csv"): _csv_text(
+            ["Season", "Rank", "Nickname", "Kills", "Deaths", "Wins", "Losses", "Total", "ELO", "Tier"], season_board_rows(rows)),
+        os.path.join(directory, "seasoncalc.csv"): _csv_text(["Season", "Round", "Nickname", "ELO"], season_calc_rows(rows)),
         os.path.join(directory, "seasoninsight.csv"): _csv_text(
-            ["Season", "Nickname", "Games", "Adj"], insight.season_insight_rows(rows)),
+            ["Season", "Nickname", "Games", "Adj", "Text"], insight.season_insight_rows(rows)),
+        os.path.join(directory, "seasontrend.csv"): _csv_text(
+            ["Season", "Nickname", "Round", "Adj"], insight.season_trend_rows(rows)),
         os.path.join(directory, "rounds.csv"): _csv_text(
             ["Round", "Date"], date_rows(rows, read_round_dates() if dates is None else dates)),
     })
 
 
-def read_previous_elos(path):
-    """이전 lboard.csv에서 {닉네임: (ELO, 경기 수)}를 읽는다. 없으면 빈 dict."""
+def read_previous_elos(path, season):
+    """이전 seasonboard.csv에서 그 시즌의 {닉네임: (ELO, 경기 수)}를 읽는다. 없으면 빈 dict."""
     if not os.path.exists(path):
         return {}
     with open(path, newline="", encoding="utf-8-sig") as f:
-        return {r["Nickname"]: (int(r["ELO"]), int(r["Total"])) for r in csv.DictReader(f)}
+        return {r["Nickname"]: (int(r["ELO"]), int(r["Total"])) for r in csv.DictReader(f) if r["Season"] == str(season)}
 
 
 def print_diff(previous, result, label):
@@ -245,8 +258,9 @@ def main(argv=None):
         print("⚠ --push는 기본 원본(data/source/matches.csv)에서만 쓸 수 있습니다.")
         return 1
     target_dir = HERE if args.publish else args.out
-    print_diff(read_previous_elos(os.path.join(target_dir, "lboard.csv")), result,
-               "현재 웹용 lboard.csv" if args.publish else "이전 결과")
+    sid, part = insight.season_parts(rows)[-1]  # 사이트에 보이는 ELO는 시즌별이므로 최신 시즌의 변화를 보여 준다
+    print_diff(read_previous_elos(os.path.join(target_dir, "seasonboard.csv"), sid), engine.compute(part),
+               f"{'현재 웹용' if args.publish else '이전 결과'} Season {sid}")
     try:
         write_web_csvs(target_dir, rows, result)
     except FileLockedError as e:

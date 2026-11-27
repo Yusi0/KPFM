@@ -1,6 +1,6 @@
 # KPFM Leaderboard (KPFM 리더보드)
 
-KPFM 스크림(내전) 기록으로 ELO 랭킹과 개인 전적을 보여 주는 정적 웹 대시보드입니다. 서버나 데이터베이스 없이 CSV 3개를 읽어 동작하고, 그 CSV는 **원본 기록 한 파일에서 자동으로 만들어집니다.**
+KPFM 스크림(내전) 기록으로 ELO 랭킹과 개인 전적을 보여 주는 정적 웹 대시보드입니다. 서버나 데이터베이스 없이 CSV를 읽어 동작하고, 그 CSV는 **원본 기록 한 파일에서 자동으로 만들어집니다.**
 
 🔗 **라이브**: https://yusi0.github.io/KPFM/
 
@@ -11,13 +11,13 @@ KPFM 스크림(내전) 기록으로 ELO 랭킹과 개인 전적을 보여 주는
 ```
  직접 편집하는 유일한 파일                      자동 생성물 (직접 고치지 않음)             웹 페이지
 ┌──────────────────────────┐   python build.py   ┌──────────────────────────┐   ┌─────────────┐
-│ data/source/matches.csv  │ ──────────────────▶ │ lboard.csv               │──▶│ index.html  │
-│ 한 줄 = 한 선수의 한 라운드 │  검증 → 계산 → 생성  │ match.csv  aftercalc.csv │──▶│ user.html   │
+│ data/source/matches.csv  │ ──────────────────▶ │ match.csv                │──▶│ index.html  │
+│ 한 줄 = 한 선수의 한 라운드 │  검증 → 계산 → 생성  │ season*.csv  rounds.csv  │──▶│ user.html   │
 └──────────────────────────┘                     └──────────────────────────┘   └─────────────┘
 ```
 
 - 기록을 고치거나 추가할 때는 **`data/source/matches.csv`만** 편집합니다.
-- 루트의 `lboard.csv`, `match.csv`, `aftercalc.csv`, `insight.csv`, `adjtrend.csv`, `seasoninsight.csv`, `rounds.csv`는 `build.py`가 매번 새로 만드는 결과물입니다. 여기에 직접 입력하면 순위에 반영되지 않고, 다음 빌드에서 덮어써져 사라집니다.
+- 루트의 `match.csv`, `rounds.csv`, `season*.csv`, `lboard.csv`, `aftercalc.csv`, `insight.csv`는 `build.py`가 매번 새로 만드는 결과물입니다. 여기에 직접 입력하면 순위에 반영되지 않고, 다음 빌드에서 덮어써져 사라집니다.
 - 계산은 항상 **원본을 첫 라운드부터 순서대로 다시 계산**합니다. 중간 라운드를 고치거나 지워도 결과가 꼬이지 않습니다.
 
 ---
@@ -58,13 +58,13 @@ python build.py --check
 ```bash
 python build.py --push
 ```
-검증 → 웹용 CSV 3개 생성 → 바뀐 선수의 ELO 변화 표시 → `[y/n]` 확인 후 `git add / commit / push`까지 합니다. 커밋 대상은 원본 `matches.csv`와 웹용 CSV 3개뿐입니다. 푸시 후 GitHub Pages 반영까지 몇 분 걸리며, 브라우저에서는 `Ctrl+Shift+R`로 새로고침하세요.
+검증 → 웹용 CSV 생성 → 최신 시즌에서 바뀐 선수의 ELO 변화 표시 → `[y/n]` 확인 후 `git add / commit / push`까지 합니다. 커밋 대상은 원본(`matches.csv`, `data/source/rounds.csv`)과 웹용 CSV뿐입니다. 푸시 후 GitHub Pages 반영까지 몇 분 걸리며, 브라우저에서는 `Ctrl+Shift+R`로 새로고침하세요.
 
 | 옵션 | 설명 |
 |---|---|
 | (없음) | 검증 후 `out/` 폴더에 미리보기 생성. 웹에는 영향 없음 |
 | `--check` | 검증만 |
-| `--publish` | 루트의 웹용 CSV 3개를 갱신 (푸시는 직접) |
+| `--publish` | 루트의 웹용 CSV를 갱신 (푸시는 직접) |
 | `--push` | `--publish` + 확인 후 커밋/푸시. `--yes`로 확인 생략, `-m "메시지"`로 커밋 메시지 지정 |
 | `--strict` | 경고도 오류로 취급 |
 
@@ -91,6 +91,8 @@ python build.py --push
 | 시작 ELO | 1500 |
 | 무승부 | `Winning Team = 0`인 라운드는 ELO, 승패, 킬/데스, 경기 수에 반영하지 않음 |
 | 기록만 하는 것 | 개인 점수, 팀 점수, 모드는 저장만 하고 공식에는 쓰지 않음 (표본이 아직 적음) |
+
+**시즌**: Season 1은 1~92라운드(KPT 스크림), Season 2는 93라운드부터입니다. **ELO, 티어, 순위, 보정값은 시즌마다 따로 계산하고 새 시즌은 전원 1500에서 시작합니다.** 구간은 `insight.py`의 `SEASONS`와 `ui.js`의 `UI.SEASONS`에 있고 둘이 같아야 합니다. `lboard.csv`, `aftercalc.csv`, `insight.csv`는 전 라운드를 합산한 값으로 디스코드 봇 호환용이며 웹은 읽지 않습니다. `stats.py`와 `tiers.py`의 ELO도 합산 값입니다.
 
 **배치**: 5경기 이하는 배치중으로 봅니다. 계산은 같지만 K가 커서 빠르게 제자리를 찾습니다. 정식 티어는 6경기부터를 기준으로 합니다.
 
@@ -135,10 +137,11 @@ python tests/test_build.py    # 파일이 잠겼을 때 안전하게 중단되�
 디자인은 주황 포인트 하나와 따뜻한 회색 계열 중립색으로 통일했습니다. 색 값은 `ui.css` 맨 위의 변수만 고치면 됩니다.
 
 ### 랭킹 대시보드 (`index.html`)
-- **표형 랭킹**: 순위, 닉네임, 티어(색 점 + 이름), ELO와 티어 눈금자(현재 100점 구간 안의 위치), KDR, 승률, 경기 수. 5경기 이하는 `Placement n/5`로 표시하고 6경기부터 순위가 붙습니다.
+- **시즌 탭**: 처음에는 진행 중인 시즌이 열립니다. All은 순위표가 아니라 통산 기록(킬/데스, KDR, 승률, 경기 수)이며 ELO·티어·순위·보정값이 없고 경기 수 순으로 정렬됩니다.
+- **표형 랭킹** (시즌 탭): 순위, 닉네임, 티어(색 점 + 이름), ELO와 티어 눈금자(현재 100점 구간 안의 위치), KDR, 승률, 경기 수. 5경기 이하는 `Placement n/5`로 표시하고 6경기부터 순위가 붙습니다.
 - **보기 전환 (Wide / Compact)**: 우측 상단 토글. Wide는 넓은 앱 화면, Compact는 예전의 좁은 카드형입니다. 1024px 미만에서는 항상 Compact이며 선택은 브라우저에 저장됩니다.
 - **실시간 검색**: 닉네임 입력 시 자동 완성 목록으로 바로 필터링합니다.
-- **팀 메이킹 로비**: 카드의 `+` 버튼이나 검색으로 플레이어를 로비에 담으면, ELO 기준으로 두 팀(Phantom, Ghost)의 평균 ELO 차이가 최소가 되도록 자동으로 나눕니다. 로비에 담은 선수는 목록 맨 위로 올라옵니다.
+- **팀 메이킹 로비**: 카드의 `+` 버튼이나 검색으로 플레이어를 로비에 담으면, 고른 시즌의 ELO(All에서는 진행 중인 시즌, 기록이 없으면 1500) 기준으로 두 팀(Phantom, Ghost)의 평균 ELO 차이가 최소가 되도록 자동으로 나눕니다. 로비에 담은 선수는 목록 맨 위로 올라옵니다.
 - 다크/라이트 테마 전환.
 
 ### 보정값과 한 줄 설명 (`insight.py`)
@@ -148,6 +151,7 @@ python tests/test_build.py    # 파일이 잠겼을 때 안전하게 중단되�
 - 알려진 한계: 킬/데스만 보므로 맵과 모드 차이, 역할 차이는 반영되지 않습니다. 보정값은 ELO와 다른 질문(누구와 붙어서 얼마나 잘했나)에 답하는 참고 지표입니다.
 
 ### 플레이어 상세 (`user.html`)
+- **시즌 탭**: 고른 시즌에 기록이 없는 선수는 기록이 있는 최신 시즌이 열립니다. All에서는 ELO·티어·순위·보정값과 ELO 추이를 숨깁니다.
 - **프로필 요약**: 순위(6경기 이상만), ELO와 티어 눈금자, KDR, 경기당 킬, 승/패/승률, 누적 경기 수.
 - **트렌드 차트 (Chart.js)**: 100점 티어 구간을 눈금으로 깐 ELO 추이(주황 선 하나)와 작은 누적 KDR 추이. 드래그로 확대, 더블클릭으로 초기화.
 - **맵별 전적**: 맵마다 플레이 수, 승리 수, 승률. 맵 표시 이름은 `maps.js`에 모여 있습니다 (`Metro`, `Warehouse`, `Desert Storm`, `Elevation`, `Derrick`, `Containers O' Fun`, `Suburbia`). **새 맵이 생기면 `maps.js`에 한 줄만 추가**하세요. 없는 맵은 CSV에 적힌 소문자 이름이 그대로 표시됩니다.
@@ -174,13 +178,15 @@ Leaderboard/
 ├── ui.css                # 두 페이지가 함께 쓰는 디자인 토큰과 공용 스타일 (다크/라이트, Wide/Compact)
 ├── ui.js                 # 테마·보기 전환, 티어 계산, 아이콘, 경기 상세 표 (ui.css/ui.js를 고치면 두 html의 `?v=` 값도 바꿔야 브라우저 캐시가 갱신됩니다)
 ├── maps.js               # 맵 표시 이름 (두 페이지가 함께 사용, 새 맵은 여기에 추가)
-├── lboard.csv            # (생성물) 선수별 누적 기록 + ELO + 티어
 ├── match.csv             # (생성물) 라운드별 선수 기록 (+ 모드/점수)
-├── aftercalc.csv         # (생성물) 라운드 직후의 ELO
-├── insight.csv           # (생성물) 선수별 보정값과 한 줄 설명
-├── adjtrend.csv          # (생성물) 경기마다 누적한 보정값 (프로필의 KDR/보정값 토글 그래프)
+├── seasonboard.csv       # (생성물) 시즌별 선수 누적 기록 + ELO + 티어
+├── seasoncalc.csv        # (생성물) 시즌별 라운드 직후의 ELO
+├── seasontrend.csv       # (생성물) 시즌별로 경기마다 누적한 보정값 (프로필의 KDR/보정값 토글 그래프)
+├── lboard.csv            # (생성물, 봇용) 전 라운드 합산 기록 + ELO + 티어
+├── aftercalc.csv         # (생성물, 봇용) 전 라운드 합산 ELO
+├── insight.csv           # (생성물, 봇용) 전 라운드 합산 보정값과 한 줄 설명
 ├── rounds.csv            # (생성물) 라운드별 날짜. 원본은 data/source/rounds.csv (Round,Date). 날짜가 없는 라운드가 있어도 됨
-├── seasoninsight.csv     # (생성물) 시즌별 보정값. 시즌 구간은 insight.py의 SEASONS와 ui.js의 UI.SEASONS (둘이 같아야 함)
+├── seasoninsight.csv     # (생성물) 시즌별 보정값과 한 줄 설명
 ├── insight.py            # 보정값 계산과 문장 규칙 (기준값은 맨 위 CONFIG, `python insight.py`로 전체 확인)
 ├── data/source/
 │   ├── matches.csv       # ★ 원본: 이 파일만 편집

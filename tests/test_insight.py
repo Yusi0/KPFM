@@ -81,11 +81,27 @@ def test_season_adjusted_values_use_only_that_seasons_games():
     rows, _result, ins = _load()
     out = insight.season_insight_rows(rows)
     games = {}
-    for sid, name, n, adj in out:
+    for sid, name, n, adj, text in out:
         games[(sid, name)] = n
         assert 0.1 < float(adj) < 5
+        assert text and "," not in text
     for name, d in ins.items():  # 시즌별 경기 수를 더하면 전체 경기 수
         assert sum(n for (s, p), n in games.items() if p == name) == d["games"], name
+
+
+def test_each_season_starts_its_own_elo():
+    rows, _result, _ins = _load()
+    parts = dict(insight.season_parts(rows))
+    assert set(parts) == {1, 2}
+    assert sum(len(p) for p in parts.values()) == len(rows)
+    # 시즌 1은 합산 계산의 앞부분과 같고, 시즌 2는 이전 기록 없이 1500에서 시작한다
+    combined = engine.compute(rows)
+    s1 = engine.compute(parts[1])
+    assert [h for h in combined.history if h[0] <= 92] == s1.history
+    first = min(r.round for r in parts[2])
+    opening = engine.compute([r for r in rows if r.round == first])
+    assert [h for h in engine.compute(parts[2]).history if h[0] == first] == opening.history
+    assert {r[:3] for r in insight.season_trend_rows(rows)} >= {(2, r.nickname, r.round) for r in parts[2] if r.winning_team in (1, 2)}
 
 
 def test_josa_by_last_digit():

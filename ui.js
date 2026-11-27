@@ -95,24 +95,28 @@
         return !!s && Number(round) >= s.first && Number(round) <= s.last;
     };
     const seasonLabel = (id) => (SEASONS.find(x => x.id === id) || {}).name || 'All';
-    // 고른 시즌은 두 화면이 함께 쓴다 ('all' | '1' | '2')
+    const seasonOf = (round) => (SEASONS.find(s => inSeason(round, s.id)) || {}).id;
+    const LATEST_SEASON = SEASONS[SEASONS.length - 1].id;
+    // 고른 시즌은 두 화면이 함께 쓴다 ('all' | '1' | '2'). 처음에는 진행 중인 시즌
     function getSeason() {
         try {
             const v = localStorage.getItem('season');
-            if (SEASONS.some(s => s.id === v)) return v;
+            if (v === 'all' || SEASONS.some(s => s.id === v)) return v;
         } catch (e) { /* 저장소가 막혀도 동작 */ }
-        return 'all';
+        return LATEST_SEASON;
     }
     function setSeason(id) {
         try { localStorage.setItem('season', id); } catch (e) { /* 무시 */ }
     }
     // All / Season 1 / Season 2 탭을 el 안에 그린다. 고르면 onChange(id)
-    function mountSeasonTabs(el, onChange) {
-        const items = [{ id: 'all', name: 'All', sub: 'Every round' }, ...SEASONS];
-        const current = getSeason();
+    // options.current: 처음 눌린 탭 (없으면 저장된 값), options.available: 고를 수 있는 탭 (없으면 전부)
+    function mountSeasonTabs(el, onChange, options) {
+        const { current = getSeason(), available } = options || {};
+        const items = [{ id: 'all', name: 'All', sub: 'Career record · no ELO' }, ...SEASONS];
         el.innerHTML = items.map(s => {
-            const range = s.id === 'all' ? s.sub : `Rounds ${s.first}${s.last === Infinity ? '+' : '–' + s.last} · ${s.sub}`;
-            return `<button type="button" data-season="${s.id}" aria-pressed="${s.id === current}" title="${range}">${s.name}</button>`;
+            const off = !!available && !available.includes(s.id);
+            const range = off ? 'No matches' : s.id === 'all' ? s.sub : `Rounds ${s.first}${s.last === Infinity ? '+' : '–' + s.last} · ${s.sub}`;
+            return `<button type="button" data-season="${s.id}" aria-pressed="${s.id === current}" title="${range}"${off ? ' disabled' : ''}>${s.name}</button>`;
         }).join('');
         el.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
             el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
@@ -167,18 +171,20 @@
         if (!current) return { elo: 1500, diff: 0 };
         const elo = parseInt(current.ELO || 1500);
         const before = allAftercalc
-            .filter(e => parseInt(e.Round) < rNum && e.Nickname?.trim().toLowerCase() === nick)
+            .filter(e => parseInt(e.Round) < rNum && seasonOf(e.Round) === seasonOf(rNum) && e.Nickname?.trim().toLowerCase() === nick)
             .sort((a, b) => parseInt(b.Round) - parseInt(a.Round))[0];
         return { elo, diff: elo - (before ? parseInt(before.ELO || 1500) : 1500) };
     }
 
-    function renderMatchDetails(round, allMatches, allAftercalc, tbody) {
+    // showElo가 false면(전체 보기) ELO 열과 MVP 표시를 감춘다
+    function renderMatchDetails(round, allMatches, allAftercalc, tbody, showElo) {
         tbody.innerHTML = '';
+        tbody.closest('table')?.classList.toggle('no-elo', !showElo);
         const players = allMatches.filter(p => String(p.Round) === String(round));
         const sides = [1, 2].map(team => {
             const list = players.filter(p => p.Team === String(team)).map(p => ({ p, ...eloChange(allAftercalc, p.Nickname, round) }));
             const best = list.reduce((m, x) => (x.diff > (m ? m.diff : -Infinity) ? x : m), null);
-            return { list, mvp: best ? best.p.Nickname : '' };
+            return { list, mvp: best && showElo ? best.p.Nickname : '' };
         });
         const rows = Math.max(sides[0].list.length, sides[1].list.length);
 
@@ -284,21 +290,6 @@
     window.addEventListener('scroll', closePopover, true);
     window.addEventListener('resize', closePopover);
 
-    // insight.csv -> { 소문자 닉네임: {adj, text, games} } (파일이 없거나 깨져도 화면은 정상 동작)
-    function parseInsights(text) {
-        const map = {};
-        try {
-            const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-            const headers = rows[0].split(',').map(h => h.trim());
-            rows.slice(1).forEach(line => {
-                const v = line.split(',').map(x => x.trim());
-                const o = Object.fromEntries(headers.map((h, i) => [h, v[i]]));
-                if (o.Nickname) map[o.Nickname.toLowerCase()] = { adj: o.Adj, text: o.Text || '', games: parseInt(o.Games, 10) || 0 };
-            });
-        } catch (e) { /* 무시 */ }
-        return map;
-    }
-
     // rounds.csv → { 라운드: 'YYYY-MM-DD' }. 날짜는 없어도 되는 정보라 파일이 없거나 깨져도 빈 객체
     function parseRoundDates(text) {
         const map = {};
@@ -312,20 +303,37 @@
     }
     const dateShort = (d) => (d ? d.slice(5).replace('-', '/') : ''); // 2026-10-05 → 10/05
 
-    // seasoninsight.csv → { 시즌: { 닉네임(소문자): 보정값 } }
+    // 쉼표로만 나누는 단순 CSV (우리 파일은 값에 쉼표가 없다)
+    function parseRows(text) {
+        const lines = String(text || '').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+        const headers = lines[0].split(',').map(h => h.trim());
+        return lines.slice(1).map(line => {
+            const v = line.split(',').map(x => x.trim());
+            return Object.fromEntries(headers.map((h, i) => [h, v[i]]));
+        });
+    }
+
+    // seasonboard.csv → { 시즌: { 닉네임(소문자): { elo, tier, total } } }
+    function parseSeasonBoard(text) {
+        const map = {};
+        parseRows(text).forEach(o => {
+            if (o.Nickname && o.Season) {
+                (map[o.Season] = map[o.Season] || {})[o.Nickname.toLowerCase()] = { elo: parseInt(o.ELO, 10) || 0, tier: o.Tier || 'Unranked', total: parseInt(o.Total, 10) || 0 };
+            }
+        });
+        return map;
+    }
+
+    // seasoninsight.csv → { 시즌: { 닉네임(소문자): { adj, text } } } (파일이 없거나 깨져도 화면은 정상 동작)
     function parseSeasonInsights(text) {
         const map = {};
         try {
-            const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-            const headers = rows[0].split(',').map(h => h.trim());
-            rows.slice(1).forEach(line => {
-                const v = line.split(',').map(x => x.trim());
-                const o = Object.fromEntries(headers.map((h, i) => [h, v[i]]));
-                if (o.Nickname && o.Season) (map[o.Season] = map[o.Season] || {})[o.Nickname.toLowerCase()] = parseFloat(o.Adj);
+            parseRows(text).forEach(o => {
+                if (o.Nickname && o.Season) (map[o.Season] = map[o.Season] || {})[o.Nickname.toLowerCase()] = { adj: parseFloat(o.Adj), text: o.Text || '' };
             });
         } catch (e) { /* 무시 */ }
         return map;
     }
 
-    window.UI = { SEASONS, inSeason, seasonLabel, getSeason, setSeason, mountSeasonTabs, parseSeasonInsights, parseRoundDates, dateShort, adjHTML, adjIndex, parseInsights, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
+    window.UI = { SEASONS, inSeason, seasonLabel, getSeason, setSeason, mountSeasonTabs, seasonOf, LATEST_SEASON, parseRows, parseSeasonBoard, parseSeasonInsights, parseRoundDates, dateShort, adjHTML, adjIndex, closePopover, icon, tierInfo, tierShort, tierHTML, rulerHTML, esc, cssVar, goToPlayer, renderMatchDetails, TIERS, PLACEMENT_GAMES, KPT_LAST_ROUND, isKPT };
 })();

@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="ui.css?v=20261125">
-    <script src="ui.js?v=20261125"></script>
+    <link rel="stylesheet" href="ui.css?v=20261127">
+    <script src="ui.js?v=20261127"></script>
 
     <style>
         /* 앱 셸: 화면을 꽉 채우고 목록만 안에서 스크롤 */
@@ -1101,6 +1101,54 @@
         [data-layout="compact"] .c-elo .num {
             font-size: 14px;
         }
+
+        /* ---- 전체 보기: 순위·티어·ELO·보정값 없이 통산 기록만 */
+        .c-kd {
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 24px;
+            color: var(--text-3);
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        .list-head [data-all-only],
+        .board[data-view="all"] .list-head [data-season-only] {
+            display: none;
+        }
+
+        .board[data-view="all"] .list-head [data-all-only] {
+            display: block;
+        }
+
+        [data-layout="wide"] .board[data-view="all"] .row,
+        [data-layout="wide"] .board[data-view="all"] .list-head {
+            grid-template-columns: minmax(0, 1fr) 140px 76px 100px 76px 84px;
+        }
+
+        @media (min-width: 1024px) and (max-width: 1319px) {
+
+            [data-layout="wide"] .board[data-view="all"] .row,
+            [data-layout="wide"] .board[data-view="all"] .list-head {
+                grid-template-columns: minmax(0, 1fr) 104px 64px 88px 64px 72px;
+            }
+        }
+
+        [data-layout="compact"] .c-kd {
+            text-align: left;
+        }
+
+        [data-layout="compact"] .board[data-view="all"] .row {
+            grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+        }
+
+        [data-layout="compact"] .board[data-view="all"] .row-head {
+            grid-column: 1 / span 3;
+        }
+
+        [data-layout="compact"] .board[data-view="all"] .lobby-toggle {
+            grid-column: 4;
+        }
     </style>
 </head>
 
@@ -1113,7 +1161,7 @@
         <header class="topbar">
             <div class="wrap topbar-in">
                 <h1 class="wordmark">KPFM <span>Leaderboard</span></h1>
-                <span class="meta meta-stats"><span id="playerCount">0</span> players · <span id="rankedCount">0</span> ranked</span>
+                <span class="meta meta-stats"><span id="playerCount">0</span> players<span id="rankedMeta"> · <span id="rankedCount">0</span> ranked</span></span>
                 <div class="spacer"></div>
                 <div class="seg layout-toggle" role="group" aria-label="Layout">
                     <button type="button" data-layout-pref="wide" aria-pressed="true">Wide</button>
@@ -1169,12 +1217,13 @@
                 </div>
 
                 <div class="list-head">
-                    <span>#</span>
+                    <span data-season-only>#</span>
                     <span>Player</span>
-                    <span>Tier</span>
-                    <span data-k="elo">ELO</span>
+                    <span data-season-only>Tier</span>
+                    <span data-k="elo" data-season-only>ELO</span>
+                    <span class="r" data-all-only>Kills / deaths</span>
                     <span class="r" data-k="kdr">KDR</span>
-                    <span class="r" data-k="adj"><button type="button" class="adj" data-adj="" aria-haspopup="true">보정값</button></span>
+                    <span class="r" data-k="adj" data-season-only><button type="button" class="adj" data-adj="" aria-haspopup="true">보정값</button></span>
                     <span class="r" data-k="winrate">Win rate</span>
                     <span class="r" data-k="matches">Matches</span>
                     <span></span>
@@ -1215,7 +1264,7 @@
     <div class="modal" id="lobbyModal">
         <div class="modal-content" style="max-width: 520px;">
             <div class="modal-header">
-                <h2>Balanced squads</h2>
+                <h2 id="lobbyTitle">Balanced squads</h2>
                 <button class="icon-btn" id="closeLobbyModal" type="button" aria-label="Close" style="border-color: transparent; background: transparent;"></button>
             </div>
             <div class="modal-body" style="padding: 0;">
@@ -1275,11 +1324,14 @@
         const timestamp = `?timestamp=${Date.now()}`;
 
         let allMatches = [];
-        let allAftercalc = [];
         let roundDates = {};   // 라운드 -> YYYY-MM-DD (rounds.csv, 없는 라운드도 있다)
-        let eloInfo = {};      // 닉네임(소문자) -> { elo, tier, total }  (ELO는 시즌과 무관하게 이어진다)
-        let insightsAll = {};  // 전체 보정값
-        let seasonAdj = {};    // 시즌별 보정값
+        let seasonBoard = {};  // 시즌 -> 닉네임(소문자) -> { elo, tier, total }  (시즌마다 1500에서 새로 계산)
+        let seasonStats = {};  // 시즌 -> 닉네임(소문자) -> { adj }
+        let seasonCalc = [];   // 시즌별 라운드 ELO (경기 상세 창)
+        let allNames = [];     // 전체 선수 이름 (로비 검색은 시즌과 무관)
+        // 전체 보기는 순위표가 아니라 통산 기록이라 정렬을 따로 기억한다
+        let currentView = '';
+        const sortByView = { all: 'matches', season: 'elo' };
         let currentSort = 'elo';
         // 배치 제외 (기본 켜짐). 검색 중이거나 로비에 넣은 선수는 항상 보인다
         let hidePlacement = true;
@@ -1315,16 +1367,11 @@
 
             // 정렬 방향: 화살표를 누를 때마다 뒤집는다
             const dirBtn = document.getElementById('sortDirBtn');
-            const paintDir = () => {
-                dirBtn.innerHTML = UI.icon(sortDesc ? 'arrowDown' : 'arrowUp');
-                dirBtn.title = sortDesc ? 'High to low' : 'Low to high';
-                dirBtn.setAttribute('aria-label', sortDesc ? 'Sort descending' : 'Sort ascending');
-            };
-            paintDir();
+            syncSortUI();
             dirBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 sortDesc = !sortDesc;
-                paintDir();
+                syncSortUI();
                 refreshLeaderboard();
             });
 
@@ -1343,14 +1390,12 @@
             optionsList.forEach(opt => {
                 opt.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    customTrigger.querySelector('span').textContent = opt.getAttribute('data-short');
-                    optionsList.forEach(o => o.classList.remove('active'));
-                    opt.classList.add('active');
                     customOptions.style.display = 'none';
                     document.getElementById('customSortWrapper').classList.remove('open');
                     currentSort = opt.getAttribute('data-value');
+                    if (currentView) sortByView[currentView] = currentSort;
                     sortDesc = true;
-                    paintDir();
+                    syncSortUI();
                     refreshLeaderboard();
                 });
             });
@@ -1394,41 +1439,23 @@
             const shell = document.querySelector('.shell');
 
             try {
-                // 보정값 (insight.csv가 없어도 나머지는 정상 동작)
-                const insightPromise = fetch(`insight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
+                // 날짜와 보정값은 없어도 나머지는 정상 동작
                 const datesPromise = fetch(`rounds.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
-                const seasonPromise = fetch(`seasoninsight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
-                const [matchResponse, lboardResponse, aftercalcResponse] = await Promise.all([
-                    fetch(`match.csv${timestamp}`),
-                    fetch(`lboard.csv${timestamp}`),
-                    fetch(`aftercalc.csv${timestamp}`)
-                ]);
-
-                const [matchText, lboardText, aftercalcText] = await Promise.all([
-                    matchResponse.text(),
-                    lboardResponse.text(),
-                    aftercalcResponse.text()
-                ]);
-
-                const parse = (text) => {
-                    const rows = text.trim().split('\n');
-                    const headers = rows[0].split(',').map(h => h.trim());
-                    return rows.slice(1).map(row => {
-                        const values = row.split(',').map(v => v.trim());
-                        return Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-                    });
+                const insightPromise = fetch(`seasoninsight.csv${timestamp}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
+                const load = async (name) => {
+                    const r = await fetch(`${name}${timestamp}`);
+                    if (!r.ok) throw new Error(`${name} ${r.status}`);
+                    return r.text();
                 };
+                const [matchText, boardText, calcText] = await Promise.all(
+                    ['match.csv', 'seasonboard.csv', 'seasoncalc.csv'].map(load));
 
-                allMatches = parse(matchText);
-                const leaderboard = parse(lboardText);
-                allAftercalc = parse(aftercalcText);
-
+                allMatches = UI.parseRows(matchText);
                 allMatches.reverse();
-                leaderboard.forEach(r => {
-                    eloInfo[r.Nickname.toLowerCase()] = { elo: parseInt(r.ELO) || 0, tier: r.Tier || 'Unranked', total: parseInt(r.Total) || 0 };
-                });
-                insightsAll = UI.parseInsights(await insightPromise);
-                seasonAdj = UI.parseSeasonInsights(await seasonPromise);
+                allNames = [...new Set(allMatches.map(m => m.Nickname).filter(Boolean))];
+                seasonBoard = UI.parseSeasonBoard(boardText);
+                seasonCalc = UI.parseRows(calcText);
+                seasonStats = UI.parseSeasonInsights(await insightPromise);
                 roundDates = UI.parseRoundDates(await datesPromise);
                 UI.mountSeasonTabs(document.getElementById('seasonTabs'), () => {
                     applySeason();
@@ -1497,40 +1524,60 @@
             renderLeaderboard(filteredData);
         }
 
-        // 고른 시즌의 경기만으로 KDR, 보정값, 승률, 매치 수를 다시 만든다. ELO와 티어는 시즌과 무관하다
+        // 정렬 선택 상자와 방향 화살표를 지금 상태에 맞춘다. 전체 보기에는 ELO와 보정값 정렬이 없다
+        function syncSortUI() {
+            document.querySelectorAll('#customSortOptions .custom-option').forEach(opt => {
+                const value = opt.getAttribute('data-value');
+                opt.style.display = currentView === 'all' && (value === 'elo' || value === 'adj') ? 'none' : '';
+                opt.classList.toggle('active', value === currentSort);
+                if (value === currentSort) document.querySelector('#customSortTrigger span').textContent = opt.getAttribute('data-short');
+            });
+            const dirBtn = document.getElementById('sortDirBtn');
+            dirBtn.innerHTML = UI.icon(sortDesc ? 'arrowDown' : 'arrowUp');
+            dirBtn.title = sortDesc ? 'High to low' : 'Low to high';
+            dirBtn.setAttribute('aria-label', sortDesc ? 'Sort descending' : 'Sort ascending');
+        }
+
+        // 고른 시즌의 경기만으로 목록을 다시 만든다. ELO·티어·보정값은 시즌 값이고, 전체 보기에는 없다
         function applySeason() {
             const season = UI.getSeason();
+            const isAll = season === 'all';
+            const view = isAll ? 'all' : 'season';
+            if (view !== currentView) {
+                currentView = view;
+                currentSort = sortByView[view];
+                sortDesc = true;
+            }
+            syncSortUI();
+            document.querySelector('.board').dataset.view = view;
+
             processMatches(allMatches.filter(m => UI.inSeason(m.Round, season)));
             leaderboardData.forEach(p => {
                 const key = p.nickname.toLowerCase();
-                const e = eloInfo[key];
+                const e = isAll ? null : (seasonBoard[season] || {})[key];
                 p.elo = e ? e.elo : 0;
                 p.tier = e ? e.tier : 'Unranked';
                 p.total = e ? e.total : p.matches;
-                if (season === 'all') {
-                    const ins = insightsAll[key];
-                    p.adj = ins ? parseFloat(ins.adj) : null;
-                } else {
-                    const v = (seasonAdj[season] || {})[key];
-                    p.adj = v == null || Number.isNaN(v) ? null : v;
-                }
+                const s = isAll ? null : (seasonStats[season] || {})[key];
+                p.adj = s && Number.isFinite(s.adj) ? s.adj : null;
             });
 
             leaderboardData.sort((a, b) => b.elo - a.elo);
 
-            // 순위는 6경기 이상인 선수만 (5경기 이하는 배치중). 시즌 보기에서는 그 시즌의 경기 수로 센다
+            // 순위는 6경기 이상인 선수만 (5경기 이하는 배치중). 그 시즌의 경기 수로 센다
             let rankCounter = 1;
             leaderboardData.forEach(p => {
                 p.rank = (p.matches > UI.PLACEMENT_GAMES && p.elo > 0) ? rankCounter++ : 'N/A';
             });
 
             const legend = document.getElementById('seasonLegend');
-            if (legend) legend.hidden = season !== 'all';
+            if (legend) legend.hidden = !isAll;
 
             refreshLeaderboard();
 
             document.getElementById('playerCount').innerText = leaderboardData.length;
             document.getElementById('rankedCount').innerText = leaderboardData.filter(p => p.rank !== 'N/A').length;
+            document.getElementById('rankedMeta').hidden = isAll;
         }
 
         function renderLeaderboard(data) {
@@ -1551,7 +1598,7 @@
                     const wrB = b.matches > 0 ? (b.wins / b.matches) : 0;
                     return dir * (wrB - wrA);
                 } else if (currentSort === 'matches') {
-                    return dir * ((b.matches || 0) - (a.matches || 0));
+                    return dir * ((b.matches || 0) - (a.matches || 0) || (b.kills + b.deaths) - (a.kills + a.deaths));
                 }
                 return dir * ((b.elo || 0) - (a.elo || 0));
             });
@@ -1599,17 +1646,21 @@
                 row.className = 'row' + (isInLobby ? ' in-lobby' : '');
                 row.onclick = () => UI.goToPlayer(player.nickname);
 
+                const isAll = currentView === 'all';
+                const nameHTML = `<span class="c-name">${UI.esc(player.nickname)}</span>`;
+                const headHTML = isAll ? nameHTML
+                    : `<span class="c-rank">${rankOf.get(player.nickname) ?? '–'}</span>${nameHTML}<span class="c-tier">${UI.tierHTML(player.tier, player.total)}</span>`;
+                const eloHTML = isAll
+                    ? `<div class="cell c-kd" data-label="K / D">${player.kills} / ${player.deaths}</div>`
+                    : `<div class="cell c-elo" data-label="ELO"><span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}</div>`;
+                const adjHTML = isAll ? ''
+                    : `<div class="cell c-adj num${placing(player) ? ' is-placement' : ''}" data-label="보정값"${placing(player) ? ' title="배치 중이라 참고용입니다"' : ''}>${player.adj == null ? '–' : UI.adjIndex(player.adj)}</div>`;
+
                 row.innerHTML = `
-                    <div class="row-head">
-                        <span class="c-rank">${rankOf.get(player.nickname) ?? '–'}</span>
-                        <span class="c-name">${UI.esc(player.nickname)}</span>
-                        <span class="c-tier">${UI.tierHTML(player.tier, player.total)}</span>
-                    </div>
-                    <div class="cell c-elo" data-label="ELO">
-                        <span class="num">${player.elo || 'N/A'}</span>${player.elo ? UI.rulerHTML(player.elo) : ''}
-                    </div>
+                    <div class="row-head">${headHTML}</div>
+                    ${eloHTML}
                     <div class="cell c-kdr num" data-label="KDR">${kdr}</div>
-                    <div class="cell c-adj num${player.matches <= UI.PLACEMENT_GAMES ? ' is-placement' : ''}" data-label="보정값"${player.matches <= UI.PLACEMENT_GAMES ? ' title="배치 중이라 참고용입니다"' : ''}>${player.adj == null ? '–' : UI.adjIndex(player.adj)}</div>
+                    ${adjHTML}
                     <div class="cell c-wr num" data-label="Win rate">${winRate}<i class="wr-bar" style="--w:${winPct}%"></i></div>
                     <div class="cell c-matches num" data-label="Matches">${player.matches}</div>
                 `;
@@ -1647,7 +1698,7 @@
             autocomplete.innerHTML = '';
 
             if (searchQuery.length > 0) {
-                const players = leaderboardData.filter(p => p.nickname.toLowerCase().includes(searchQuery));
+                const players = allNames.filter(n => n.toLowerCase().includes(searchQuery)).map(nickname => ({ nickname }));
                 if (players.length > 0) {
                     players.forEach(player => {
                         const item = document.createElement('div');
@@ -1708,8 +1759,11 @@
 
         // 팀 배정 (알고리즘은 그대로: ELO 내림차순으로 합이 작은 쪽에 한 명씩)
         function balanceTeams() {
+            const season = UI.getSeason() === 'all' ? UI.LATEST_SEASON : UI.getSeason();
+            document.getElementById('lobbyTitle').textContent = `Balanced squads · ${UI.seasonLabel(season)} ELO`;
             const players = Array.from(selectedUsers).map(nickname => {
-                return leaderboardData.find(p => p.nickname === nickname) || { nickname, elo: 1000 };
+                const e = (seasonBoard[season] || {})[nickname.toLowerCase()];
+                return { nickname, elo: e ? e.elo : 1500 };
             });
 
             players.sort((a, b) => (b.elo || 0) - (a.elo || 0));
@@ -1720,7 +1774,7 @@
             let sum2 = 0;
 
             players.forEach(p => {
-                const elo = p.elo || 1000;
+                const elo = p.elo;
                 if (sum1 <= sum2) {
                     team1.push(p);
                     sum1 += elo;
@@ -1813,7 +1867,7 @@
 
         function displayMatchDetails(round) {
             document.getElementById('modalRoundTitle').textContent = `Round #${round}${roundDates[round] ? ' · ' + roundDates[round] : ''}${UI.isKPT(round) ? ' · Season 1 (KPT scrim)' : ' · Season 2'}`;
-            UI.renderMatchDetails(round, allMatches, allAftercalc, document.querySelector('#matchDetails tbody'));
+            UI.renderMatchDetails(round, allMatches, seasonCalc, document.querySelector('#matchDetails tbody'), UI.getSeason() !== 'all');
             document.getElementById('matchModal').classList.add('active');
         }
 

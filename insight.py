@@ -40,18 +40,28 @@ CONFIG = {
 SEASONS = ((1, 1, 92), (2, 93, None))
 
 
-def season_insight_rows(rows, config=None):
-    """시즌별 보정값: (시즌, 선수, 경기 수, 보정값 배율). 그 시즌의 경기만으로 따로 푼다 (ELO는 시즌과 무관)."""
-    cfg = dict(CONFIG, **(config or {}))
+def season_parts(rows):
+    """[(시즌, 그 시즌의 행)]. 기록이 있는 시즌만. ELO와 보정값 모두 시즌마다 그 시즌의 경기만으로 처음부터 계산한다."""
     out = []
     for sid, first, last in SEASONS:
         part = [r for r in rows if r.round >= first and (last is None or r.round <= last)]
-        recs = build_records(part)
-        if not recs:
-            continue
-        theta = adjusted_ratings(recs, cfg["ridge"], cfg["iterations"])
-        out.extend((sid, p, len(recs[p]), f"{math.exp(theta[p]):.2f}") for p in sorted(recs))
+        if part:
+            out.append((sid, part))
     return out
+
+
+def season_insight_rows(rows, config=None):
+    """seasoninsight.csv 한 줄 = (시즌, 선수, 경기 수, 보정값 배율, 한 줄 설명)."""
+    out = []
+    for sid, part in season_parts(rows):
+        ins = compute_insights(part, engine.compute(part), config)
+        out.extend((sid, p, ins[p]["games"], f"{ins[p]['adj']:.2f}", ins[p]["text"]) for p in sorted(ins))
+    return out
+
+
+def season_trend_rows(rows, config=None):
+    """seasontrend.csv 한 줄 = (시즌, 선수, 라운드, 보정값 배율). 시즌마다 따로 누적한다."""
+    return [(sid, *row) for sid, part in season_parts(rows) for row in trend_rows(compute_adj_trend(part, config))]
 
 
 def build_records(rows):
